@@ -1,0 +1,18 @@
+# API keys and secrets
+.env
+
+# Dependency directory
+node_modules
+
+# Editors
+.idea
+*.iml
+.vscode
+
+# OS metadata
+.DS_Store
+
+# Ignore built ts files
+dist/**/*
+
+scripts/data/**/*
