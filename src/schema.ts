@@ -9,8 +9,8 @@ export const typeDefinitions = /* GraphQL */ `
     address: String!
     tokenId: String
     status: BlockStatusFilter
-    to: String
-    from: String
+    to: Int
+    from: Int
   }
 
   type EventData {

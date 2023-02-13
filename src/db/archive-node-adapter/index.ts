@@ -1,19 +1,19 @@
 import postgres from 'postgres';
-
 import {
   BlockStatusFilter,
   defaultTokenID,
   Event,
   Events,
-} from '../models/types';
+} from '../../models/types';
 import {
   createBlockInfo,
   createTransactionInfo,
   createEvent,
-} from '../models/utils';
+} from '../../models/utils';
+import { getEventsQuery } from './queries';
 
-import type { DatabaseAdapter } from './index';
-import type { EventFilterOptionsInput } from '../resolvers-types';
+import type { DatabaseAdapter } from '../index';
+import type { EventFilterOptionsInput } from '../../resolvers-types';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
@@ -45,70 +45,18 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     let { address, tokenId, status, to, from } = input;
     tokenId ??= defaultTokenID;
     status ??= BlockStatusFilter.all;
-    if (to && from && parseInt(to) < parseInt(from)) {
+    if (to && from && to < from) {
       throw new Error('to must be greater than from');
     }
 
-    console.log(status, status === BlockStatusFilter.all);
-
-    let accountIdentifierCTE = this.client`
-        account_identifier AS (
-        SELECT id 
-        FROM account_identifiers ai
-        WHERE ai.public_key_id = (SELECT id FROM public_keys WHERE value = ${address})
-        AND ai.token_id = (SELECT id FROM tokens WHERE value = ${tokenId})
-    )
-    `;
-    let blocksAccessedCTE = this.client`
-    blocks_accessed AS (
-        SELECT *
-        FROM account_identifier ai
-        INNER JOIN accounts_accessed aa
-        ON ai.id = aa.account_identifier_id
-        INNER JOIN blocks b
-        ON aa.block_id = b.id
-        WHERE chain_status <> 'orphaned'
-        ${
-          status === BlockStatusFilter.all
-            ? this.client``
-            : this.client`AND chain_status = ${status.toLowerCase()}`
-        }
-        ${to ? this.client`AND b.height <= ${to}` : this.client``}
-        ${from ? this.client`AND b.height >= ${from}` : this.client``}
-    )
-    `;
-    let emittedZkappCommandsCTE = this.client`
-    emitted_zkapp_commands AS (
-        SELECT *
-        FROM blocks_accessed
-        INNER JOIN blocks_zkapp_commands bzkc
-        ON blocks_accessed.block_id = bzkc.block_id
-        INNER JOIN zkapp_commands zkc
-        ON bzkc.zkapp_command_id = zkc.id
-        INNER JOIN zkapp_account_update zkcu
-        ON zkcu.id = ANY(zkc.zkapp_account_updates_ids)
-        INNER JOIN zkapp_account_update_body zkcu_body
-        ON zkcu_body.id = zkcu.body_id
-    )
-    `;
-    let emittedEventsCTE = this.client`
-    emitted_events AS (
-        SELECT *
-        FROM emitted_zkapp_commands
-        INNER JOIN zkapp_events zke
-        ON zke.id = events_id
-        INNER JOIN zkapp_state_data_array zksda
-        ON zksda.id = ANY(zke.element_ids)
-        INNER JOIN zkapp_state_data zksd
-        ON zksd.id = ANY(zksda.element_ids)
-    )
-    `;
-
-    return this.client`
-    WITH ${accountIdentifierCTE}, ${blocksAccessedCTE}, ${emittedZkappCommandsCTE}, ${emittedEventsCTE}
-    SELECT *
-    FROM emitted_events
-    `;
+    return getEventsQuery(
+      this.client,
+      address,
+      tokenId,
+      status,
+      to?.toString(),
+      from?.toString()
+    );
   }
 
   private deriveEventsFromBlocks(

@@ -50,9 +50,9 @@ export type EventData = {
 
 export type EventFilterOptionsInput = {
   address: Scalars['String'];
-  from?: InputMaybe<Scalars['String']>;
+  from?: InputMaybe<Scalars['Int']>;
   status?: InputMaybe<BlockStatusFilter>;
-  to?: InputMaybe<Scalars['String']>;
+  to?: InputMaybe<Scalars['Int']>;
   tokenId?: InputMaybe<Scalars['String']>;
 };
 
@@ -164,6 +164,7 @@ export type ResolversTypes = {
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
+  Int: ResolverTypeWrapper<Scalars['Int']>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
@@ -178,6 +179,7 @@ export type ResolversParentTypes = {
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
+  Int: Scalars['Int'];
   Query: {};
   String: Scalars['String'];
   TransactionInfo: TransactionInfo;
