@@ -1,5 +1,7 @@
 import postgres from 'postgres';
 import {
+  Action,
+  Actions,
   BlockStatusFilter,
   defaultTokenID,
   Event,
@@ -9,8 +11,9 @@ import {
   createBlockInfo,
   createTransactionInfo,
   createEvent,
+  createAction,
 } from '../../models/utils';
-import { getEventsQuery } from './queries';
+import { getActionsQuery, getEventsQuery } from './queries';
 
 import type { DatabaseAdapter } from '../index';
 import type { EventFilterOptionsInput } from '../../resolvers-types';
@@ -25,13 +28,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
     const start = process.hrtime();
-    let rows = await this.buildAndExecuteQuery(input);
+    let rows = await this.executeEventsQuery(input);
     const end = process.hrtime(start);
     console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
 
-    // Create a map of element_ids to their respective field values
     let elementIdFieldValues = this.getElementIdFieldValues(rows);
-    // Create a map of block hashes to their respective blocks returned by the query
     let blocksMap = this.partitionBlocks(rows);
 
     let eventsData = this.deriveEventsFromBlocks(
@@ -41,7 +42,23 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return eventsData ?? [];
   }
 
-  private async buildAndExecuteQuery(input: EventFilterOptionsInput) {
+  async getActions(input: EventFilterOptionsInput): Promise<Actions> {
+    const start = process.hrtime();
+    let rows = await this.executeActionsQuery(input);
+    const end = process.hrtime(start);
+    console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
+
+    let elementIdFieldValues = this.getElementIdFieldValues(rows);
+    let blocksMap = this.partitionBlocks(rows);
+
+    let actionsData = this.deriveActionsFromBlocks(
+      blocksMap,
+      elementIdFieldValues
+    );
+    return actionsData ?? [];
+  }
+
+  private async executeEventsQuery(input: EventFilterOptionsInput) {
     let { address, tokenId, status, to, from } = input;
     tokenId ??= defaultTokenID;
     status ??= BlockStatusFilter.all;
@@ -50,6 +67,24 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     }
 
     return getEventsQuery(
+      this.client,
+      address,
+      tokenId,
+      status,
+      to?.toString(),
+      from?.toString()
+    );
+  }
+
+  private async executeActionsQuery(input: EventFilterOptionsInput) {
+    let { address, tokenId, status, to, from } = input;
+    tokenId ??= defaultTokenID;
+    status ??= BlockStatusFilter.all;
+    if (to && from && to < from) {
+      throw new Error('to must be greater than from');
+    }
+
+    return getActionsQuery(
       this.client,
       address,
       tokenId,
@@ -73,6 +108,22 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
+  }
+
+  private deriveActionsFromBlocks(
+    blocksMap: Map<string, postgres.Row[]>,
+    elementIdFieldValues: Map<string, string>
+  ) {
+    let actionsData: Actions = [];
+    for (let [_, blocks] of blocksMap) {
+      let blockInfo = createBlockInfo(blocks[0]);
+      let transactionInfo = createTransactionInfo(blocks[0]);
+      let actions = this.createActionsFromBlocks(blocks, elementIdFieldValues);
+
+      actions.reverse();
+      actionsData.push({ blockInfo, transactionInfo, actionData: actions });
+    }
+    return actionsData;
   }
 
   private partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
@@ -113,6 +164,29 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       i += element_ids.length;
     }
     return events;
+  }
+
+  private createActionsFromBlocks(
+    rows: postgres.Row[],
+    elementIdFieldValues: Map<string, string>
+  ) {
+    let i = 0;
+    let actions: Action[] = [];
+
+    while (i < rows.length) {
+      let { element_ids } = rows[i];
+      let currentAction = [];
+
+      for (let elementId of element_ids) {
+        let elementIdValue = elementIdFieldValues.get(elementId)!;
+        currentAction.push(elementIdValue);
+      }
+
+      let action = createAction(currentAction);
+      actions.push(action);
+      i += element_ids.length;
+    }
+    return actions;
   }
 
   private getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {

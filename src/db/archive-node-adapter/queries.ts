@@ -70,6 +70,20 @@ function emittedEventsCTE(db_client: postgres.Sql) {
   )`;
 }
 
+function emittedActionsCTE(db_client: postgres.Sql) {
+  return db_client`
+  emitted_actions AS (
+    SELECT *
+    FROM emitted_zkapp_commands
+    INNER JOIN zkapp_events zke
+    ON zke.id = sequence_events_id 
+    INNER JOIN zkapp_state_data_array zksda
+    ON zksda.id = ANY(zke.element_ids)
+    INNER JOIN zkapp_state_data zksd
+    ON zksd.id = ANY(zksda.element_ids)
+  )`;
+}
+
 export function getEventsQuery(
   db_client: postgres.Sql,
   address: string,
@@ -85,4 +99,21 @@ export function getEventsQuery(
     ${emittedEventsCTE(db_client)}
     SELECT *
     FROM emitted_events`;
+}
+
+export function getActionsQuery(
+  db_client: postgres.Sql,
+  address: string,
+  tokenId: string,
+  status: BlockStatusFilter,
+  to?: string,
+  from?: string
+) {
+  return db_client`
+    WITH ${accountIdentifierCTE(db_client, address, tokenId)},
+    ${blocksAccessedCTE(db_client, status, to, from)},
+    ${emittedZkAppCommandsCTE(db_client)},
+    ${emittedActionsCTE(db_client)}
+    SELECT *
+    FROM emitted_actions`;
 }

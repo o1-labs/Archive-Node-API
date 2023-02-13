@@ -1,4 +1,4 @@
-import type { BlockInfo, TransactionInfo, Event } from './types';
+import type { BlockInfo, TransactionInfo, Event, Action } from './types';
 
 export function createBlockInfo(row: any) {
   return {
@@ -27,4 +27,10 @@ export function createEvent(index: string, fields: string[]) {
     index,
     fields,
   } as Event;
+}
+
+export function createAction(data: string[]) {
+  return {
+    data,
+  } as Action;
 }
