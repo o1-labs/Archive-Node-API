@@ -102,7 +102,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (let [_, blocks] of blocksMap) {
       let blockInfo = createBlockInfo(blocks[0]);
       let transactionInfo = createTransactionInfo(blocks[0]);
-      let events = this.createEventsFromBlocks(blocks, elementIdFieldValues);
+      let events = this.mapActionOrEvent(
+        'event',
+        blocks,
+        elementIdFieldValues
+      ) as Event[];
 
       events.reverse();
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
@@ -118,7 +122,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (let [_, blocks] of blocksMap) {
       let blockInfo = createBlockInfo(blocks[0]);
       let transactionInfo = createTransactionInfo(blocks[0]);
-      let actions = this.createActionsFromBlocks(blocks, elementIdFieldValues);
+      let actions = this.mapActionOrEvent(
+        'action',
+        blocks,
+        elementIdFieldValues
+      ) as Action[];
 
       actions.reverse();
       actionsData.push({ blockInfo, transactionInfo, actionData: actions });
@@ -143,50 +151,33 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return blocks;
   }
 
-  private createEventsFromBlocks(
+  private mapActionOrEvent(
+    kind: 'action' | 'event',
     rows: postgres.Row[],
     elementIdFieldValues: Map<string, string>
   ) {
     let i = 0;
-    let events: Event[] = [];
+    let data: (Event | Action)[] = [];
 
     while (i < rows.length) {
       let { element_ids } = rows[i];
-      let currentEvent = [];
+      let currentValue = [];
 
       for (let elementId of element_ids) {
         let elementIdValue = elementIdFieldValues.get(elementId)!;
-        currentEvent.push(elementIdValue);
+        currentValue.push(elementIdValue);
       }
 
-      let event = createEvent(currentEvent[0], currentEvent.slice(1));
-      events.push(event);
-      i += element_ids.length;
-    }
-    return events;
-  }
-
-  private createActionsFromBlocks(
-    rows: postgres.Row[],
-    elementIdFieldValues: Map<string, string>
-  ) {
-    let i = 0;
-    let actions: Action[] = [];
-
-    while (i < rows.length) {
-      let { element_ids } = rows[i];
-      let currentAction = [];
-
-      for (let elementId of element_ids) {
-        let elementIdValue = elementIdFieldValues.get(elementId)!;
-        currentAction.push(elementIdValue);
+      if (kind === 'event') {
+        let event = createEvent(currentValue[0], currentValue.slice(1));
+        data.push(event);
+      } else {
+        let action = createAction(currentValue);
+        data.push(action);
       }
-
-      let action = createAction(currentAction);
-      actions.push(action);
       i += element_ids.length;
     }
-    return actions;
+    return data;
   }
 
   private getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
