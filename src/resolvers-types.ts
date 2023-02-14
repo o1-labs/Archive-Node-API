@@ -18,13 +18,13 @@ export type Scalars = {
 
 export type ActionData = {
   __typename?: 'ActionData';
-  data: Scalars['String'];
+  data: Array<Maybe<Scalars['String']>>;
 };
 
 export type ActionOutput = {
   __typename?: 'ActionOutput';
+  actionData?: Maybe<Array<Maybe<ActionData>>>;
   blockInfo?: Maybe<BlockInfo>;
-  eventData?: Maybe<Array<Maybe<ActionData>>>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
@@ -50,9 +50,9 @@ export type EventData = {
 
 export type EventFilterOptionsInput = {
   address: Scalars['String'];
-  from?: InputMaybe<Scalars['String']>;
+  from?: InputMaybe<Scalars['Int']>;
   status?: InputMaybe<BlockStatusFilter>;
-  to?: InputMaybe<Scalars['String']>;
+  to?: InputMaybe<Scalars['Int']>;
   tokenId?: InputMaybe<Scalars['String']>;
 };
 
@@ -65,7 +65,7 @@ export type EventOutput = {
 
 export type Query = {
   __typename?: 'Query';
-  actions: Array<Maybe<ActionData>>;
+  actions: Array<Maybe<ActionOutput>>;
   events: Array<Maybe<EventOutput>>;
 };
 
@@ -164,6 +164,7 @@ export type ResolversTypes = {
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
+  Int: ResolverTypeWrapper<Scalars['Int']>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
@@ -178,19 +179,20 @@ export type ResolversParentTypes = {
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
+  Int: Scalars['Int'];
   Query: {};
   String: Scalars['String'];
   TransactionInfo: TransactionInfo;
 };
 
 export type ActionDataResolvers<ContextType = any, ParentType extends ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData']> = {
-  data?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  data?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ActionOutputResolvers<ContextType = any, ParentType extends ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput']> = {
+  actionData?: Resolver<Maybe<Array<Maybe<ResolversTypes['ActionData']>>>, ParentType, ContextType>;
   blockInfo?: Resolver<Maybe<ResolversTypes['BlockInfo']>, ParentType, ContextType>;
-  eventData?: Resolver<Maybe<Array<Maybe<ResolversTypes['ActionData']>>>, ParentType, ContextType>;
   transactionInfo?: Resolver<Maybe<ResolversTypes['TransactionInfo']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -223,7 +225,7 @@ export type EventOutputResolvers<ContextType = any, ParentType extends Resolvers
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  actions?: Resolver<Array<Maybe<ResolversTypes['ActionData']>>, ParentType, ContextType, RequireFields<QueryActionsArgs, 'input'>>;
+  actions?: Resolver<Array<Maybe<ResolversTypes['ActionOutput']>>, ParentType, ContextType, RequireFields<QueryActionsArgs, 'input'>>;
   events?: Resolver<Array<Maybe<ResolversTypes['EventOutput']>>, ParentType, ContextType, RequireFields<QueryEventsArgs, 'input'>>;
 };
 

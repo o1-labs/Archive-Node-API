@@ -9,8 +9,8 @@ export const typeDefinitions = /* GraphQL */ `
     address: String!
     tokenId: String
     status: BlockStatusFilter
-    to: String
-    from: String
+    to: Int
+    from: Int
   }
 
   type EventData {
@@ -19,7 +19,7 @@ export const typeDefinitions = /* GraphQL */ `
   }
 
   type ActionData {
-    data: String!
+    data: [String]!
   }
 
   type BlockInfo {
@@ -49,11 +49,11 @@ export const typeDefinitions = /* GraphQL */ `
   type ActionOutput {
     blockInfo: BlockInfo
     transactionInfo: TransactionInfo
-    eventData: [ActionData]
+    actionData: [ActionData]
   }
 
   type Query {
     events(input: EventFilterOptionsInput!): [EventOutput]!
-    actions(input: EventFilterOptionsInput!): [ActionData]!
+    actions(input: EventFilterOptionsInput!): [ActionOutput]!
   }
 `;

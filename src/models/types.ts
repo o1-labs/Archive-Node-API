@@ -12,6 +12,10 @@ export type Event = {
   fields: string[];
 };
 
+export type Action = {
+  data: string[];
+};
+
 export type BlockInfo = {
   height: string;
   stateHash: string;
@@ -32,6 +36,12 @@ export type TransactionInfo = {
 
 export type Events = {
   eventData: Event[];
+  blockInfo: BlockInfo;
+  transactionInfo: TransactionInfo;
+}[];
+
+export type Actions = {
+  actionData: Action[];
   blockInfo: BlockInfo;
   transactionInfo: TransactionInfo;
 }[];

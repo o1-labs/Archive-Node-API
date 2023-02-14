@@ -16,8 +16,17 @@ const resolvers: Resolvers = {
       );
       return fetchedEvents;
     },
-    actions: (_, { input }, { db_client }) => {
-      return [];
+    actions: async (_, { input }, { db_client }) => {
+      const start = process.hrtime();
+      let fetchedActions = await db_client.getActions(input);
+      const end = process.hrtime(start);
+
+      console.info(
+        'Actions Resolver Execution Time: %ds %dms',
+        end[0],
+        end[1] / 1000000
+      );
+      return fetchedActions;
     },
   },
 };
