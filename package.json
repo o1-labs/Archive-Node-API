@@ -1,11 +1,16 @@
 {
   "name": "archive-node-graphql",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A NodeJS GraphQL server for exposing data for SnarkyJS/zkApps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/o1-labs/Archive-Node-API"
+  },
+  "main": "build/src/index.js",
   "scripts": {
+    "build": "tsc",
+    "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
-    "start": "ts-node src/index.ts",
     "generate": "graphql-codegen"
   },
   "keywords": [],
@@ -18,7 +23,6 @@
     "@types/node": "^18.11.18",
     "cross-env": "^7.0.3",
     "prettier": "2.8.3",
-    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0"
   },
   "dependencies": {
