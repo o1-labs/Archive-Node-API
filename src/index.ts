@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { buildServer } from './build';
-let PORT = process.env.PORT || 4000;
+let PORT = process.env.PORT || 8080;
 
 let server = buildServer();
 server.listen(PORT, () => {
