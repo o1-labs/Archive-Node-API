@@ -1,4 +1,4 @@
-import { createYoga, LogLevel } from 'graphql-yoga';
+import { createYoga, LogLevel, YogaInitialContext } from 'graphql-yoga';
 import { createServer } from 'http';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
@@ -44,6 +44,5 @@ export function buildServer() {
       };
     },
   });
-  const server = createServer(yoga);
-  return server;
+  return createServer(yoga);
 }
