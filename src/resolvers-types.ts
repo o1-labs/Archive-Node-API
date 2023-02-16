@@ -33,9 +33,9 @@ export type BlockInfo = {
   __typename?: 'BlockInfo';
   chainStatus: Scalars['String'];
   distanceFromMaxBlockHeight: Scalars['Int'];
-  globalSlotSinceGenesis?: Maybe<Scalars['String']>;
-  globalSlotSinceHardfork?: Maybe<Scalars['String']>;
-  height: Scalars['String'];
+  globalSlotSinceGenesis: Scalars['Int'];
+  globalSlotSinceHardfork: Scalars['Int'];
+  height: Scalars['Int'];
   ledgerHash: Scalars['String'];
   parentHash: Scalars['String'];
   stateHash: Scalars['String'];
@@ -46,7 +46,7 @@ export { BlockStatusFilter };
 
 export type EventData = {
   __typename?: 'EventData';
-  fields: Array<Maybe<Scalars['String']>>;
+  data: Array<Maybe<Scalars['String']>>;
   index: Scalars['String'];
 };
 
@@ -202,9 +202,9 @@ export type ActionOutputResolvers<ContextType = GraphQLContext, ParentType exten
 export type BlockInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlockInfo'] = ResolversParentTypes['BlockInfo']> = {
   chainStatus?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   distanceFromMaxBlockHeight?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  globalSlotSinceGenesis?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  globalSlotSinceHardfork?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  height?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  globalSlotSinceGenesis?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  globalSlotSinceHardfork?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  height?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   ledgerHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parentHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stateHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -215,7 +215,7 @@ export type BlockInfoResolvers<ContextType = GraphQLContext, ParentType extends 
 export type BlockStatusFilterResolvers = EnumResolverSignature<{ ALL?: any, CANONICAL?: any, PENDING?: any }, ResolversTypes['BlockStatusFilter']>;
 
 export type EventDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EventData'] = ResolversParentTypes['EventData']> = {
-  fields?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
+  data?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
   index?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
