@@ -9,7 +9,7 @@ function fullChainCTE(db_client: postgres.Sql) {
       FROM blocks b 
       WHERE height = (SELECT max(height) FROM blocks) 
     ) 
-    UNION ALL 
+    UNION ALL
     SELECT b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status 
     FROM blocks b 
     INNER JOIN pending_chain ON b.id = pending_chain.parent_id 
@@ -17,7 +17,7 @@ function fullChainCTE(db_client: postgres.Sql) {
     AND pending_chain.chain_status <> 'canonical'
   ), 
   full_chain AS (
-    SELECT * 
+    SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
     FROM 
       (
         SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status 
@@ -106,7 +106,8 @@ function emittedEventsCTE(db_client: postgres.Sql) {
 
 function emittedActionsCTE(db_client: postgres.Sql) {
   return db_client`
-  emitted_actions AS (
+  emitted_actions AS
+  (
     SELECT *
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke

@@ -31,6 +31,7 @@ export const typeDefinitions = /* GraphQL */ `
     timestamp: String!
     globalSlotSinceHardfork: String
     globalSlotSinceGenesis: String
+    distanceFromMaxBlockHeight: Int!
   }
 
   type TransactionInfo {

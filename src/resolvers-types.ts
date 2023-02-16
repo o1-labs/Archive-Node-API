@@ -32,6 +32,7 @@ export type ActionOutput = {
 export type BlockInfo = {
   __typename?: 'BlockInfo';
   chainStatus: Scalars['String'];
+  distanceFromMaxBlockHeight: Scalars['Int'];
   globalSlotSinceGenesis?: Maybe<Scalars['String']>;
   globalSlotSinceHardfork?: Maybe<Scalars['String']>;
   height: Scalars['String'];
@@ -186,20 +187,21 @@ export type ResolversParentTypes = {
   TransactionInfo: TransactionInfo;
 };
 
-export type ActionDataResolvers<ContextType = any, ParentType extends ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData']> = {
+export type ActionDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData']> = {
   data?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type ActionOutputResolvers<ContextType = any, ParentType extends ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput']> = {
+export type ActionOutputResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput']> = {
   actionData?: Resolver<Maybe<Array<Maybe<ResolversTypes['ActionData']>>>, ParentType, ContextType>;
   blockInfo?: Resolver<Maybe<ResolversTypes['BlockInfo']>, ParentType, ContextType>;
   transactionInfo?: Resolver<Maybe<ResolversTypes['TransactionInfo']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type BlockInfoResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockInfo'] = ResolversParentTypes['BlockInfo']> = {
+export type BlockInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlockInfo'] = ResolversParentTypes['BlockInfo']> = {
   chainStatus?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  distanceFromMaxBlockHeight?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   globalSlotSinceGenesis?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   globalSlotSinceHardfork?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   height?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -212,25 +214,25 @@ export type BlockInfoResolvers<ContextType = any, ParentType extends ResolversPa
 
 export type BlockStatusFilterResolvers = EnumResolverSignature<{ ALL?: any, CANONICAL?: any, PENDING?: any }, ResolversTypes['BlockStatusFilter']>;
 
-export type EventDataResolvers<ContextType = any, ParentType extends ResolversParentTypes['EventData'] = ResolversParentTypes['EventData']> = {
+export type EventDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EventData'] = ResolversParentTypes['EventData']> = {
   fields?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
   index?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type EventOutputResolvers<ContextType = any, ParentType extends ResolversParentTypes['EventOutput'] = ResolversParentTypes['EventOutput']> = {
+export type EventOutputResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EventOutput'] = ResolversParentTypes['EventOutput']> = {
   blockInfo?: Resolver<Maybe<ResolversTypes['BlockInfo']>, ParentType, ContextType>;
   eventData?: Resolver<Maybe<Array<Maybe<ResolversTypes['EventData']>>>, ParentType, ContextType>;
   transactionInfo?: Resolver<Maybe<ResolversTypes['TransactionInfo']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   actions?: Resolver<Array<Maybe<ResolversTypes['ActionOutput']>>, ParentType, ContextType, RequireFields<QueryActionsArgs, 'input'>>;
   events?: Resolver<Array<Maybe<ResolversTypes['EventOutput']>>, ParentType, ContextType, RequireFields<QueryEventsArgs, 'input'>>;
 };
 
-export type TransactionInfoResolvers<ContextType = any, ParentType extends ResolversParentTypes['TransactionInfo'] = ResolversParentTypes['TransactionInfo']> = {
+export type TransactionInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TransactionInfo'] = ResolversParentTypes['TransactionInfo']> = {
   authorizationKind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -238,7 +240,7 @@ export type TransactionInfoResolvers<ContextType = any, ParentType extends Resol
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type Resolvers<ContextType = any> = {
+export type Resolvers<ContextType = GraphQLContext> = {
   ActionData?: ActionDataResolvers<ContextType>;
   ActionOutput?: ActionOutputResolvers<ContextType>;
   BlockInfo?: BlockInfoResolvers<ContextType>;
