@@ -1,6 +1,7 @@
 import type { BlockInfo, TransactionInfo, Event, Action } from './types';
+import type postgres from 'postgres';
 
-export function createBlockInfo(row: any) {
+export function createBlockInfo(row: postgres.Row) {
   return {
     height: row.height,
     stateHash: row.state_hash,
@@ -10,10 +11,11 @@ export function createBlockInfo(row: any) {
     timestamp: row.timestamp,
     globalSlotSinceHardfork: row.global_slot_since_hard_fork,
     globalSlotSinceGenesis: row.global_slot_since_genesis,
+    distanceFromMaxBlockHeight: row.distance_from_max_block_height,
   } as BlockInfo;
 }
 
-export function createTransactionInfo(row: any) {
+export function createTransactionInfo(row: postgres.Row) {
   return {
     status: row.status,
     hash: row.hash,
@@ -22,10 +24,10 @@ export function createTransactionInfo(row: any) {
   } as TransactionInfo;
 }
 
-export function createEvent(index: string, fields: string[]) {
+export function createEvent(index: string, data: string[]) {
   return {
     index,
-    fields,
+    data,
   } as Event;
 }
 

@@ -9,7 +9,7 @@ export enum BlockStatusFilter {
 
 export type Event = {
   index: string;
-  fields: string[];
+  data: string[];
 };
 
 export type Action = {
@@ -17,14 +17,15 @@ export type Action = {
 };
 
 export type BlockInfo = {
-  height: string;
+  height: number;
   stateHash: string;
   parentHash: string;
   ledgerHash: string;
   chainStatus: string;
   timestamp: string;
-  globalSlotSinceHardfork: string;
-  globalSlotSinceGenesis: string;
+  globalSlotSinceHardfork: number;
+  globalSlotSinceGenesis: number;
+  distanceFromMaxBlockHeight: number;
 };
 
 export type TransactionInfo = {

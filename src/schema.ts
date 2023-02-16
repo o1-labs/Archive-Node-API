@@ -15,7 +15,7 @@ export const typeDefinitions = /* GraphQL */ `
 
   type EventData {
     index: String!
-    fields: [String]!
+    data: [String]!
   }
 
   type ActionData {
@@ -23,14 +23,15 @@ export const typeDefinitions = /* GraphQL */ `
   }
 
   type BlockInfo {
-    height: String!
+    height: Int!
     stateHash: String!
     parentHash: String!
     ledgerHash: String!
     chainStatus: String!
     timestamp: String!
-    globalSlotSinceHardfork: String
-    globalSlotSinceGenesis: String
+    globalSlotSinceHardfork: Int!
+    globalSlotSinceGenesis: Int!
+    distanceFromMaxBlockHeight: Int!
   }
 
   type TransactionInfo {

@@ -5,6 +5,7 @@ const config: CodegenConfig = {
   generates: {
     './src/resolvers-types.ts': {
       config: {
+        contextType: './context#GraphQLContext',
         enumValues: {
           BlockStatusFilter: './models/types#BlockStatusFilter',
         },
