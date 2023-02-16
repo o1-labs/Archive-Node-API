@@ -6,7 +6,7 @@ import { useOpenTelemetry } from '@envelop/opentelemetry';
 
 import { buildProvider } from './tracing';
 import { schema } from './resolvers';
-import { ArchiveNodeAdapter } from './db';
+import { GraphQLContext, buildContext } from './context';
 
 let LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
@@ -26,7 +26,7 @@ export function buildServer() {
   if (process.env.ENABLE_INTROSPECTION !== 'true')
     plugins.push(useDisableIntrospection());
 
-  const yoga = createYoga({
+  const yoga = createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
     graphqlEndpoint: '/',
@@ -39,9 +39,7 @@ export function buildServer() {
       methods: ['GET'],
     },
     context: () => {
-      return {
-        db_client: new ArchiveNodeAdapter(process.env.PG_CONN),
-      };
+      return buildContext();
     },
   });
   return createServer(yoga);
