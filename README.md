@@ -106,3 +106,11 @@ npm run start
 ```
 
 This will start the server and allow you to interact with the GraphQL API at `http://localhost:4000`.
+
+## Benchmarking
+
+To run the benchmark, you need to start the server by using `npm run dev` and then run the benchmarking script by using `npm run benchmark-report`. The benchmarking script will use the configuration defined in `benchmarking/graphql.yaml` to run performance tests against the server.
+
+Once the benchmarking script is complete, a report will be generated in the benchmarking folder. The report will contain summarized metrics of the performance testing run, providing valuable insights into the performance of the server.
+
+Please note that running the benchmark may consume significant resources and should be done with caution. Ensure that the server is running in a stable environment before running the benchmarking script.
