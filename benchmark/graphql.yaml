@@ -1,0 +1,94 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 180
+      arrivalRate: 25 
+      rampTo: 250
+      name: "light phase"
+    - duration: 180
+      arrivalRate: 50 
+      rampTo: 500
+      name: "medium phase"
+    - duration: 180
+      arrivalRate: 100 
+      rampTo: 1000
+      name: "heavy phase"
+  processor: "processor.js"
+  payload:
+    path: "data.csv"
+    skipHeader: true
+    fields:
+      - "address"
+      - "tokenId"
+scenarios:
+  - name: "Get Events"
+    flow:
+      - function: "generateRandomBlockRange"
+      - post:
+          url: "/"
+          json:
+            query: |
+              query GetEventsQuery($input: EventFilterOptionsInput!) {
+                events(input: $input) {
+                  blockInfo {
+                    stateHash
+                    timestamp
+                    height
+                    parentHash
+                    chainStatus
+                    distanceFromMaxBlockHeight
+                  }
+                  transactionInfo {
+                    status
+                    hash
+                    memo
+                  }
+                  eventData {
+                    index
+                    data
+                  }
+                }
+              }
+            variables:
+              input:
+                address: "{{ address }}"
+                tokenId: "{{ tokenId }}"
+                to: "{{ to }}"
+                from: "{{ from }}"
+          expect:
+            - statusCode: 200
+  - name: "Get Actions"
+    flow:
+      - function: "generateRandomBlockRange"
+      - post:
+          url: "/"
+          json:
+            query: |
+              query GetActionsQuery($input: EventFilterOptionsInput!) {
+                actions(input: $input) {
+                  blockInfo {
+                    stateHash
+                    timestamp
+                    height
+                    parentHash
+                    chainStatus
+                    distanceFromMaxBlockHeight
+                  }
+                  transactionInfo {
+                    status
+                    hash
+                    memo
+                  }
+                  actionData {
+                    data
+                  }
+                }
+              }
+            variables:
+              input:
+                address: "{{ address }}"
+                tokenId: "{{ tokenId }}"
+                to: "{{ to }}"
+                from: "{{ from }}"
+          expect:
+            - statusCode: 200

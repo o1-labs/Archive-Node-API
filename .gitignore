@@ -17,3 +17,6 @@ build/**/*
 
 # Ignore development SQL dump
 scripts/data/**/*
+
+# Ignore benchmark results
+benchmark/*.json

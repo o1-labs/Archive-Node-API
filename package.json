@@ -11,6 +11,8 @@
     "build": "tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
+    "benchmark": "node node_modules/.bin/artillery run benchmark/graphql.yaml",
+    "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
     "generate": "graphql-codegen"
   },
   "keywords": [],
