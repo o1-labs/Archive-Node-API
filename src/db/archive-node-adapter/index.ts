@@ -58,8 +58,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {
     let { address, tokenId, status, to, from } = input;
-    tokenId ??= defaultTokenID;
-    status ??= BlockStatusFilter.all;
+    tokenId ||= defaultTokenID;
+    status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
     }
@@ -76,8 +76,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   private async executeActionsQuery(input: EventFilterOptionsInput) {
     let { address, tokenId, status, to, from } = input;
-    tokenId ??= defaultTokenID;
-    status ??= BlockStatusFilter.all;
+    tokenId ||= defaultTokenID;
+    status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
     }
