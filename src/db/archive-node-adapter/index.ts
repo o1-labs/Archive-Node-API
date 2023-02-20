@@ -31,10 +31,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    const start = process.hrtime();
     let rows = await this.executeEventsQuery(input);
-    const end = process.hrtime(start);
-    console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
 
     let elementIdFieldValues = this.getElementIdFieldValues(rows);
     let blocksMap = this.partitionBlocks(rows);
@@ -47,10 +44,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async getActions(input: EventFilterOptionsInput): Promise<Actions> {
-    const start = process.hrtime();
     let rows = await this.executeActionsQuery(input);
-    const end = process.hrtime(start);
-    console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
 
     let elementIdFieldValues = this.getElementIdFieldValues(rows);
     let blocksMap = this.partitionBlocks(rows);
