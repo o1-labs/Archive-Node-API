@@ -26,6 +26,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.client = postgres(connectionString);
   }
 
+  async close() {
+    return this.client.end();
+  }
+
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
     const start = process.hrtime();
     let rows = await this.executeEventsQuery(input);
