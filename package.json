@@ -18,25 +18,25 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@graphql-codegen/cli": "^2.16.4",
-    "@graphql-codegen/typescript": "^2.8.7",
-    "@graphql-codegen/typescript-resolvers": "^2.7.12",
-    "@types/node": "^18.11.18",
+    "@graphql-codegen/cli": "^3.1.0",
+    "@graphql-codegen/typescript": "^3.0.1",
+    "@graphql-codegen/typescript-resolvers": "^3.1.0",
+    "@types/node": "^18.14.0",
     "artillery": "^2.0.0-30",
     "cross-env": "^7.0.3",
-    "prettier": "2.8.3",
+    "prettier": "2.8.4",
     "ts-node-dev": "^2.0.0"
   },
   "dependencies": {
-    "@envelop/disable-introspection": "^4.0.4",
-    "@envelop/graphql-jit": "^5.0.4",
-    "@envelop/opentelemetry": "^4.0.4",
-    "@graphql-tools/schema": "^9.0.14",
+    "@envelop/disable-introspection": "^4.0.6",
+    "@envelop/graphql-jit": "^5.0.6",
+    "@envelop/opentelemetry": "^4.0.6",
+    "@graphql-tools/schema": "^9.0.16",
     "@opentelemetry/exporter-jaeger": "^1.9.1",
     "@opentelemetry/tracing": "^0.24.0",
     "dotenv": "^16.0.3",
     "graphql": "^16.6.0",
-    "graphql-yoga": "3.4.0",
+    "graphql-yoga": "3.7.0",
     "postgres": "^3.3.3"
   }
 }
