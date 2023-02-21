@@ -157,6 +157,6 @@ export function getActionsQuery(
   ${emittedActionsCTE(db_client)}
   SELECT *
   FROM emitted_actions
-  ORDER BY height DESC
+  ORDER BY timestamp DESC, state_hash DESC
   `;
 }

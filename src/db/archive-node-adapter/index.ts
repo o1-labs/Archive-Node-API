@@ -26,11 +26,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.client = postgres(connectionString);
   }
 
+  async close() {
+    return this.client.end();
+  }
+
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    const start = process.hrtime();
     let rows = await this.executeEventsQuery(input);
-    const end = process.hrtime(start);
-    console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
 
     let elementIdFieldValues = this.getElementIdFieldValues(rows);
     let blocksMap = this.partitionBlocks(rows);
@@ -43,10 +44,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async getActions(input: EventFilterOptionsInput): Promise<Actions> {
-    const start = process.hrtime();
     let rows = await this.executeActionsQuery(input);
-    const end = process.hrtime(start);
-    console.info('SQL Event Time: %ds %dms', end[0], end[1] / 1000000);
 
     let elementIdFieldValues = this.getElementIdFieldValues(rows);
     let blocksMap = this.partitionBlocks(rows);
@@ -60,8 +58,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {
     let { address, tokenId, status, to, from } = input;
-    tokenId ??= defaultTokenID;
-    status ??= BlockStatusFilter.all;
+    tokenId ||= defaultTokenID;
+    status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
     }
@@ -78,8 +76,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   private async executeActionsQuery(input: EventFilterOptionsInput) {
     let { address, tokenId, status, to, from } = input;
-    tokenId ??= defaultTokenID;
-    status ??= BlockStatusFilter.all;
+    tokenId ||= defaultTokenID;
+    status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
     }

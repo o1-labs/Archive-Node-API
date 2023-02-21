@@ -6,11 +6,11 @@ import { useOpenTelemetry } from '@envelop/opentelemetry';
 
 import { buildProvider } from './tracing';
 import { schema } from './resolvers';
-import { GraphQLContext, buildContext } from './context';
+import type { GraphQLContext } from './context';
 
 let LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
-export function buildServer() {
+export function buildServer(context: GraphQLContext) {
   let plugins = [];
   plugins.push(useGraphQlJit());
   plugins.push(
@@ -38,9 +38,7 @@ export function buildServer() {
       origin: process.env.CORS_ORIGIN ?? '*',
       methods: ['GET'],
     },
-    context: () => {
-      return buildContext();
-    },
+    context,
   });
   return createServer(yoga);
 }

@@ -106,3 +106,21 @@ npm run start
 ```
 
 This will start the server and allow you to interact with the GraphQL API at `http://localhost:4000`.
+
+## Benchmarking
+
+To run a benchmark on the Typescript GraphQL server, you need to start the server by using the following command:
+
+```sh
+npm run dev
+```
+
+Once the server is up and running, you can run the benchmarking script by using the following command:
+
+```sh
+npm run benchmark-report
+```
+
+This script will run the config defined in `benchmarking/graphql.yaml`, make use of the data in the `data.csv` file to fetch events/actions related to predefined addresses, and output a report in the benchmarking folder. The report will contain summarized metrics of the performance testing run against the server.
+
+It is important to note that the benchmarking script requires the server to be running in order to collect performance metrics. The report generated will provide valuable insights into the server's performance and help identify any potential bottlenecks or areas for improvement. Please note that running the benchmark may consume significant resources and should be done with caution. Ensure that the server is running in a stable environment before running the benchmarking script.

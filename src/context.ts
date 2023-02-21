@@ -1,8 +1,7 @@
-import type { YogaInitialContext } from 'graphql-yoga';
-import { ArchiveNodeAdapter } from './db';
+import { ArchiveNodeAdapter, DatabaseAdapter } from './db';
 
-export interface GraphQLContext extends YogaInitialContext {
-  db_client: ArchiveNodeAdapter;
+export interface GraphQLContext {
+  db_client: DatabaseAdapter;
 }
 
 export function buildContext() {
