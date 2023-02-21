@@ -6,8 +6,8 @@ import { buildServer } from './server';
 
 const PORT = process.env.PORT || 8080;
 
-function main() {
-  const context = buildContext(process.env.PG_CONN);
+(async function main() {
+  const context = await buildContext(process.env.PG_CONN);
   const server = buildServer(context);
 
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
@@ -21,6 +21,4 @@ function main() {
   server.listen(PORT, () => {
     console.info(`Server is running on port: ${PORT}`);
   });
-}
-
-main();
+})();

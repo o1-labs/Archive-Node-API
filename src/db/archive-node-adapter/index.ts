@@ -13,7 +13,12 @@ import {
   createEvent,
   createAction,
 } from '../../models/utils';
-import { getActionsQuery, getEventsQuery } from './queries';
+import {
+  getActionsQuery,
+  getEventsQuery,
+  getTables,
+  USED_TABLES,
+} from './queries';
 
 import type { DatabaseAdapter } from '../index';
 import type { EventFilterOptionsInput } from '../../resolvers-types';
@@ -27,6 +32,20 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
       );
     this.client = postgres(connectionString);
+  }
+
+  async checkSQLSchema() {
+    let tables = await (
+      await getTables(this.client)
+    ).map((table) => table.tablename);
+
+    for (let table of USED_TABLES) {
+      if (!tables.includes(table)) {
+        throw new Error(
+          `Missing table ${table}. Please make sure the table exists in the database.`
+        );
+      }
+    }
   }
 
   async close() {

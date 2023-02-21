@@ -4,8 +4,10 @@ export interface GraphQLContext {
   db_client: DatabaseAdapter;
 }
 
-export function buildContext(connectionString: string | undefined) {
+export async function buildContext(connectionString: string | undefined) {
+  const db_client = new ArchiveNodeAdapter(connectionString);
+  await db_client.checkSQLSchema();
   return {
-    db_client: new ArchiveNodeAdapter(connectionString),
+    db_client,
   };
 }
