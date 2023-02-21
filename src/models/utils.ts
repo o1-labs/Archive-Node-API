@@ -1,5 +1,5 @@
-import type { BlockInfo, TransactionInfo, Event, Action } from './types';
 import type postgres from 'postgres';
+import type { BlockInfo, TransactionInfo, Event, Action } from './types';
 
 export function createBlockInfo(row: postgres.Row) {
   return {
