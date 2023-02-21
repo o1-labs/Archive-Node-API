@@ -4,6 +4,7 @@ declare global {
       PORT?: string;
       PG_CONN: string;
       CORS_ORIGIN?: string;
+      ENABLE_LOGGING?: bool;
       ENABLE_INTROSPECTION?: bool;
       ENABLE_GRAPHIQL?: bool;
       ENABLE_JAEGER?: bool;
