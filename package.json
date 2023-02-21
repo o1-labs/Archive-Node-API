@@ -11,6 +11,7 @@
     "build": "tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
+    "test": "vitest run",
     "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
     "generate": "graphql-codegen"
   },
@@ -25,7 +26,8 @@
     "artillery": "^2.0.0-30",
     "cross-env": "^7.0.3",
     "prettier": "2.8.4",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "vitest": "^0.28.5"
   },
   "dependencies": {
     "@envelop/disable-introspection": "^4.0.6",
