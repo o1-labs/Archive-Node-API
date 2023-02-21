@@ -3,7 +3,7 @@ import {
   Action,
   Actions,
   BlockStatusFilter,
-  defaultTokenID,
+  DEFAULT_TOKEN_ID,
   Event,
   Events,
 } from '../../models/types';
@@ -35,11 +35,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async checkSQLSchema() {
-    let tables = await (
+    const tables = await (
       await getTables(this.client)
     ).map((table) => table.tablename);
 
-    for (let table of USED_TABLES) {
+    for (const table of USED_TABLES) {
       if (!tables.includes(table)) {
         throw new Error(
           `Missing table ${table}. Please make sure the table exists in the database.`
@@ -82,7 +82,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const { address, to, from } = input;
     let { tokenId, status } = input;
 
-    tokenId ||= defaultTokenID;
+    tokenId ||= DEFAULT_TOKEN_ID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
@@ -102,7 +102,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const { address, to, from } = input;
     let { tokenId, status } = input;
 
-    tokenId ||= defaultTokenID;
+    tokenId ||= DEFAULT_TOKEN_ID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
