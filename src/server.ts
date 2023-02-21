@@ -36,7 +36,7 @@ export function buildServer(context: GraphQLContext) {
     plugins,
     cors: {
       origin: process.env.CORS_ORIGIN ?? '*',
-      methods: ['GET'],
+      methods: ['GET', 'POST'],
     },
     context,
   });
