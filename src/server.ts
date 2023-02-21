@@ -28,11 +28,13 @@ function initJaegerProvider() {
   return provider;
 }
 
-export function buildServer(context: GraphQLContext) {
+function buildPlugins() {
   const plugins = [];
+
   plugins.push(useGraphQlJit());
+
   if (process.env.ENABLE_LOGGING === 'true') {
-    let provider = initJaegerProvider();
+    const provider = initJaegerProvider();
     plugins.push(
       useOpenTelemetry(
         {
@@ -44,9 +46,14 @@ export function buildServer(context: GraphQLContext) {
       )
     );
   }
-  if (process.env.ENABLE_INTROSPECTION !== 'true')
+
+  if (!process.env.ENABLE_INTROSPECTION)
     plugins.push(useDisableIntrospection());
 
+  return plugins;
+}
+
+export function buildServer(context: GraphQLContext) {
   const yoga = createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
@@ -54,7 +61,7 @@ export function buildServer(context: GraphQLContext) {
     landingPage: false,
     healthCheckEndpoint: '/healthcheck',
     graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
-    plugins,
+    plugins: buildPlugins(),
     cors: {
       origin: process.env.CORS_ORIGIN ?? '*',
       methods: ['GET', 'POST'],
