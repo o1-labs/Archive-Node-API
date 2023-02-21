@@ -22,7 +22,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
 
   constructor(connectionString: string | undefined) {
-    if (!connectionString) throw new Error('Missing connection string');
+    if (!connectionString)
+      throw new Error(
+        'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
+      );
     this.client = postgres(connectionString);
   }
 
