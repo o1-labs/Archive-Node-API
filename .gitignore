@@ -18,5 +18,8 @@ build/**/*
 # Ignore development SQL dump
 data/**/*
 
+# Ignore coverage
+coverage/**/*
+
 # Ignore benchmark results
 benchmark/*.json

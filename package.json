@@ -13,6 +13,7 @@
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
     "test": "cross-env NODE_ENV=development vitest run",
     "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
+    "coverage": "vitest run --coverage",
     "generate": "graphql-codegen"
   },
   "keywords": [],
@@ -23,6 +24,7 @@
     "@graphql-codegen/typescript": "^3.0.1",
     "@graphql-codegen/typescript-resolvers": "^3.1.0",
     "@types/node": "^18.14.0",
+    "@vitest/coverage-c8": "^0.28.5",
     "artillery": "^2.0.0-30",
     "cross-env": "^7.0.3",
     "prettier": "2.8.4",
