@@ -5,25 +5,25 @@ function fullChainCTE(db_client: postgres.Sql) {
   return db_client`
   RECURSIVE pending_chain AS (
     (
-      SELECT id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status 
+      SELECT id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
       FROM blocks b 
       WHERE height = (SELECT max(height) FROM blocks) 
     ) 
     UNION ALL
-    SELECT b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status 
+    SELECT b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash
     FROM blocks b 
     INNER JOIN pending_chain ON b.id = pending_chain.parent_id 
     AND pending_chain.id <> pending_chain.parent_id 
     AND pending_chain.chain_status <> 'canonical'
   ), 
   full_chain AS (
-    SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
+    SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
     FROM 
       (
-        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status 
+        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash 
         FROM pending_chain 
         UNION ALL 
-        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status 
+        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
         FROM blocks b 
         WHERE chain_status = 'canonical'
       ) AS full_chain
