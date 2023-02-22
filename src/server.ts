@@ -4,7 +4,9 @@ import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
-import http from 'node:http';
+
+import { request } from 'node:http';
+import { inspect } from 'node:util';
 
 import { buildProvider } from './tracing';
 import { schema } from './resolvers';
@@ -33,7 +35,7 @@ function initJaegerProvider() {
       ''
     ).split(':');
     port = port?.split('/')[0];
-    const req = http.request({
+    const req = request({
       hostname,
       method: 'GET',
       port,
