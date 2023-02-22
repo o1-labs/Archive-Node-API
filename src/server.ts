@@ -1,5 +1,6 @@
 import { createYoga, LogLevel } from 'graphql-yoga';
 import { createServer } from 'http';
+import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
@@ -71,6 +72,27 @@ function buildPlugins() {
   if (!process.env.ENABLE_INTROSPECTION)
     plugins.push(useDisableIntrospection());
 
+  plugins.push(
+    useLogger({
+      logFn: (eventName, args) => {
+        if (args?.result?.errors) {
+          console.debug(
+            eventName,
+            inspect(args.args.contextValue.params, {
+              showHidden: false,
+              depth: null,
+              colors: true,
+            }),
+            inspect(args.result.errors, {
+              showHidden: false,
+              depth: null,
+              colors: true,
+            })
+          );
+        }
+      },
+    })
+  );
   return plugins;
 }
 
