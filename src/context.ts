@@ -4,8 +4,8 @@ export interface GraphQLContext {
   db_client: DatabaseAdapter;
 }
 
-export function buildContext() {
+export function buildContext(connectionString: string | undefined) {
   return {
-    db_client: new ArchiveNodeAdapter(process.env.PG_CONN),
+    db_client: new ArchiveNodeAdapter(connectionString),
   };
 }

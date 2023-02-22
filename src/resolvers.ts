@@ -2,7 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { typeDefinitions } from './schema';
 import { Resolvers } from './resolvers-types';
 
-const resolvers: Resolvers = {
+export const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, { db_client }) => {
       let fetchedEvents = await db_client.getEvents(input);
