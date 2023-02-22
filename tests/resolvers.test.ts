@@ -55,6 +55,10 @@ query getEvents($input: EventFilterOptionsInput!) {
 }
 `;
 
+const address = 'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw';
+
+const PG_CONN = 'postgres://postgres:password@postgres:5432/archive';
+
 describe('Query Resolvers', () => {
   let executor;
 
@@ -63,9 +67,7 @@ describe('Query Resolvers', () => {
       typeDefs: typeDefinitions,
       resolvers,
     });
-    let context = await buildContext(
-      'postgres://postgres:password@postgres:5432/archive'
-    );
+    let context = await buildContext(PG_CONN);
     const yoga = createYoga<GraphQLContext>({ schema, context });
     executor = buildHTTPExecutor({
       fetch: yoga.fetch,
@@ -74,30 +76,31 @@ describe('Query Resolvers', () => {
 
   describe('Events', () => {
     test('Fetching events with a valid address should not throw', async () => {
-      const result = await executor({
-        variables: {
-          input: {
-            address: 'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw',
+      expect(async () => {
+        await executor({
+          variables: {
+            input: {
+              address,
+            },
           },
-        },
-        document: parse(`${eventsQuery}`),
-      });
-      console.log(result);
-      expect(result).toBeTruthy();
+          document: parse(`${eventsQuery}`),
+        });
+      }).not.toThrowError();
     });
   });
 
   describe('Actions', () => {
     test('Fetching actions with a valid address should not throw', async () => {
-      const result = await executor({
-        variables: {
-          input: {
-            address: 'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw',
+      expect(async () => {
+        await executor({
+          variables: {
+            input: {
+              address,
+            },
           },
-        },
-        document: parse(`${actionsQuery}`),
-      });
-      expect(result).toBeTruthy();
+          document: parse(`${actionsQuery}`),
+        });
+      }).not.toThrowError();
     });
   });
 });

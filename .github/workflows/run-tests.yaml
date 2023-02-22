@@ -1,4 +1,4 @@
-name: Run tests 
+name: Run Tests
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  test:
+  Run-Tests:
     runs-on: ubuntu-latest
     container: node:latest
     services:
@@ -27,11 +27,6 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Install PostgreSQL client
-      run: |
-        apt-get update
-        apt-get install --yes postgresql-client
-
     - name: Checkout code
       uses: actions/checkout@v2
 
@@ -40,6 +35,11 @@ jobs:
 
     - name: Download nightly Berkeley dump
       run: bash ./scripts/download_db.sh
+
+    - name: Install PostgreSQL client
+      run: |
+        apt-get update
+        apt-get install --yes postgresql-client
 
     - name: Create Archive Node database
       run: psql -h postgres -U postgres archive < ./data/berkeley-archive.sql
