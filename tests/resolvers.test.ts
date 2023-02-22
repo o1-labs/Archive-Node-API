@@ -90,7 +90,7 @@ describe('Query Resolvers', async () => {
       }).not.toThrowError();
     });
 
-    test('Fetching events with a valid address should return empty list', async () => {
+    test('Fetching events with a empty address should return empty list', async () => {
       let results = await executor({
         variables: {
           input: {
@@ -117,7 +117,7 @@ describe('Query Resolvers', async () => {
       }).not.toThrowError();
     });
 
-    test('Fetching actions with a valid address should return empty list', async () => {
+    test('Fetching actions with a empty address should return empty list', async () => {
       let results = await executor({
         variables: {
           input: {
