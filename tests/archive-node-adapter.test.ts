@@ -5,6 +5,7 @@ import database_mock from './mocked_sql/database_mock.json';
 
 import { ArchiveNodeAdapter } from '../src/db';
 import { createBlockInfo, createTransactionInfo } from '../src/models/utils';
+import { Action, Event } from '../src/models/types';
 
 const PG_CONN = process.env.GITHUB_ACTIONS
   ? 'postgres://postgres:password@postgres:5432/archive'
@@ -21,6 +22,14 @@ class ArchiveNodeAdapterExtend extends ArchiveNodeAdapter {
 
   getElementIdFieldValuesExtended(rows: postgres.RowList<postgres.Row[]>) {
     return this.getElementIdFieldValues(rows);
+  }
+
+  mapActionOrEventExtended(
+    kind: 'action' | 'event',
+    rows: postgres.Row[],
+    elementIdFieldValues: Map<string, string>
+  ) {
+    return this.mapActionOrEvent(kind, rows, elementIdFieldValues);
   }
 }
 
@@ -86,6 +95,87 @@ describe('ArchiveNodeAdapter', async () => {
         );
       database_mock.forEach((row: any) => {
         expect(elementIdFieldValues.get(row.id)).toEqual(row.field);
+      });
+    });
+  });
+
+  describe('mapActionOrEvent', async () => {
+    describe('Events', async () => {
+      test('should return a non-empty list of events if "events" are specified', async () => {
+        const elementIdFieldValues =
+          archiveNodeAdapter.getElementIdFieldValuesExtended(
+            database_mock as any
+          );
+        const events = archiveNodeAdapter.mapActionOrEventExtended(
+          'event',
+          database_mock as any,
+          elementIdFieldValues
+        ) as Event[];
+
+        expect(events.length).toBeTruthy();
+        events.forEach((event) => {
+          expect(event).toHaveProperty('index');
+          expect(event).toHaveProperty('data');
+        });
+      });
+
+      test('should return a list of events with values all contained in mocked data', async () => {
+        const elementIdFieldValues =
+          archiveNodeAdapter.getElementIdFieldValuesExtended(
+            database_mock as any
+          );
+        const events = archiveNodeAdapter.mapActionOrEventExtended(
+          'event',
+          database_mock as any,
+          elementIdFieldValues
+        ) as Event[];
+
+        events.forEach((event) => {
+          for (let field in event.data) {
+            expect(
+              database_mock.find((row) => row.field === field)
+            ).toBeTruthy();
+          }
+        });
+      });
+    });
+
+    describe('Actions', async () => {
+      test('should return a non-empty list of actionss if "actions" are specified', async () => {
+        const elementIdFieldValues =
+          archiveNodeAdapter.getElementIdFieldValuesExtended(
+            database_mock as any
+          );
+        const actions = archiveNodeAdapter.mapActionOrEventExtended(
+          'action',
+          database_mock as any,
+          elementIdFieldValues
+        ) as Action[];
+
+        expect(actions.length).toBeTruthy();
+        actions.forEach((event) => {
+          expect(event).toHaveProperty('data');
+        });
+      });
+
+      test('should return a list of actionswith values all contained in mocked data', async () => {
+        const elementIdFieldValues =
+          archiveNodeAdapter.getElementIdFieldValuesExtended(
+            database_mock as any
+          );
+        const actions = archiveNodeAdapter.mapActionOrEventExtended(
+          'action',
+          database_mock as any,
+          elementIdFieldValues
+        ) as Event[];
+
+        actions.forEach((event) => {
+          for (let field in event.data) {
+            expect(
+              database_mock.find((row) => row.field === field)
+            ).toBeTruthy();
+          }
+        });
       });
     });
   });
