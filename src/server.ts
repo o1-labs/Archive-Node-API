@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
+import http from 'node:http';
 
 import { buildProvider } from './tracing';
 import { schema } from './resolvers';
@@ -24,6 +25,26 @@ function initJaegerProvider() {
         'Jaeger service name not found. Please ensure that the Jaeger service name is properly configured and available.'
       );
     }
+
+    // Check if Jaeger endpoint is available.
+    let [hostname, port] = process.env.JAEGER_ENDPOINT.replace(
+      'http://',
+      ''
+    ).split(':');
+    port = port?.split('/')[0];
+    const req = http.request({
+      hostname,
+      method: 'GET',
+      port,
+      path: '/',
+    });
+    req.on('error', () => {
+      throw new Error(
+        'Jaeger endpoint not available. Please ensure that the Jaeger endpoint is properly configured and available.'
+      );
+    });
+    req.end();
+    req.socket?.end?.();
   }
   return provider;
 }
