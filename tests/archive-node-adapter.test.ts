@@ -78,5 +78,15 @@ describe('ArchiveNodeAdapter', async () => {
         );
       expect(elementIdFieldValues.size).toBeTruthy();
     });
+
+    test('getElementIdFieldValues should return a map with correct keys', async () => {
+      const elementIdFieldValues =
+        archiveNodeAdapter.getElementIdFieldValuesExtended(
+          database_mock as any
+        );
+      database_mock.forEach((row: any) => {
+        expect(elementIdFieldValues.get(row.id)).toEqual(row.field);
+      });
+    });
   });
 });
