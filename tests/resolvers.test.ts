@@ -64,7 +64,7 @@ describe('Query Resolvers', () => {
       resolvers,
     });
     let context = await buildContext(
-      'postgres://postgres:password@localhost:5432/archive'
+      'postgres://postgres:password@postgres:5432/archive'
     );
     const yoga = createYoga<GraphQLContext>({ schema, context });
     executor = buildHTTPExecutor({
@@ -82,6 +82,7 @@ describe('Query Resolvers', () => {
         },
         document: parse(`${eventsQuery}`),
       });
+      console.log(result);
       expect(result).toBeTruthy();
     });
   });
