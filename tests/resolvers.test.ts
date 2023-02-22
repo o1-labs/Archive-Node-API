@@ -57,9 +57,11 @@ query getEvents($input: EventFilterOptionsInput!) {
 
 const address = 'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw';
 
-const PG_CONN = 'postgres://postgres:password@postgres:5432/archive';
+const PG_CONN = process.env.GITHUB_ACTIONS
+  ? 'postgres://postgres:password@postgres:5432/archive'
+  : 'postgres://postgres:password@localhost:5432/archive';
 
-describe('Query Resolvers', () => {
+describe('Query Resolvers', async () => {
   let executor;
 
   beforeAll(async () => {
@@ -87,6 +89,18 @@ describe('Query Resolvers', () => {
         });
       }).not.toThrowError();
     });
+
+    test('Fetching events with a valid address should return empty list', async () => {
+      let results = await executor({
+        variables: {
+          input: {
+            address: '',
+          },
+        },
+        document: parse(`${eventsQuery}`),
+      });
+      expect(results.data.events).toStrictEqual([]);
+    });
   });
 
   describe('Actions', () => {
@@ -101,6 +115,18 @@ describe('Query Resolvers', () => {
           document: parse(`${actionsQuery}`),
         });
       }).not.toThrowError();
+    });
+
+    test('Fetching actions with a valid address should return empty list', async () => {
+      let results = await executor({
+        variables: {
+          input: {
+            address: '',
+          },
+        },
+        document: parse(`${actionsQuery}`),
+      });
+      expect(results.data.actions).toStrictEqual([]);
     });
   });
 });

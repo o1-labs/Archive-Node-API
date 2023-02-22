@@ -92,7 +92,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
   }
 
-  private deriveEventsFromBlocks(
+  protected deriveEventsFromBlocks(
     blocksMap: Map<string, postgres.Row[]>,
     elementIdFieldValues: Map<string, string>
   ) {
@@ -112,7 +112,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return eventsData;
   }
 
-  private deriveActionsFromBlocks(
+  protected deriveActionsFromBlocks(
     blocksMap: Map<string, postgres.Row[]>,
     elementIdFieldValues: Map<string, string>
   ) {
@@ -132,7 +132,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return actionsData;
   }
 
-  private partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
+  protected partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
     let blocks: Map<string, postgres.Row[]> = new Map();
     if (rows.length === 0) return blocks;
 
@@ -149,7 +149,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return blocks;
   }
 
-  private mapActionOrEvent(
+  protected mapActionOrEvent(
     kind: 'action' | 'event',
     rows: postgres.Row[],
     elementIdFieldValues: Map<string, string>
@@ -178,7 +178,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return data;
   }
 
-  private getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
+  protected getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
     let elementIdValues: Map<string, string> = new Map();
     for (let i = 0; i < rows.length; i++) {
       let { id, field } = rows[i];
