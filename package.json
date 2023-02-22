@@ -11,7 +11,7 @@
     "build": "tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
-    "test": "vitest run",
+    "test": "cross-env NODE_ENV=development vitest run",
     "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
     "generate": "graphql-codegen"
   },
@@ -33,6 +33,7 @@
     "@envelop/disable-introspection": "^4.0.6",
     "@envelop/graphql-jit": "^5.0.6",
     "@envelop/opentelemetry": "^4.0.6",
+    "@graphql-tools/executor-http": "^0.1.9",
     "@graphql-tools/schema": "^9.0.16",
     "@opentelemetry/exporter-jaeger": "^1.9.1",
     "@opentelemetry/tracing": "^0.24.0",
