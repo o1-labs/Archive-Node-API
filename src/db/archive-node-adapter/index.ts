@@ -106,7 +106,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         elementIdFieldValues
       ) as Event[];
 
-      events.reverse();
+      events.sort((a, b) => Number(a.index) - Number(b.index));
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
