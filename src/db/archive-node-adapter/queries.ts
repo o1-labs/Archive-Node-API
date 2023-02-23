@@ -111,7 +111,7 @@ function emittedActionsCTE(db_client: postgres.Sql) {
     SELECT *
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
-    ON zke.id = sequence_events_id 
+    ON zke.id = actions_id
     INNER JOIN zkapp_field_array zkfa
     ON zkfa.id = ANY(zke.element_ids)
     INNER JOIN zkapp_field zkf
