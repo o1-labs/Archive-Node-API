@@ -97,10 +97,10 @@ function emittedEventsCTE(db_client: postgres.Sql) {
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
     ON zke.id = events_id
-    INNER JOIN zkapp_state_data_array zksda
-    ON zksda.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_state_data zksd
-    ON zksd.id = ANY(zksda.element_ids)
+    INNER JOIN zkapp_field_array zkfa
+    ON zkfa.id = ANY(zke.element_ids)
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = ANY(zkfa.element_ids)
   )`;
 }
 
@@ -112,10 +112,10 @@ function emittedActionsCTE(db_client: postgres.Sql) {
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
     ON zke.id = sequence_events_id 
-    INNER JOIN zkapp_state_data_array zksda
-    ON zksda.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_state_data zksd
-    ON zksd.id = ANY(zksda.element_ids)
+    INNER JOIN zkapp_field_array zkfa
+    ON zkfa.id = ANY(zke.element_ids)
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = ANY(zkfa.element_ids)
   )`;
 }
 
