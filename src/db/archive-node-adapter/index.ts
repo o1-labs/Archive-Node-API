@@ -106,7 +106,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         elementIdFieldValues
       ) as Event[];
 
-      events.reverse();
+      events.sort((a, b) => Number(a.index) - Number(b.index));
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
@@ -156,11 +156,15 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     let i = 0;
     let data: (Event | Action)[] = [];
+    let seenEventOrActionIds = new Set();
 
-    while (i < rows.length) {
+    for (let i = 0; i < rows.length; i++) {
       let { element_ids } = rows[i];
-      let currentValue = [];
+      let index = element_ids[0];
+      if (seenEventOrActionIds.has(index)) continue;
+      seenEventOrActionIds.add(index);
 
+      let currentValue = [];
       for (let elementId of element_ids) {
         let elementIdValue = elementIdFieldValues.get(elementId)!;
         currentValue.push(elementIdValue);
@@ -173,7 +177,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         let action = createAction(currentValue);
         data.push(action);
       }
-      i += element_ids.length;
     }
     return data;
   }
