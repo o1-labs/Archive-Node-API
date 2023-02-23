@@ -7,7 +7,7 @@ import { buildServer } from './server';
 let PORT = process.env.PORT || 8080;
 
 function main() {
-  let context = buildContext();
+  let context = buildContext(process.env.PG_CONN);
   let server = buildServer(context);
 
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {

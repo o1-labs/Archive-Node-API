@@ -18,9 +18,9 @@ DB_HOST="${POSTGRES_HOST:=localhost}"
 CONTAINER_NAME="postgres_$(date '+%s')"
 PG_DUMP="berkeley-archive.sql"
 
-if [ ! -f "./scripts/data/${PG_DUMP}" ]
+if [ ! -f "./data/${PG_DUMP}" ]
 then
-	echo "SQL dump not found. Make sure you have a sql dump at the path: $(pwd)/scripts/data/${PG_DUMP}"
+	echo "SQL dump not found. Make sure you have a sql dump at the path: $(pwd)/data/${PG_DUMP}"
   exit 1
 fi
 
@@ -38,7 +38,7 @@ docker run \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
     -e POSTGRES_DB=${DB_NAME} \
     -p "${DB_PORT}":5432 \
-    -v "$(pwd)/scripts/data/${PG_DUMP}":"/data/${PG_DUMP}" \
+    -v "$(pwd)/data/${PG_DUMP}":"/data/${PG_DUMP}" \
     -d \
     --name ${CONTAINER_NAME} \
     postgres -N 1000

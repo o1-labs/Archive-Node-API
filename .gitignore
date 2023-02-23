@@ -16,7 +16,10 @@ node_modules
 build/**/*
 
 # Ignore development SQL dump
-scripts/data/**/*
+data/**/*
+
+# Ignore coverage
+coverage/**/*
 
 # Ignore benchmark results
 benchmark/*.json
