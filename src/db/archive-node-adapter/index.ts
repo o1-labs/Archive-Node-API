@@ -31,12 +31,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    let rows = await this.executeEventsQuery(input);
+    const rows = await this.executeEventsQuery(input);
 
-    let elementIdFieldValues = this.getElementIdFieldValues(rows);
-    let blocksMap = this.partitionBlocks(rows);
+    const elementIdFieldValues = this.getElementIdFieldValues(rows);
+    const blocksMap = this.partitionBlocks(rows);
 
-    let eventsData = this.deriveEventsFromBlocks(
+    const eventsData = this.deriveEventsFromBlocks(
       blocksMap,
       elementIdFieldValues
     );
@@ -44,12 +44,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async getActions(input: EventFilterOptionsInput): Promise<Actions> {
-    let rows = await this.executeActionsQuery(input);
+    const rows = await this.executeActionsQuery(input);
 
-    let elementIdFieldValues = this.getElementIdFieldValues(rows);
-    let blocksMap = this.partitionBlocks(rows);
+    const elementIdFieldValues = this.getElementIdFieldValues(rows);
+    const blocksMap = this.partitionBlocks(rows);
 
-    let actionsData = this.deriveActionsFromBlocks(
+    const actionsData = this.deriveActionsFromBlocks(
       blocksMap,
       elementIdFieldValues
     );
@@ -57,7 +57,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {
-    let { address, tokenId, status, to, from } = input;
+    const { address, to, from } = input;
+    let { tokenId, status } = input;
+
     tokenId ||= defaultTokenID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
@@ -75,7 +77,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   private async executeActionsQuery(input: EventFilterOptionsInput) {
-    let { address, tokenId, status, to, from } = input;
+    const { address, to, from } = input;
+    let { tokenId, status } = input;
+
     tokenId ||= defaultTokenID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
@@ -96,11 +100,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     blocksMap: Map<string, postgres.Row[]>,
     elementIdFieldValues: Map<string, string>
   ) {
-    let eventsData: Events = [];
-    for (let [_, blocks] of blocksMap) {
-      let blockInfo = createBlockInfo(blocks[0]);
-      let transactionInfo = createTransactionInfo(blocks[0]);
-      let events = this.mapActionOrEvent(
+    const eventsData: Events = [];
+    for (const [, blocks] of blocksMap) {
+      const blockInfo = createBlockInfo(blocks[0]);
+      const transactionInfo = createTransactionInfo(blocks[0]);
+      const events = this.mapActionOrEvent(
         'event',
         blocks,
         elementIdFieldValues
@@ -116,11 +120,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     blocksMap: Map<string, postgres.Row[]>,
     elementIdFieldValues: Map<string, string>
   ) {
-    let actionsData: Actions = [];
-    for (let [_, blocks] of blocksMap) {
-      let blockInfo = createBlockInfo(blocks[0]);
-      let transactionInfo = createTransactionInfo(blocks[0]);
-      let actions = this.mapActionOrEvent(
+    const actionsData: Actions = [];
+    for (const [, blocks] of blocksMap) {
+      const blockInfo = createBlockInfo(blocks[0]);
+      const transactionInfo = createTransactionInfo(blocks[0]);
+      const actions = this.mapActionOrEvent(
         'action',
         blocks,
         elementIdFieldValues
@@ -133,11 +137,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
-    let blocks: Map<string, postgres.Row[]> = new Map();
+    const blocks: Map<string, postgres.Row[]> = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
-      let blockHash = rows[i].state_hash;
+      const blockHash = rows[i].state_hash;
       let blockData = blocks.get(blockHash);
 
       if (blockData === undefined) {
@@ -154,27 +158,27 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     rows: postgres.Row[],
     elementIdFieldValues: Map<string, string>
   ) {
-    let i = 0;
-    let data: (Event | Action)[] = [];
-    let seenEventOrActionIds = new Set();
+    const data: (Event | Action)[] = [];
+    const seenEventOrActionIds = new Set();
 
     for (let i = 0; i < rows.length; i++) {
-      let { element_ids } = rows[i];
-      let index = element_ids[0];
+      const { element_ids } = rows[i];
+      const index = element_ids[0];
       if (seenEventOrActionIds.has(index)) continue;
       seenEventOrActionIds.add(index);
 
-      let currentValue = [];
-      for (let elementId of element_ids) {
-        let elementIdValue = elementIdFieldValues.get(elementId)!;
+      const currentValue = [];
+      for (const elementId of element_ids) {
+        const elementIdValue = elementIdFieldValues.get(elementId);
+        if (elementIdValue === undefined) continue;
         currentValue.push(elementIdValue);
       }
 
       if (kind === 'event') {
-        let event = createEvent(currentValue[0], currentValue.slice(1));
+        const event = createEvent(currentValue[0], currentValue.slice(1));
         data.push(event);
       } else {
-        let action = createAction(currentValue);
+        const action = createAction(currentValue);
         data.push(action);
       }
     }
@@ -182,9 +186,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
-    let elementIdValues: Map<string, string> = new Map();
+    const elementIdValues: Map<string, string> = new Map();
     for (let i = 0; i < rows.length; i++) {
-      let { id, field } = rows[i];
+      const { id, field } = rows[i];
       elementIdValues.set(id, field);
     }
     return elementIdValues;

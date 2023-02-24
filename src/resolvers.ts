@@ -5,11 +5,11 @@ import { Resolvers } from './resolvers-types';
 export const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, { db_client }) => {
-      let fetchedEvents = await db_client.getEvents(input);
+      const fetchedEvents = await db_client.getEvents(input);
       return fetchedEvents;
     },
     actions: async (_, { input }, { db_client }) => {
-      let fetchedActions = await db_client.getActions(input);
+      const fetchedActions = await db_client.getActions(input);
       return fetchedActions;
     },
   },

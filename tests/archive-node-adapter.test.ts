@@ -145,7 +145,7 @@ describe('ArchiveNodeAdapter', async () => {
         ) as Event[];
 
         events.forEach((event) => {
-          for (let field in event.data) {
+          for (const field in event.data) {
             expect(
               database_mock.find((row) => row.field === field)
             ).toBeTruthy();
@@ -184,7 +184,7 @@ describe('ArchiveNodeAdapter', async () => {
         ) as Event[];
 
         actions.forEach((event) => {
-          for (let field in event.data) {
+          for (const field in event.data) {
             expect(
               database_mock.find((row) => row.field === field)
             ).toBeTruthy();
@@ -231,7 +231,7 @@ describe('ArchiveNodeAdapter', async () => {
               (row) => row.state_hash === event.blockInfo.stateHash
             )
           ).toBeTruthy();
-          for (let field in event.eventData) {
+          for (const field in event.eventData) {
             expect(
               database_mock.find((row) => row.field === field)
             ).toBeTruthy();
@@ -295,7 +295,7 @@ describe('ArchiveNodeAdapter', async () => {
               (row) => row.state_hash === event.blockInfo.stateHash
             )
           ).toBeTruthy();
-          for (let field in event.actionData) {
+          for (const field in event.actionData) {
             expect(
               database_mock.find((row) => row.field === field)
             ).toBeTruthy();
