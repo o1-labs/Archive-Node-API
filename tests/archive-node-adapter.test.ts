@@ -1,4 +1,4 @@
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, beforeAll } from 'vitest';
 import postgres from 'postgres';
 
 import database_mock from './mocked_sql/database_mock.json';
@@ -47,9 +47,13 @@ class ArchiveNodeAdapterExtend extends ArchiveNodeAdapter {
   }
 }
 
-const archiveNodeAdapter = new ArchiveNodeAdapterExtend(PG_CONN);
+let archiveNodeAdapter;
 
 describe('ArchiveNodeAdapter', async () => {
+  beforeAll(() => {
+    archiveNodeAdapter = new ArchiveNodeAdapterExtend(PG_CONN);
+  });
+
   describe('partitionBlocks', async () => {
     test('partitionBlocks should return a non-empty map', async () => {
       const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
