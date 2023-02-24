@@ -6,30 +6,52 @@ This is a GraphQL server that is built with the intention of exposing informatio
 
 The server aims to expose zkApp related information to be used by developers and SnarkyJS. Users can query for events and actions related to their zkApp. In addition, users can filter for specific events and actions by public key, tokenId, to/from block ranges, and chain status.
 
-An example query looks like this:
+An example query for event and actions looks like this:
 
 ```graphql
 query getEvents {
-  events(input: { address: "B62...", to: "10000", from: "0", status: ALL }) {
+  events(input: { address: "B62..." }) {
     blockInfo {
-      height
       stateHash
-      parentHash
-      ledgerHash
-      chainStatus
       timestamp
+      ledgerHash
+      height
+      parentHash
+      chainStatus
+      distanceFromMaxBlockHeight
       globalSlotSinceGenesis
-      globalSlotSinceHardfork
     }
     transactionInfo {
+      status
       hash
       memo
-      status
-      authorizationKind
     }
     eventData {
       index
-      fields
+      data
+    }
+  }
+}
+
+query getActions {
+  actions(input: { address: "B62..." }) {
+    blockInfo {
+      stateHash
+      timestamp
+      ledgerHash
+      height
+      parentHash
+      chainStatus
+      distanceFromMaxBlockHeight
+      globalSlotSinceGenesis
+    }
+    transactionInfo {
+      status
+      hash
+      memo
+    }
+    actionData {
+      data
     }
   }
 }
