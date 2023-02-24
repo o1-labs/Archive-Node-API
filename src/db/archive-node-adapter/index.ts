@@ -3,7 +3,7 @@ import {
   Action,
   Actions,
   BlockStatusFilter,
-  defaultTokenID,
+  DEFAULT_TOKEN_ID,
   Event,
   Events,
 } from '../../models/types';
@@ -13,7 +13,12 @@ import {
   createEvent,
   createAction,
 } from '../../models/utils';
-import { getActionsQuery, getEventsQuery } from './queries';
+import {
+  getActionsQuery,
+  getEventsQuery,
+  getTables,
+  USED_TABLES,
+} from './queries';
 
 import type { DatabaseAdapter } from '../index';
 import type { EventFilterOptionsInput } from '../../resolvers-types';
@@ -22,8 +27,25 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
 
   constructor(connectionString: string | undefined) {
-    if (!connectionString) throw new Error('Missing connection string');
+    if (!connectionString)
+      throw new Error(
+        'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
+      );
     this.client = postgres(connectionString);
+  }
+
+  async checkSQLSchema() {
+    const tables = await (
+      await getTables(this.client)
+    ).map((table) => table.tablename);
+
+    for (const table of USED_TABLES) {
+      if (!tables.includes(table)) {
+        throw new Error(
+          `Missing table ${table}. Please make sure the table exists in the database.`
+        );
+      }
+    }
   }
 
   async close() {
@@ -60,7 +82,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const { address, to, from } = input;
     let { tokenId, status } = input;
 
-    tokenId ||= defaultTokenID;
+    tokenId ||= DEFAULT_TOKEN_ID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');
@@ -80,7 +102,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const { address, to, from } = input;
     let { tokenId, status } = input;
 
-    tokenId ||= defaultTokenID;
+    tokenId ||= DEFAULT_TOKEN_ID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
       throw new Error('to must be greater than from');

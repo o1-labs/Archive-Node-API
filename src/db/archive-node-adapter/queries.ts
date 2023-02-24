@@ -160,3 +160,22 @@ export function getActionsQuery(
   ORDER BY timestamp DESC, state_hash DESC
   `;
 }
+
+export function getTables(db_client: postgres.Sql) {
+  return db_client`
+  SELECT tablename FROM pg_catalog.pg_tables where schemaname='public';
+  `;
+}
+
+export const USED_TABLES = [
+  'blocks',
+  'account_identifiers',
+  'accounts_accessed',
+  'blocks_zkapp_commands',
+  'zkapp_commands',
+  'zkapp_account_update',
+  'zkapp_account_update_body',
+  'zkapp_events',
+  'zkapp_state_data_array',
+  'zkapp_state_data',
+] as const;

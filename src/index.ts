@@ -6,21 +6,20 @@ import { buildServer } from './server';
 
 const PORT = process.env.PORT || 8080;
 
-function main() {
-  const context = buildContext(process.env.PG_CONN);
+(async function main() {
+  const context = await buildContext(process.env.PG_CONN);
   const server = buildServer(context);
 
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
     process.on(signal, () => server.close());
   });
 
-  server.on('close', () => {
-    context.db_client.close();
+  server.on('close', async () => {
+    await context.db_client.close();
+    process.exit(1);
   });
 
   server.listen(PORT, () => {
     console.info(`Server is running on port: ${PORT}`);
   });
-}
-
-main();
+})();
