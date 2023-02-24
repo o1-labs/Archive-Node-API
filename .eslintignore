@@ -1,5 +1,6 @@
 node_modules
 build
 tests
+benchmark/*.js
 */resolvers-types.ts
 codegen.ts

@@ -1,4 +1,4 @@
-name: Lint
+name: Lint #
 
 on:
   pull_request:
@@ -6,25 +6,27 @@ on:
     branches:
       - main
 
-jobs:
-  run-linters:
-    name: Run linters
-    runs-on: ubuntu-latest
+env:
+  NODE_VERSION: 16
 
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out Git repository
+      - name: Install NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Code Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16
-
-      - name: Install Node.js dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: Run linters
-        uses: wearerequired/lint-action@v2
-        with:
-          eslint: true
-          prettier: true
+      - name: Code Linting
+        run: npm run lint
+
+      - name: Run prettier
+        run: npx prettier --debug-check .
