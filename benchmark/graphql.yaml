@@ -1,31 +1,31 @@
 config:
-  target: "http://localhost:8080"
+  target: 'http://localhost:8080'
   phases:
     - duration: 180
-      arrivalRate: 25 
+      arrivalRate: 25
       rampTo: 250
-      name: "light phase"
+      name: 'light phase'
     - duration: 180
-      arrivalRate: 50 
+      arrivalRate: 50
       rampTo: 500
-      name: "medium phase"
+      name: 'medium phase'
     - duration: 180
-      arrivalRate: 100 
+      arrivalRate: 100
       rampTo: 1000
-      name: "heavy phase"
-  processor: "processor.js"
+      name: 'heavy phase'
+  processor: 'processor.js'
   payload:
-    path: "data.csv"
+    path: 'data.csv'
     skipHeader: true
     fields:
-      - "address"
-      - "tokenId"
+      - 'address'
+      - 'tokenId'
 scenarios:
-  - name: "Get Events"
+  - name: 'Get Events'
     flow:
-      - function: "generateRandomBlockRange"
+      - function: 'generateRandomBlockRange'
       - post:
-          url: "/"
+          url: '/'
           json:
             query: |
               query GetEventsQuery($input: EventFilterOptionsInput!) {
@@ -51,17 +51,17 @@ scenarios:
               }
             variables:
               input:
-                address: "{{ address }}"
-                tokenId: "{{ tokenId }}"
-                to: "{{ to }}"
-                from: "{{ from }}"
+                address: '{{ address }}'
+                tokenId: '{{ tokenId }}'
+                to: '{{ to }}'
+                from: '{{ from }}'
           expect:
             - statusCode: 200
-  - name: "Get Actions"
+  - name: 'Get Actions'
     flow:
-      - function: "generateRandomBlockRange"
+      - function: 'generateRandomBlockRange'
       - post:
-          url: "/"
+          url: '/'
           json:
             query: |
               query GetActionsQuery($input: EventFilterOptionsInput!) {
@@ -86,9 +86,9 @@ scenarios:
               }
             variables:
               input:
-                address: "{{ address }}"
-                tokenId: "{{ tokenId }}"
-                to: "{{ to }}"
-                from: "{{ from }}"
+                address: '{{ address }}'
+                tokenId: '{{ tokenId }}'
+                to: '{{ to }}'
+                from: '{{ from }}'
           expect:
             - statusCode: 200

@@ -2,8 +2,8 @@ name: Run Tests
 
 on:
   pull_request:
-  push: 
-    branches: 
+  push:
+    branches:
       - main
 
 jobs:
@@ -27,24 +27,24 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Download nightly Berkeley dump
-      run: bash ./scripts/download_db.sh
+      - name: Download nightly Berkeley dump
+        run: bash ./scripts/download_db.sh
 
-    - name: Install PostgreSQL client
-      run: |
-        apt-get update
-        apt-get install --yes postgresql-client
+      - name: Install PostgreSQL client
+        run: |
+          apt-get update
+          apt-get install --yes postgresql-client
 
-    - name: Create Archive Node database
-      run: psql -h postgres -U postgres archive < ./data/berkeley-archive.sql
-      env:
-        PGPASSWORD: password
+      - name: Create Archive Node database
+        run: psql -h postgres -U postgres archive < ./data/berkeley-archive.sql
+        env:
+          PGPASSWORD: password
 
-    - name: Run tests
-      run: npm run test
+      - name: Run tests
+        run: npm run test

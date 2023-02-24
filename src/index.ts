@@ -4,11 +4,11 @@ dotenv.config();
 import { buildContext } from './context';
 import { buildServer } from './server';
 
-let PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;
 
 function main() {
-  let context = buildContext(process.env.PG_CONN);
-  let server = buildServer(context);
+  const context = buildContext(process.env.PG_CONN);
+  const server = buildServer(context);
 
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
     process.on(signal, () => server.close());

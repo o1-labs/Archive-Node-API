@@ -13,5 +13,6 @@ const config: CodegenConfig = {
       plugins: ['typescript', 'typescript-resolvers'],
     },
   },
+  hooks: { afterAllFileWrite: ['prettier --write'] },
 };
 export default config;

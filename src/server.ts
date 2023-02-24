@@ -1,4 +1,4 @@
-import { createYoga, LogLevel, YogaInitialContext } from 'graphql-yoga';
+import { createYoga, LogLevel } from 'graphql-yoga';
 import { createServer } from 'http';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
@@ -8,10 +8,10 @@ import { buildProvider } from './tracing';
 import { schema } from './resolvers';
 import type { GraphQLContext } from './context';
 
-let LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
+const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
 export function buildServer(context: GraphQLContext) {
-  let plugins = [];
+  const plugins = [];
   plugins.push(useGraphQlJit());
   plugins.push(
     useOpenTelemetry(

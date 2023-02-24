@@ -69,7 +69,7 @@ describe('Query Resolvers', async () => {
       typeDefs: typeDefinitions,
       resolvers,
     });
-    let context = await buildContext(PG_CONN);
+    const context = await buildContext(PG_CONN);
     const yoga = createYoga<GraphQLContext>({ schema, context });
     executor = buildHTTPExecutor({
       fetch: yoga.fetch,
@@ -91,7 +91,7 @@ describe('Query Resolvers', async () => {
     });
 
     test('Fetching events with a empty address should return empty list', async () => {
-      let results = await executor({
+      const results = await executor({
         variables: {
           input: {
             address: '',
@@ -118,7 +118,7 @@ describe('Query Resolvers', async () => {
     });
 
     test('Fetching actions with a empty address should return empty list', async () => {
-      let results = await executor({
+      const results = await executor({
         variables: {
           input: {
             address: '',

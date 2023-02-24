@@ -14,6 +14,8 @@
     "test": "cross-env NODE_ENV=development vitest run",
     "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
     "coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
     "generate": "graphql-codegen"
   },
   "keywords": [],
@@ -23,10 +25,14 @@
     "@graphql-codegen/cli": "^3.1.0",
     "@graphql-codegen/typescript": "^3.0.1",
     "@graphql-codegen/typescript-resolvers": "^3.1.0",
+    "@graphql-eslint/eslint-plugin": "^3.16.0",
     "@types/node": "^18.14.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
     "@vitest/coverage-c8": "^0.28.5",
     "artillery": "^2.0.0-30",
     "cross-env": "^7.0.3",
+    "eslint": "^8.34.0",
     "prettier": "2.8.4",
     "ts-node-dev": "^2.0.0",
     "vitest": "^0.28.5"
