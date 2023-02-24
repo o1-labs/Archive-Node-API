@@ -30,6 +30,7 @@ function initJaegerProvider() {
     }
 
     // Check if Jaeger endpoint is available.
+    // eslint-disable-next-line prefer-const
     let [hostname, port] = process.env.JAEGER_ENDPOINT.replace(
       'http://',
       ''
@@ -56,8 +57,7 @@ function buildPlugins() {
   const plugins = [];
 
   plugins.push(useGraphQlJit());
-
-  if (process.env.ENABLE_LOGGING === 'true') {
+  if (process.env.ENABLE_LOGGING) {
     const provider = initJaegerProvider();
     plugins.push(
       useOpenTelemetry(
