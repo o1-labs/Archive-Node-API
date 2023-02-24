@@ -28,9 +28,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -46,10 +44,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -81,9 +76,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -99,10 +92,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1270
-    ],
+    "element_ids": [15, 1270],
     "field": "1"
   },
   {
@@ -134,9 +124,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -152,11 +140,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -188,9 +172,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -206,10 +188,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1270
-    ],
+    "element_ids": [15, 1270],
     "field": "171"
   },
   {
@@ -241,9 +220,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -259,11 +236,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -295,9 +268,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1265,
-    "zkapp_account_updates_ids": [
-      1830
-    ],
+    "zkapp_account_updates_ids": [1830],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLnbvSJvmq3bQ7RcGC47c7EJRUuw6cqKnTn83yFZz7XoJDaH4p",
     "body_id": 1830,
@@ -313,10 +284,7 @@
     "zkapp_account_precondition_id": 465,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -348,9 +316,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -366,10 +332,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -401,9 +364,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -419,10 +380,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1267
-    ],
+    "element_ids": [15, 1267],
     "field": "161"
   },
   {
@@ -454,9 +412,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -472,10 +428,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1267
-    ],
+    "element_ids": [15, 1267],
     "field": "1"
   },
   {
@@ -507,9 +460,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -525,11 +476,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -561,9 +508,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -579,11 +524,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -615,9 +556,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1264,
-    "zkapp_account_updates_ids": [
-      1829
-    ],
+    "zkapp_account_updates_ids": [1829],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYw5LaP4c3DJVthfHiXaAhVA5sF22wAZHEgJSu4FpUpofFM3Ybg",
     "body_id": 1829,
@@ -633,10 +572,7 @@
     "zkapp_account_precondition_id": 464,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -668,9 +604,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -686,10 +620,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -721,9 +652,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -739,10 +668,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1264
-    ],
+    "element_ids": [15, 1264],
     "field": "151"
   },
   {
@@ -774,9 +700,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -792,10 +716,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1264
-    ],
+    "element_ids": [15, 1264],
     "field": "1"
   },
   {
@@ -827,9 +748,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -845,11 +764,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -881,9 +796,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -899,11 +812,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -935,9 +844,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1263,
-    "zkapp_account_updates_ids": [
-      1828
-    ],
+    "zkapp_account_updates_ids": [1828],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjYQ7MGAfhFrFvjfg4WX3yMfrdjxHMzUfVPh5XBxk7RbN4KYWL",
     "body_id": 1828,
@@ -953,10 +860,7 @@
     "zkapp_account_precondition_id": 463,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -988,9 +892,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1006,10 +908,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -1041,9 +940,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1059,10 +956,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1261
-    ],
+    "element_ids": [15, 1261],
     "field": "141"
   },
   {
@@ -1094,9 +988,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1112,10 +1004,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1261
-    ],
+    "element_ids": [15, 1261],
     "field": "1"
   },
   {
@@ -1147,9 +1036,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1165,11 +1052,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -1201,9 +1084,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1219,11 +1100,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -1255,9 +1132,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1262,
-    "zkapp_account_updates_ids": [
-      1827
-    ],
+    "zkapp_account_updates_ids": [1827],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZHXbwayLox2e5aKaYhKBTxKHRVC7TwKJBKxuhSPhBF3oCSdhcP",
     "body_id": 1827,
@@ -1273,10 +1148,7 @@
     "zkapp_account_precondition_id": 462,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -1308,9 +1180,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1326,10 +1196,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -1361,9 +1228,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1379,10 +1244,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1258
-    ],
+    "element_ids": [15, 1258],
     "field": "131"
   },
   {
@@ -1414,9 +1276,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1432,10 +1292,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1258
-    ],
+    "element_ids": [15, 1258],
     "field": "1"
   },
   {
@@ -1467,9 +1324,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1485,11 +1340,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -1521,9 +1372,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1539,11 +1388,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -1575,9 +1420,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1261,
-    "zkapp_account_updates_ids": [
-      1826
-    ],
+    "zkapp_account_updates_ids": [1826],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZCaTQyGCPMi8Gv9EhNezfPMg2BQHxiXVD5MYVZiUQ5q5UuM33b",
     "body_id": 1826,
@@ -1593,10 +1436,7 @@
     "zkapp_account_precondition_id": 461,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -1628,9 +1468,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1646,10 +1484,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -1681,9 +1516,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1699,10 +1532,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      171
-    ],
+    "element_ids": [15, 171],
     "field": "121"
   },
   {
@@ -1734,9 +1564,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1752,10 +1580,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      171
-    ],
+    "element_ids": [15, 171],
     "field": "1"
   },
   {
@@ -1787,9 +1612,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1805,11 +1628,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -1841,9 +1660,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1859,11 +1676,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -1895,9 +1708,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1260,
-    "zkapp_account_updates_ids": [
-      1825
-    ],
+    "zkapp_account_updates_ids": [1825],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZUe5UN3KTc7wgN7ZFczwxvSZKcanje6T1TdCRAfLBeR92nBnPv",
     "body_id": 1825,
@@ -1913,10 +1724,7 @@
     "zkapp_account_precondition_id": 460,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -1948,9 +1756,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -1966,10 +1772,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -2001,9 +1804,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -2019,10 +1820,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1253
-    ],
+    "element_ids": [15, 1253],
     "field": "111"
   },
   {
@@ -2054,9 +1852,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -2072,10 +1868,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1253
-    ],
+    "element_ids": [15, 1253],
     "field": "1"
   },
   {
@@ -2107,9 +1900,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -2125,11 +1916,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -2161,9 +1948,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -2179,11 +1964,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -2215,9 +1996,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1259,
-    "zkapp_account_updates_ids": [
-      1824
-    ],
+    "zkapp_account_updates_ids": [1824],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZjTUkCJXraJojzsPye2igpDh5n8za4FvfXd6UEhiguDhnswyLC",
     "body_id": 1824,
@@ -2233,10 +2012,7 @@
     "zkapp_account_precondition_id": 459,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -2268,9 +2044,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2286,10 +2060,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -2321,9 +2092,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2339,10 +2108,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1001
-    ],
+    "element_ids": [15, 1001],
     "field": "101"
   },
   {
@@ -2374,9 +2140,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2392,10 +2156,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1001
-    ],
+    "element_ids": [15, 1001],
     "field": "1"
   },
   {
@@ -2427,9 +2188,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2445,11 +2204,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -2481,9 +2236,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2499,11 +2252,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -2535,9 +2284,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1258,
-    "zkapp_account_updates_ids": [
-      1823
-    ],
+    "zkapp_account_updates_ids": [1823],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "Ckpa5F5eUU3BL6RbphKxoRLAgoxNFDEygyHsZQLbTX9a1gskkFCme",
     "body_id": 1823,
@@ -2553,10 +2300,7 @@
     "zkapp_account_precondition_id": 458,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -2588,9 +2332,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2606,11 +2348,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -2642,9 +2380,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2660,10 +2396,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -2695,9 +2428,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2713,10 +2444,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -2748,9 +2476,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2766,11 +2492,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -2802,9 +2524,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2820,10 +2540,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1248
-    ],
+    "element_ids": [15, 1248],
     "field": "1"
   },
   {
@@ -2855,9 +2572,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1257,
-    "zkapp_account_updates_ids": [
-      1822
-    ],
+    "zkapp_account_updates_ids": [1822],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZaGUcsTy4rByC3d1DxNyH14EQKRkg1LPhyCR24VLEUnLojoAAp",
     "body_id": 1822,
@@ -2873,10 +2588,7 @@
     "zkapp_account_precondition_id": 332,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1248
-    ],
+    "element_ids": [15, 1248],
     "field": "91"
   },
   {
@@ -2908,9 +2620,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -2926,10 +2636,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -2961,9 +2668,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -2979,10 +2684,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      868
-    ],
+    "element_ids": [15, 868],
     "field": "81"
   },
   {
@@ -3014,9 +2716,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -3032,10 +2732,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      868
-    ],
+    "element_ids": [15, 868],
     "field": "1"
   },
   {
@@ -3067,9 +2764,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -3085,11 +2780,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -3121,9 +2812,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -3139,11 +2828,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -3175,9 +2860,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1256,
-    "zkapp_account_updates_ids": [
-      1821
-    ],
+    "zkapp_account_updates_ids": [1821],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpaBYEpjBtGBgNkV1K7RPkDHDmpvEeXX24dw3Uq6HDbK4YHQRZVX",
     "body_id": 1821,
@@ -3193,10 +2876,7 @@
     "zkapp_account_precondition_id": 457,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -3228,9 +2908,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3246,10 +2924,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -3281,9 +2956,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3299,10 +2972,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1243
-    ],
+    "element_ids": [15, 1243],
     "field": "71"
   },
   {
@@ -3334,9 +3004,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3352,10 +3020,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      1243
-    ],
+    "element_ids": [15, 1243],
     "field": "1"
   },
   {
@@ -3387,9 +3052,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3405,11 +3068,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -3441,9 +3100,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3459,11 +3116,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -3495,9 +3148,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1255,
-    "zkapp_account_updates_ids": [
-      1820
-    ],
+    "zkapp_account_updates_ids": [1820],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZLz1wPhx6VShR6gsqN43ziSPioms3a3mkVzYP9ZNsxnqoDunCL",
     "body_id": 1820,
@@ -3513,10 +3164,7 @@
     "zkapp_account_precondition_id": 456,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -3548,9 +3196,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3566,10 +3212,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -3601,9 +3244,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3619,11 +3260,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -3655,9 +3292,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3673,11 +3308,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -3709,9 +3340,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3727,10 +3356,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      946
-    ],
+    "element_ids": [15, 946],
     "field": "61"
   },
   {
@@ -3762,9 +3388,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3780,10 +3404,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      946
-    ],
+    "element_ids": [15, 946],
     "field": "1"
   },
   {
@@ -3815,9 +3436,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1254,
-    "zkapp_account_updates_ids": [
-      1819
-    ],
+    "zkapp_account_updates_ids": [1819],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYVohAyrwdKLSadYZuuo6zw423hcqnXMxupXVtiWmTGvBoPnYHa",
     "body_id": 1819,
@@ -3833,10 +3452,7 @@
     "zkapp_account_precondition_id": 361,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -3868,9 +3484,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -3886,10 +3500,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -3921,9 +3532,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -3939,11 +3548,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -3975,9 +3580,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -3993,11 +3596,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -4029,9 +3628,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -4047,10 +3644,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      806
-    ],
+    "element_ids": [15, 806],
     "field": "51"
   },
   {
@@ -4082,9 +3676,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -4100,10 +3692,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      806
-    ],
+    "element_ids": [15, 806],
     "field": "1"
   },
   {
@@ -4135,9 +3724,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1253,
-    "zkapp_account_updates_ids": [
-      1818
-    ],
+    "zkapp_account_updates_ids": [1818],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZ1V87GujZ3JvnmP9eoYpDqZq7Vxi8EbBN7UGiHskBdA4fUH4iL",
     "body_id": 1818,
@@ -4153,10 +3740,7 @@
     "zkapp_account_precondition_id": 360,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -4188,9 +3772,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4206,10 +3788,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -4241,9 +3820,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4259,11 +3836,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -4295,9 +3868,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4313,11 +3884,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -4349,9 +3916,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4367,10 +3932,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      393
-    ],
+    "element_ids": [15, 393],
     "field": "41"
   },
   {
@@ -4402,9 +3964,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4420,10 +3980,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      393
-    ],
+    "element_ids": [15, 393],
     "field": "1"
   },
   {
@@ -4455,9 +4012,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1252,
-    "zkapp_account_updates_ids": [
-      1817
-    ],
+    "zkapp_account_updates_ids": [1817],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZP9LW6tAKkUwgrcnV365rqRCEgADcSeaKLK77xR4SZgaqdjStu",
     "body_id": 1817,
@@ -4473,10 +4028,7 @@
     "zkapp_account_precondition_id": 359,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -4508,9 +4060,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4526,10 +4076,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -4561,9 +4108,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4579,11 +4124,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -4615,9 +4156,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4633,11 +4172,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -4669,9 +4204,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4687,10 +4220,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      749
-    ],
+    "element_ids": [15, 749],
     "field": "31"
   },
   {
@@ -4722,9 +4252,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4740,10 +4268,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      749
-    ],
+    "element_ids": [15, 749],
     "field": "1"
   },
   {
@@ -4775,9 +4300,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1251,
-    "zkapp_account_updates_ids": [
-      1816
-    ],
+    "zkapp_account_updates_ids": [1816],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpZBC1xTakdQuqqbxNUFZUnt6tTJpLm38XLMrsPPdhC83B4nN5kA",
     "body_id": 1816,
@@ -4793,10 +4316,7 @@
     "zkapp_account_precondition_id": 325,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -4828,9 +4348,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -4846,10 +4364,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -4881,9 +4396,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -4899,11 +4412,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -4935,9 +4444,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -4953,11 +4460,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -4989,9 +4492,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -5007,10 +4508,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      585
-    ],
+    "element_ids": [15, 585],
     "field": "21"
   },
   {
@@ -5042,9 +4540,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -5060,10 +4556,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      585
-    ],
+    "element_ids": [15, 585],
     "field": "1"
   },
   {
@@ -5095,9 +4588,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1250,
-    "zkapp_account_updates_ids": [
-      1815
-    ],
+    "zkapp_account_updates_ids": [1815],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYiuBDEuhTLDiYTDMXcqHP6rX4AFxSiiXbHjwUs3GbqPVATnM9i",
     "body_id": 1815,
@@ -5113,10 +4604,7 @@
     "zkapp_account_precondition_id": 324,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   },
   {
@@ -5148,9 +4636,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5166,10 +4652,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "2"
   },
   {
@@ -5201,9 +4684,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5219,11 +4700,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "10191506464909270128073023814250575658809808342193182194196658310732645800693"
   },
   {
@@ -5255,9 +4732,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5273,11 +4748,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      1,
-      1230,
-      1
-    ],
+    "element_ids": [1, 1230, 1],
     "field": "0"
   },
   {
@@ -5309,9 +4780,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5327,10 +4796,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      398
-    ],
+    "element_ids": [15, 398],
     "field": "11"
   },
   {
@@ -5362,9 +4828,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5380,10 +4844,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      15,
-      398
-    ],
+    "element_ids": [15, 398],
     "field": "1"
   },
   {
@@ -5415,9 +4876,7 @@
     "status": "applied",
     "failure_reasons_ids": null,
     "zkapp_fee_payer_body_id": 1249,
-    "zkapp_account_updates_ids": [
-      1814
-    ],
+    "zkapp_account_updates_ids": [1814],
     "memo": "E4YM2vTHhWEg66xpj52JErHUBU4pZ1yageL4TVDDpTTSsv8mK6YaH",
     "hash": "CkpYx5R8FncyTWndTWTP9i6aiEewhTudqmdUgJB5QYpp47pZRfJnf",
     "body_id": 1814,
@@ -5433,10 +4892,7 @@
     "zkapp_account_precondition_id": 73,
     "use_full_commitment": false,
     "caller": "call",
-    "element_ids": [
-      6,
-      272
-    ],
+    "element_ids": [6, 272],
     "field": "10"
   }
 ]
