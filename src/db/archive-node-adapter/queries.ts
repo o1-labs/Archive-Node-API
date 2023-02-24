@@ -176,6 +176,6 @@ export const USED_TABLES = [
   'zkapp_account_update',
   'zkapp_account_update_body',
   'zkapp_events',
-  'zkapp_state_data_array',
-  'zkapp_state_data',
+  'zkapp_field_array',
+  'zkapp_field',
 ] as const;
