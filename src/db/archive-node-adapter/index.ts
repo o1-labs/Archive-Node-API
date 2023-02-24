@@ -35,9 +35,16 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   async checkSQLSchema() {
-    const tables = await (
-      await getTables(this.client)
-    ).map((table) => table.tablename);
+    let tables;
+    try {
+      tables = await (
+        await getTables(this.client)
+      ).map((table) => table.tablename);
+    } catch (e) {
+      throw new Error(
+        `Could not connect to Postgres with the specified connection string. Please check that Postgres is available and that your connection string is correct and try again.\nReason: ${e}`
+      );
+    }
 
     for (const table of USED_TABLES) {
       if (!tables.includes(table)) {
