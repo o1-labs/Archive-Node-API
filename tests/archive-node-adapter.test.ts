@@ -238,6 +238,25 @@ describe('ArchiveNodeAdapter', async () => {
           }
         });
       });
+
+      test('should return an ordered list of events by index ', async () => {
+        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
+          database_mock as any
+        );
+        const elementIdFieldValues =
+          archiveNodeAdapter.getElementIdFieldValuesExtended(
+            database_mock as any
+          );
+        const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
+          blocksMap,
+          elementIdFieldValues
+        );
+
+        eventsData.forEach((event) => {
+          const indexes = event.eventData.map((event) => event.index);
+          expect(indexes).toEqual(indexes.sort());
+        });
+      });
     });
 
     describe('Actions', async () => {
