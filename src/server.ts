@@ -20,31 +20,35 @@ function initJaegerProvider() {
     provider = buildProvider();
     if (!process.env.JAEGER_ENDPOINT) {
       throw new Error(
-        'Jaeger endpoint not found. Please ensure that the Jaeger endpoint is properly configured and available.'
+        'Jaeger was enabled but no endpoint was specified. Please ensure that the Jaeger endpoint is properly configured and available.'
       );
     }
     if (!process.env.JAEGER_SERVICE_NAME) {
       throw new Error(
-        'Jaeger service name not found. Please ensure that the Jaeger service name is properly configured and available.'
+        'Jaeger was enabled but no service name was specified. Please ensure that the Jaeger service name is properly configured.'
       );
     }
 
     // Check if Jaeger endpoint is available.
+    const endpoint = process.env.JAEGER_ENDPOINT.replace(/(^\w+:|^)\/\//, '');
     // eslint-disable-next-line prefer-const
-    let [hostname, port] = process.env.JAEGER_ENDPOINT.replace(
-      'http://',
-      ''
-    ).split(':');
+    let [hostname, port] = endpoint.split(':');
     port = port?.split('/')[0];
     const req = request({
       hostname,
       method: 'GET',
       port,
       path: '/',
+      timeout: 2000,
     });
     req.on('error', () => {
       throw new Error(
         'Jaeger endpoint not available. Please ensure that the Jaeger endpoint is properly configured and available.'
+      );
+    });
+    req.on('timeout', () => {
+      throw new Error(
+        'Jaeger endpoint timed out. Please ensure that the Jaeger endpoint is properly configured and available.'
       );
     });
     req.end();
@@ -99,6 +103,7 @@ function buildPlugins() {
 }
 
 export function buildServer(context: GraphQLContext) {
+  const plugins = buildPlugins();
   const yoga = createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
@@ -106,7 +111,7 @@ export function buildServer(context: GraphQLContext) {
     landingPage: false,
     healthCheckEndpoint: '/healthcheck',
     graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
-    plugins: buildPlugins(),
+    plugins,
     cors: {
       origin: process.env.CORS_ORIGIN ?? '*',
       methods: ['GET', 'POST'],
