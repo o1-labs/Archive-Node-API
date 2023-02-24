@@ -14,5 +14,15 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended"
+  ],
+  "overrides": [
+    {
+      "files": ["src/schema.ts"],
+      "processor": "@graphql-eslint/graphql"
+    },
+    {
+      "files": ["*.graphql"],
+      "extends": "plugin:@graphql-eslint/schema-all"
+    }
   ]
 }
