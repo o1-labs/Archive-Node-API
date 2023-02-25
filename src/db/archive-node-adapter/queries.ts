@@ -97,10 +97,10 @@ function emittedEventsCTE(db_client: postgres.Sql) {
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
     ON zke.id = events_id
-    INNER JOIN zkapp_state_data_array zksda
-    ON zksda.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_state_data zksd
-    ON zksd.id = ANY(zksda.element_ids)
+    INNER JOIN zkapp_field_array zkfa
+    ON zkfa.id = ANY(zke.element_ids)
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = ANY(zkfa.element_ids)
   )`;
 }
 
@@ -111,11 +111,11 @@ function emittedActionsCTE(db_client: postgres.Sql) {
     SELECT *
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
-    ON zke.id = sequence_events_id 
-    INNER JOIN zkapp_state_data_array zksda
-    ON zksda.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_state_data zksd
-    ON zksd.id = ANY(zksda.element_ids)
+    ON zke.id = actions_id
+    INNER JOIN zkapp_field_array zkfa
+    ON zkfa.id = ANY(zke.element_ids)
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = ANY(zkfa.element_ids)
   )`;
 }
 
@@ -176,6 +176,6 @@ export const USED_TABLES = [
   'zkapp_account_update',
   'zkapp_account_update_body',
   'zkapp_events',
-  'zkapp_state_data_array',
-  'zkapp_state_data',
+  'zkapp_field_array',
+  'zkapp_field',
 ] as const;
