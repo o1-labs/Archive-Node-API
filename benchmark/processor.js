@@ -4,8 +4,9 @@ function getRandomNumber(min, max) {
 
 module.exports = {
   generateRandomBlockRange: (userContext, _events, done) => {
-    const from = getRandomNumber(0, 20000);
-    const to = getRandomNumber(0, 20000);
+    const MAX_HEIGHT = 2000;
+    const from = getRandomNumber(0, MAX_HEIGHT);
+    const to = getRandomNumber(0, MAX_HEIGHT);
 
     // If from is greater than to, we assign undefined to both variables.
     // Doing so, lets us test the GraphQL resolver with undefined variables (which means get all blocks).
