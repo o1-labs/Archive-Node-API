@@ -1,7 +1,8 @@
 import { expect, test, describe, beforeAll } from 'vitest';
 import postgres from 'postgres';
 
-import database_mock from './mocked_sql/database_mock.json';
+import EventsMock from './mocked_sql/database_mock_events.json';
+import ActionsMock from './mocked_sql/database_mock_actions.json';
 
 import { ArchiveNodeAdapter } from '../src/db';
 import { createBlockInfo, createTransactionInfo } from '../src/models/utils';
@@ -57,14 +58,14 @@ describe('ArchiveNodeAdapter', async () => {
   describe('partitionBlocks', async () => {
     test('partitionBlocks should return a non-empty map', async () => {
       const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-        database_mock as any
+        EventsMock as any
       );
       expect(blocksMap.size).toBeTruthy();
     });
 
     test('partitionBlocks values should be able to create blockInfo', async () => {
       const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-        database_mock as any
+        EventsMock as any
       );
 
       const blockHash = blocksMap.keys().next().value;
@@ -83,7 +84,7 @@ describe('ArchiveNodeAdapter', async () => {
 
     test('partitionBlocks values should be able to create transactionInfo', async () => {
       const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-        database_mock as any
+        EventsMock as any
       );
 
       const blockHash = blocksMap.keys().next().value;
@@ -100,18 +101,14 @@ describe('ArchiveNodeAdapter', async () => {
   describe('getElementIdFieldValues', async () => {
     test('getElementIdFieldValues should return a non-empty map', async () => {
       const elementIdFieldValues =
-        archiveNodeAdapter.getElementIdFieldValuesExtended(
-          database_mock as any
-        );
+        archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
       expect(elementIdFieldValues.size).toBeTruthy();
     });
 
     test('getElementIdFieldValues should return a map with correct keys', async () => {
       const elementIdFieldValues =
-        archiveNodeAdapter.getElementIdFieldValuesExtended(
-          database_mock as any
-        );
-      database_mock.forEach((row: any) => {
+        archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
+      EventsMock.forEach((row: any) => {
         expect(elementIdFieldValues.get(row.id)).toEqual(row.field);
       });
     });
@@ -121,12 +118,10 @@ describe('ArchiveNodeAdapter', async () => {
     describe('Events', async () => {
       test('should return a non-empty list of events if "events" are specified', async () => {
         const elementIdFieldValues =
-          archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
-          );
+          archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const events = archiveNodeAdapter.mapActionOrEventExtended(
           'event',
-          database_mock as any,
+          EventsMock as any,
           elementIdFieldValues
         ) as Event[];
 
@@ -139,20 +134,16 @@ describe('ArchiveNodeAdapter', async () => {
 
       test('should return a list of events with values all contained in mocked data', async () => {
         const elementIdFieldValues =
-          archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
-          );
+          archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const events = archiveNodeAdapter.mapActionOrEventExtended(
           'event',
-          database_mock as any,
+          EventsMock as any,
           elementIdFieldValues
         ) as Event[];
 
         events.forEach((event) => {
           for (const field in event.data) {
-            expect(
-              database_mock.find((row) => row.field === field)
-            ).toBeTruthy();
+            expect(EventsMock.find((row) => row.field === field)).toBeTruthy();
           }
         });
       });
@@ -162,11 +153,11 @@ describe('ArchiveNodeAdapter', async () => {
       test('should return a non-empty list of actions if "actions" are specified', async () => {
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
+            ActionsMock as any
           );
         const actions = archiveNodeAdapter.mapActionOrEventExtended(
           'action',
-          database_mock as any,
+          ActionsMock as any,
           elementIdFieldValues
         ) as Action[];
 
@@ -179,19 +170,17 @@ describe('ArchiveNodeAdapter', async () => {
       test('should return a list of actions with values all contained in mocked data', async () => {
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
+            ActionsMock as any
           );
         const actions = archiveNodeAdapter.mapActionOrEventExtended(
           'action',
-          database_mock as any,
+          ActionsMock as any,
           elementIdFieldValues
-        ) as Event[];
+        ) as Action[];
 
-        actions.forEach((event) => {
-          for (const field in event.data) {
-            expect(
-              database_mock.find((row) => row.field === field)
-            ).toBeTruthy();
+        actions.forEach((action) => {
+          for (const field of action.data) {
+            expect(ActionsMock.find((row) => row.field === field)).toBeTruthy();
           }
         });
       });
@@ -202,12 +191,10 @@ describe('ArchiveNodeAdapter', async () => {
     describe('Events', async () => {
       test('should return a non-empty list of events if are specified', async () => {
         const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          database_mock as any
+          EventsMock as any
         );
         const elementIdFieldValues =
-          archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
-          );
+          archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
           blocksMap,
           elementIdFieldValues
@@ -218,12 +205,10 @@ describe('ArchiveNodeAdapter', async () => {
 
       test('should return a list of events with values all contained in mocked data', async () => {
         const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          database_mock as any
+          EventsMock as any
         );
         const elementIdFieldValues =
-          archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
-          );
+          archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
           blocksMap,
           elementIdFieldValues
@@ -231,26 +216,33 @@ describe('ArchiveNodeAdapter', async () => {
 
         eventsData.forEach((event) => {
           expect(
-            database_mock.find(
+            EventsMock.find(
               (row) => row.state_hash === event.blockInfo.stateHash
             )
           ).toBeTruthy();
-          for (const field in event.eventData) {
-            expect(
-              database_mock.find((row) => row.field === field)
-            ).toBeTruthy();
+          for (const eventData of event.eventData) {
+            const { data } = eventData;
+            if (data.length >= 2) {
+              for (const field of data) {
+                expect(
+                  EventsMock.find((row) => row.field === field)
+                ).toBeTruthy();
+              }
+            } else {
+              expect(
+                EventsMock.find((row) => row.field === data[0])
+              ).toBeTruthy();
+            }
           }
         });
       });
 
       test('should return an ordered list of events by index ', async () => {
         const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          database_mock as any
+          EventsMock as any
         );
         const elementIdFieldValues =
-          archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
-          );
+          archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
           blocksMap,
           elementIdFieldValues
@@ -266,11 +258,11 @@ describe('ArchiveNodeAdapter', async () => {
     describe('Actions', async () => {
       test('should return a non-empty list of actions if are specified', async () => {
         const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          database_mock as any
+          ActionsMock as any
         );
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
+            ActionsMock as any
           );
         const actionsData = archiveNodeAdapter.deriveActionsFromBlocksExtended(
           blocksMap,
@@ -282,26 +274,27 @@ describe('ArchiveNodeAdapter', async () => {
 
       test('should return a list of actions with values all contained in mocked data', async () => {
         const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          database_mock as any
+          ActionsMock as any
         );
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
-            database_mock as any
+            ActionsMock as any
           );
         const actionsData = archiveNodeAdapter.deriveActionsFromBlocksExtended(
           blocksMap,
           elementIdFieldValues
         );
 
-        actionsData.forEach((event) => {
+        actionsData.forEach((action) => {
           expect(
-            database_mock.find(
-              (row) => row.state_hash === event.blockInfo.stateHash
+            ActionsMock.find(
+              (row) => row.state_hash === action.blockInfo.stateHash
             )
           ).toBeTruthy();
-          for (const field in event.actionData) {
+          for (const actionData of action.actionData) {
+            const { data } = actionData;
             expect(
-              database_mock.find((row) => row.field === field)
+              ActionsMock.find((row) => row.field === data[0])
             ).toBeTruthy();
           }
         });
