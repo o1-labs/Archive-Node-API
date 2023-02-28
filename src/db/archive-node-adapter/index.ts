@@ -133,10 +133,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
-      this.filterDuplicateEvents(blocks);
+      const filteredBlocks = this.filterDuplicateEvents(blocks);
       const events = this.mapActionOrEvent(
         'event',
-        blocks,
+        filteredBlocks,
         elementIdFieldValues
       ) as Event[];
 
@@ -148,6 +148,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   protected filterDuplicateEvents(blocks: postgres.Row[]) {
     const seenEventIds = new Map<string, number>();
+    const newBlocks: postgres.Row[] = [];
     for (let i = 0; i < blocks.length; i++) {
       const { element_ids } = blocks[i];
       const uniqueElementIds = [...new Set(element_ids)];
@@ -159,8 +160,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         // If we have seen all the element ids before, we can remove the row.
         if (numberofUniqueElements + 1 === uniqueElementIds.length) {
           seenEventIds.delete(uniqueElementIdsKey);
-          blocks.splice(i, 1);
-          i--;
+          continue;
         } else {
           seenEventIds.set(uniqueElementIdsKey, numberofUniqueElements + 1);
         }
@@ -170,7 +170,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       else if (uniqueElementIds.length > 1) {
         seenEventIds.set(uniqueElementIdsKey, 1);
       }
+      newBlocks.push(blocks[i]);
     }
+    return newBlocks;
   }
 
   protected deriveActionsFromBlocks(
