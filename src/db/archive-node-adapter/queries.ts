@@ -91,6 +91,7 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
       FROM zkapp_fee_payer_body zkfpb
       WHERE zkfpb.account_identifier_id <> account_identifier_id
     )
+    AND bzkc.status <> 'failed'
   )`;
 }
 
