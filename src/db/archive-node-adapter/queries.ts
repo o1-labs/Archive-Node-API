@@ -39,7 +39,7 @@ function accountIdentifierCTE(
   return db_client`
   account_identifier AS 
   (
-    SELECT id AS account_identifier_id
+    SELECT id AS requesting_zkapp_account_identifier_id
     FROM account_identifiers ai
     WHERE ai.public_key_id = (SELECT id FROM public_keys WHERE value = ${address})
     AND ai.token_id = (SELECT id FROM tokens WHERE value = ${tokenId})
@@ -58,7 +58,7 @@ function blocksAccessedCTE(
     SELECT *
     FROM account_identifier ai
     INNER JOIN accounts_accessed aa
-    ON ai.account_identifier_id = aa.account_identifier_id
+    ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
     INNER JOIN full_chain b
     ON aa.block_id = b.id
     WHERE 1 = 1
@@ -85,13 +85,8 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
     INNER JOIN zkapp_account_update zkcu
     ON zkcu.id = ANY(zkc.zkapp_account_updates_ids)
     INNER JOIN zkapp_account_update_body zkcu_body
-    ON zkcu_body.id = zkcu.body_id
-    WHERE NOT EXISTS (
-      SELECT 1
-      FROM zkapp_fee_payer_body zkfpb
-      WHERE zkfpb.account_identifier_id <> account_identifier_id
-    )
-    AND bzkc.status <> 'failed'
+    ON zkcu_body.id = zkcu.body_id AND zkcu_body.account_identifier_id = requesting_zkapp_account_identifier_id
+    WHERE bzkc.status <> 'failed'
   )`;
 }
 
@@ -184,5 +179,4 @@ export const USED_TABLES = [
   'zkapp_events',
   'zkapp_field_array',
   'zkapp_field',
-  'zkapp_fee_payer_body',
 ] as const;
