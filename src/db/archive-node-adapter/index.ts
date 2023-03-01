@@ -133,9 +133,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
+      const filteredBlocks = this.filterDuplicateEvents(blocks);
       const events = this.mapActionOrEvent(
         'event',
-        blocks,
+        filteredBlocks,
         elementIdFieldValues
       ) as Event[];
 
@@ -143,6 +144,35 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
+  }
+
+  protected filterDuplicateEvents(blocks: postgres.Row[]) {
+    const seenEventIds = new Map<string, number>();
+    const newBlocks: postgres.Row[] = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const { element_ids } = blocks[i];
+      const uniqueElementIds = [...new Set(element_ids)];
+
+      const uniqueElementIdsKey = uniqueElementIds.join(',');
+      const numberofUniqueElements = seenEventIds.get(uniqueElementIdsKey);
+
+      if (numberofUniqueElements) {
+        // If we have seen all the element ids before, we can remove the row.
+        if (numberofUniqueElements + 1 === uniqueElementIds.length) {
+          seenEventIds.delete(uniqueElementIdsKey);
+          continue;
+        } else {
+          seenEventIds.set(uniqueElementIdsKey, numberofUniqueElements + 1);
+        }
+      }
+      // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
+      // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
+      else if (uniqueElementIds.length > 1) {
+        seenEventIds.set(uniqueElementIdsKey, 1);
+      }
+      newBlocks.push(blocks[i]);
+    }
+    return newBlocks;
   }
 
   protected deriveActionsFromBlocks(
@@ -188,14 +218,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     elementIdFieldValues: Map<string, string>
   ) {
     const data: (Event | Action)[] = [];
-    const seenEventOrActionIds = new Set();
 
     for (let i = 0; i < rows.length; i++) {
       const { element_ids } = rows[i];
-      const index = element_ids[0];
-      if (seenEventOrActionIds.has(index)) continue;
-      seenEventOrActionIds.add(index);
-
       const currentValue = [];
       for (const elementId of element_ids) {
         const elementIdValue = elementIdFieldValues.get(elementId);

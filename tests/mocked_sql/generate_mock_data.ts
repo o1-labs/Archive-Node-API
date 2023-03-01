@@ -5,7 +5,10 @@
 
 import postgres from 'postgres';
 import fs from 'fs';
-import { getEventsQuery } from '../../src/db/archive-node-adapter/queries';
+import {
+  getEventsQuery,
+  getActionsQuery,
+} from '../../src/db/archive-node-adapter/queries';
 import { BlockStatusFilter } from '../../src/models/types';
 
 (async function main() {
@@ -16,9 +19,19 @@ import { BlockStatusFilter } from '../../src/models/types';
     'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf',
     BlockStatusFilter.all
   );
+  const actionsQuery = await getActionsQuery(
+    sql,
+    'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw',
+    'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf',
+    BlockStatusFilter.all
+  );
   fs.writeFileSync(
-    './tests/mocked_sql/database_mock.json',
+    './tests/mocked_sql/database_mock_events.json',
     JSON.stringify(eventsQuery, null, 2)
+  );
+  fs.writeFileSync(
+    './tests/mocked_sql/database_mock_actions.json',
+    JSON.stringify(actionsQuery, null, 2)
   );
   process.exit(0);
 })();
