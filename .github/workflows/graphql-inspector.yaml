@@ -15,7 +15,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
+      - name: Create schema.graphql from schema.ts
+        run: sed 's/export const typeDefinitions = //' src/schema.ts > schema.graphql
+
       - uses: kamilkisiela/graphql-inspector@master
         with:
-          schema: 'main:src/schema.ts'
+          schema: 'main:schema.graphql'
           approve-label: expected-breaking-change
