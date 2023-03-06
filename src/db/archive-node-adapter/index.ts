@@ -134,6 +134,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.filterDuplicateEvents(blocks);
+      if (blocks[0].height === 2500) {
+        console.log('------------------');
+        console.log('blocks', blocks[0].height, blocks);
+        console.log('------------------');
+        console.log('------------------');
+        console.log('filtered', filteredBlocks[0].height, filteredBlocks);
+        console.log('------------------');
+      }
       const events = this.mapActionOrEvent(
         'event',
         filteredBlocks,
