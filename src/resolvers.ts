@@ -14,23 +14,21 @@ export const resolvers: Resolvers = {
         return context.db_client.getEvents(input);
       }
 
-      const eventsData = context.db_client.getEvents(input, {
+      return context.db_client.getEvents(input, {
         traceInfo,
       });
-      return eventsData;
     },
     actions: async (_, { input }, context) => {
       const contextSymbols = Object.getOwnPropertySymbols(context);
       const traceInfo = getTracingInfo(context[contextSymbols?.[0]]);
 
       if (!traceInfo) {
-        return context.db_client.getEvents(input);
+        return context.db_client.getActions(input);
       }
 
-      const actionsData = context.db_client.getActions(input, {
+      return context.db_client.getActions(input, {
         traceInfo,
       });
-      return actionsData ?? [];
     },
   },
 };
