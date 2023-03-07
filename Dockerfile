@@ -10,6 +10,7 @@ RUN npm run build
 FROM node:14
 WORKDIR /app
 COPY package*.json ./
+COPY schema.graphql ./
 RUN npm ci --only=production
 COPY --from=build /app/build /app/build
 EXPOSE 8080

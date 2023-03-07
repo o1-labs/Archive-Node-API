@@ -43,6 +43,7 @@
     "@envelop/graphql-jit": "^5.0.6",
     "@envelop/opentelemetry": "^4.0.6",
     "@graphql-tools/executor-http": "^0.1.9",
+    "@graphql-tools/graphql-file-loader": "^7.5.16",
     "@graphql-tools/load": "^7.8.13",
     "@graphql-tools/schema": "^9.0.16",
     "@opentelemetry/exporter-jaeger": "^1.9.1",
