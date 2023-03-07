@@ -66,7 +66,7 @@ function buildPlugins() {
     plugins.push(
       useOpenTelemetry(
         {
-          resolvers: false, // Tracks resolvers calls, and tracks resolvers thrown errors
+          resolvers: true, // Tracks resolvers calls, and tracks resolvers thrown errors
           variables: true, // Includes the operation variables values as part of the metadata collected
           result: true, // Includes execution result object as part of the metadata collected
         },
