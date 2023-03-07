@@ -1,10 +1,11 @@
 import { expect, test, describe, beforeAll } from 'vitest';
 
 import { createYoga, createSchema } from 'graphql-yoga';
+import { loadSchemaSync } from '@graphql-tools/load';
+import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { buildHTTPExecutor } from '@graphql-tools/executor-http';
 import { parse } from 'graphql';
 
-import { typeDefinitions } from '../src/schema';
 import { resolvers } from '../src/resolvers';
 import { buildContext, GraphQLContext } from '../src/context';
 
@@ -66,7 +67,9 @@ describe('Query Resolvers', async () => {
 
   beforeAll(async () => {
     const schema = createSchema({
-      typeDefs: typeDefinitions,
+      typeDefs: loadSchemaSync('./schema.graphql', {
+        loaders: [new GraphQLFileLoader()],
+      }),
       resolvers,
     });
     const context = await buildContext(PG_CONN);
