@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { typeDefinitions } from './schema';
+import { loadSchemaSync } from '@graphql-tools/load';
+import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { Resolvers } from './resolvers-types';
 import { getTracingInfo } from './tracing';
 
@@ -36,5 +37,7 @@ export const resolvers: Resolvers = {
 
 export const schema = makeExecutableSchema({
   resolvers: [resolvers],
-  typeDefs: [typeDefinitions],
+  typeDefs: loadSchemaSync('./schema.graphql', {
+    loaders: [new GraphQLFileLoader()],
+  }),
 });
