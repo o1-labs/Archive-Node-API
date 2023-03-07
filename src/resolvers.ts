@@ -2,14 +2,35 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { Resolvers } from './resolvers-types';
+import { getTracingInfo } from './tracing';
 
 export const resolvers: Resolvers = {
   Query: {
-    events: async (_, { input }, { db_client }) => {
-      return db_client.getEvents(input);
+    events: async (_, { input }, context) => {
+      const contextSymbols = Object.getOwnPropertySymbols(context);
+      const traceInfo = getTracingInfo(context[contextSymbols?.[0]]);
+
+      if (!traceInfo) {
+        return context.db_client.getEvents(input);
+      }
+
+      const eventsData = context.db_client.getEvents(input, {
+        traceInfo,
+      });
+      return eventsData;
     },
-    actions: async (_, { input }, { db_client }) => {
-      return db_client.getActions(input);
+    actions: async (_, { input }, context) => {
+      const contextSymbols = Object.getOwnPropertySymbols(context);
+      const traceInfo = getTracingInfo(context[contextSymbols?.[0]]);
+
+      if (!traceInfo) {
+        return context.db_client.getEvents(input);
+      }
+
+      const actionsData = context.db_client.getActions(input, {
+        traceInfo,
+      });
+      return actionsData ?? [];
     },
   },
 };
