@@ -22,6 +22,7 @@ import {
 
 import type { DatabaseAdapter } from '../index';
 import type { EventFilterOptionsInput } from '../../resolvers-types';
+import { TraceInfo } from 'src/tracing';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
@@ -59,29 +60,67 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return this.client.end();
   }
 
-  async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    const rows = await this.executeEventsQuery(input);
+  async getEvents(
+    input: EventFilterOptionsInput,
+    options?: unknown
+  ): Promise<Events> {
+    let traceInfo;
+    if (options && typeof options === 'object' && 'traceInfo' in options) {
+      traceInfo = options.traceInfo as TraceInfo;
+    }
 
+    const sqlSpan = traceInfo?.tracer.startSpan(
+      'Events SQL',
+      undefined,
+      traceInfo.ctx
+    );
+    const rows = await this.executeEventsQuery(input);
+    sqlSpan?.end();
+
+    const eventsProcessingSpan = traceInfo?.tracer.startSpan(
+      'Events Processing',
+      undefined,
+      traceInfo.ctx
+    );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
     const blocksMap = this.partitionBlocks(rows);
-
     const eventsData = this.deriveEventsFromBlocks(
       blocksMap,
       elementIdFieldValues
     );
+    eventsProcessingSpan?.end();
     return eventsData ?? [];
   }
 
-  async getActions(input: EventFilterOptionsInput): Promise<Actions> {
-    const rows = await this.executeActionsQuery(input);
+  async getActions(
+    input: EventFilterOptionsInput,
+    options: unknown
+  ): Promise<Actions> {
+    let traceInfo;
+    if (options && typeof options === 'object' && 'traceInfo' in options) {
+      traceInfo = options.traceInfo as TraceInfo;
+    }
 
+    const sqlSpan = traceInfo?.tracer.startSpan(
+      'Actions SQL',
+      undefined,
+      traceInfo.ctx
+    );
+    const rows = await this.executeActionsQuery(input);
+    sqlSpan?.end();
+
+    const actionsProcessingSpan = traceInfo?.tracer.startSpan(
+      'Actions Processing',
+      undefined,
+      traceInfo.ctx
+    );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
     const blocksMap = this.partitionBlocks(rows);
-
     const actionsData = this.deriveActionsFromBlocks(
       blocksMap,
       elementIdFieldValues
     );
+    actionsProcessingSpan?.end();
     return actionsData ?? [];
   }
 
