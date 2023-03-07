@@ -169,28 +169,52 @@ It is important to note that the benchmarking script requires the server to run 
 
 ## Hardware Requirements
 
-Running the Archive Node API requires a hardware configuration that can handle the load placed on the server by user requests, with the main load being on the database. The following hardware requirements are recommended for optimal performance:
-
-CPU: The server should have a multi-core CPU, preferably with at least four cores, to handle the concurrent user requests and database transactions. A higher core count CPU will help reduce response times and ensure faster processing of queries.
-
-Memory: Sufficient memory is required to handle the increased load on the database. It is recommended to have at least 4GB of RAM.
-
-Network: A high-speed internet connection is recommended to reduce latency and improve query performance. The network infrastructure should be capable of handling concurrent user requests and database transactions.
+Running the Archive Node API requires a hardware configuration that can handle the load placed on the server by user requests, with the primary load being on the database. This API is written to be resource efficient; the main bottleneck is expected to be on the database performance, not the Archive Node API process.
 
 ### Increased Load on the Database
 
-The Archive Node API server will place a heavy load on the database due to the nature of the complexity of the Archive Node database schema. To fetch events and action data related to a zkApp, there are multiple complex JOINs involved to aggregate the requested data. This can cause an increased load on the database and slow down response times.
+To mitigate the load on the database, it is recommended to use the multi-host connection to utilize multiple Archive Node databases. By supplying additional read-only databases for the API to connect to, queries will be spread evenly across all databases, which will help with response time. Additionally, the use of more powerful hardware on existing Archive Node databases should be considered.
 
-To mitigate the load on the database, it is recommended to take advantage of the multi-host connection to utilize multiple Archive Node databases. By supplying additional read-only databases for the API to connect to, queries will be spread out evenly across all databases which will help with response time. Additionally, considerations to use more powerful hardware on existing Archive Node databases should be considered.
+To get a real sense of what hardware requirements are needed, you can utilize the [benchmarking suite](#benchmarking) to see how many requests can be handled.
 
-To get an accurate sense of what hardware requirements are needed, you can utilize the [benchmarking suite](#benchmarking) to see how many requests can be handled. Simply deploy your Archive Node database to an accessible endpoint, start the server, specify the URL to use for the Archive Node database, and run the benchmarking suite to see how higher requests affect response time.
+For example, a benchmark report is shown below and was run with an Archive Node API and Postgres database container running on the same machine with a 12-core processor & 32GB of RAM.
 
-## Why are multiple blocks shown when getting event/action data at highest block of the network?
+```
+--------------------------------------
+Metrics for period to: 19:05:30(-0800) (width: 9.999s)
+--------------------------------------
 
-One issue with this design is deciding how to return data from the tip of the network. At the tip of the network, each block producer submits their block to be included in the Mina network. Because Mina has weaker finality, it is difficult to know which block should be returned when querying for event/action data. The OCaml Mina daemon uses a selection algorithm to estimate the chain strength of each submitted block and then decides which block to move forward with.
+http.codes.200: ................................................................ 7908
+http.request_rate: ............................................................. 794/sec
+http.requests: ................................................................. 7915
+http.response_time:
+  min: ......................................................................... 1
+  max: ......................................................................... 54
+  median: ...................................................................... 15
+  p95: ......................................................................... 30.9
+  p99: ......................................................................... 39.3
+http.responses: ................................................................ 7908
+vusers.completed: .............................................................. 7907
+vusers.created: ................................................................ 7916
+vusers.created_by_name.Get Actions: ............................................ 3885
+vusers.created_by_name.Get Events: ............................................. 4031
+vusers.failed: ................................................................. 0
+vusers.session_length:
+  min: ......................................................................... 2.4
+  max: ......................................................................... 55.5
+  median: ...................................................................... 16
+  p95: ......................................................................... 32.1
+  p99: ......................................................................... 40
+```
 
-One solution could be porting over the selection algorithm to TypeScript and emulating the same algorithm to decide which block to return at the tip of the network. However, this does not work as the Archive Node database currently doesn’t store the data needed to run the selection algorithm that the Mina daemon has access to (mainly `last_vrf_output` and `sub_window_densities`).
+## Why are multiple blocks shown when getting event/action data at most recent (highest) block of the network?
 
-Due to not knowing what block to return at the tip of the network, the API will return _all_ blocks at the tip of the network. If all the blocks contain the same transaction data, there is a high probability that the event/action data will be persisted in the network. In the rare case where some blocks contain the event/action data and some do not, we let the developer using this API handle this case for themselves (e.g. wait for additional blocks to gain confidence in finality).
+When the Mina protocol decides which block to include as part of the canonical chain at the highest tip of the network, it must consider a choice of blocks submitted by different block producers. Because there are potentially other blocks to include at the best tip, forks can happen frequently. The Mina client runs a selection algorithm based on calculating each proposed block's [chain strength](https://docs.minaprotocol.com/glossary#chain-strength). The block with the highest chain strength is chosen and included in the canonical chain.
+
+The Archive Node API only has access to the Archive Node database for network-related information. This means it does not have access to the data structures the Mina client uses as part of the chain selection algorithm. For this reason, the Archive Node API cannot quickly check which block has the highest chain strength at the tip of the network.
+
+As a short-term solution, due to not knowing what block to return at the tip of the network, the Archive Node API will return _all_ blocks at the tip of the network for the time being. If all the blocks contain the same transaction data, there is a high probability that the event/action data will be persisted in the network. In the rare case where some blocks contain the event/action data, and some do not, we let the developer using this API handle this case for themselves (e.g. wait for additional blocks to gain confidence in finality). The most recent block can be identified by checking the `distanceFromMaxBlockHeight` resolver and checking that it equals `0`.
+
+A long-term solution would be porting over the selection algorithm to TypeScript and emulating the same algorithm to decide which block to return at the tip of the network. However, this is not possible now, given that the Archive Node database schema currently doesn’t store the data needed to run the selection algorithm that the Mina client has access to (mainly `last_vrf_output` and `sub_window_densities`).
 
 This issue of deciding what to return at the tip of the network only happens at the maximum block height. All blocks below the height of the network will have one block returned and will avoid this issue. The need for this data has been raised to the current maintainers of the Archive Node. Once the Archive Node includes `last_vrf_output` and `sub_window_densities` into its schema, the selection algorithm can be implemented later to solve this issue. The issue tracking this is [listed here](https://github.com/o1-labs/Archive-Node-API/issues/7)
