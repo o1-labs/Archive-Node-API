@@ -88,6 +88,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       blocksMap,
       elementIdFieldValues
     );
+    eventsData.sort(
+      (a, b) => Number(b.blockInfo.height) - Number(a.blockInfo.height)
+    );
     eventsProcessingSpan?.end();
     return eventsData ?? [];
   }
@@ -119,6 +122,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const actionsData = this.deriveActionsFromBlocks(
       blocksMap,
       elementIdFieldValues
+    );
+    actionsData.sort(
+      (a, b) => Number(b.blockInfo.height) - Number(a.blockInfo.height)
     );
     actionsProcessingSpan?.end();
     return actionsData ?? [];
@@ -178,7 +184,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-
       events.sort((a, b) => Number(a.index) - Number(b.index));
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
@@ -227,8 +232,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blocks,
         elementIdFieldValues
       ) as Action[];
-
-      actions.reverse();
       actionsData.push({ blockInfo, transactionInfo, actionData: actions });
     }
     return actionsData;

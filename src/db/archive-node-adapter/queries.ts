@@ -137,7 +137,6 @@ export function getEventsQuery(
   ${emittedEventsCTE(db_client)}
   SELECT *
   FROM emitted_events
-  ORDER BY timestamp DESC, state_hash DESC
   `;
 }
 
@@ -158,7 +157,6 @@ export function getActionsQuery(
   ${emittedActionsCTE(db_client)}
   SELECT *
   FROM emitted_actions
-  ORDER BY timestamp DESC, state_hash DESC
   `;
 }
 
