@@ -110,6 +110,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       traceInfo.ctx
     );
     const rows = await this.executeActionsQuery(input);
+    console.log(rows);
+
     sqlSpan?.end();
 
     const actionsProcessingSpan = traceInfo?.tracer.startSpan(

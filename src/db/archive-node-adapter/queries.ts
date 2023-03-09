@@ -120,6 +120,39 @@ function emittedActionsCTE(db_client: postgres.Sql) {
   )`;
 }
 
+function emittedActionStateCTE(db_client: postgres.Sql) {
+  return db_client`
+  emitted_action_state AS
+  (
+    SELECT 
+      zkvh.value AS verification_key_hash, 
+
+      zkvk.verification_key AS zkapp_verification_key,
+      
+      element0,
+      zkf.field AS action_state_field,
+
+      emitted_actions.* 
+
+    FROM emitted_actions
+    INNER JOIN zkapp_verification_key_hashes zkvh
+    ON zkvh.id = verification_key_hash_id
+
+    INNER JOIN zkapp_verification_keys zkvk
+    ON zkvk.hash_id = zkvh.id
+
+    INNER JOIN zkapp_accounts zka
+    ON zka.verification_key_id = zkvk.hash_id
+
+    INNER JOIN zkapp_sequence_states zks
+    ON zks.id = zka.sequence_state_id
+
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = element0
+
+  )`;
+}
+
 export function getEventsQuery(
   db_client: postgres.Sql,
   address: string,
@@ -154,9 +187,10 @@ export function getActionsQuery(
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},
-  ${emittedActionsCTE(db_client)}
+  ${emittedActionsCTE(db_client)},
+  ${emittedActionStateCTE(db_client)}
   SELECT *
-  FROM emitted_actions
+  FROM emitted_action_state 
   `;
 }
 
@@ -177,4 +211,6 @@ export const USED_TABLES = [
   'zkapp_events',
   'zkapp_field_array',
   'zkapp_field',
+  'zkapp_verification_key_hashes',
+  'zkapp_verification_keys',
 ] as const;
