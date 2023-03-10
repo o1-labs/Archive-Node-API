@@ -27,7 +27,6 @@ query getEvents {
       memo
     }
     eventData {
-      index
       data
     }
   }
@@ -50,6 +49,7 @@ query getActions {
       hash
       memo
     }
+    actionState
     actionData {
       data
     }
@@ -109,7 +109,7 @@ This section aims to describe all the environment variables exposed to configure
 
 - `JAEGER_SERVICE_NAME`: The name used to specify your service within Jaeger. This name will be used to identify your specific running server.
 
-- `PORT`: The port to be used when running the server. By default, it will use port `4000`.
+- `PORT`: The port to be used when running the server. By default, it will use port `8080`.
 
 - `LOG_LEVEL`: Specifies the level of logs to emit from GraphQL Yoga. [See documentation here](https://the-guild.dev/graphql/yoga-server/docs/features/logging-and-debugging) for more details.
 
