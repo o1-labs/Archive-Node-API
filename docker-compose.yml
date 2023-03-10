@@ -44,6 +44,11 @@ services:
       - "5432:5432"
     env_file:
       - ./.env
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+      PGDATA: ${PGDATA}
     volumes:
       - "./data/${PG_DUMP}:/data/${PG_DUMP}"
       - "./scripts/init.sh:/docker-entrypoint-initdb.d/init.sh"
@@ -81,7 +86,6 @@ services:
       - "8080:8080"
     command: npm run start
     volumes:
-      - .:/app/
       - /app/node_modules
     networks:
       - archive

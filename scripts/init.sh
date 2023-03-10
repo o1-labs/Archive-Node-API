@@ -2,5 +2,5 @@
 
 set -e
 
-psql -U "${DB_USER}" "${DB_NAME}" -c "CREATE USER zkapps_monitor;"
-psql -U "${DB_USER}" "${DB_NAME}" < /data/"${PG_DUMP}"
+psql -U "${PGUSER}" "${PGDATABASE}" -c "CREATE USER zkapps_monitor;"
+psql -U "${PGUSER}" "${PGDATABASE}" < /data/"${PG_DUMP}"
