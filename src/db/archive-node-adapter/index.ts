@@ -227,6 +227,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     const actionsData: Actions = [];
     for (const [, blocks] of blocksMap) {
+      const { action_state_value } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
       const actions = this.mapActionOrEvent(
@@ -234,7 +235,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blocks,
         elementIdFieldValues
       ) as Action[];
-      actionsData.push({ blockInfo, transactionInfo, actionData: actions });
+      actionsData.push({
+        blockInfo,
+        transactionInfo,
+        actionData: actions,
+        actionState: action_state_value,
+      });
     }
     return actionsData;
   }
