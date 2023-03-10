@@ -26,7 +26,6 @@ query getEvents($input: EventFilterOptionsInput!) {
       memo
     }
     eventData {
-      index
       data
     }
   }
