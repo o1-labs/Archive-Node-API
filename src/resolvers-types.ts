@@ -35,6 +35,7 @@ export type ActionData = {
 export type ActionOutput = {
   __typename?: 'ActionOutput';
   actionData?: Maybe<Array<Maybe<ActionData>>>;
+  actionState: Scalars['String'];
   blockInfo?: Maybe<BlockInfo>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
@@ -253,6 +254,7 @@ export type ActionOutputResolvers<
     ParentType,
     ContextType
   >;
+  actionState?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   blockInfo?: Resolver<
     Maybe<ResolversTypes['BlockInfo']>,
     ParentType,

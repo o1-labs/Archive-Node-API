@@ -120,6 +120,23 @@ function emittedActionsCTE(db_client: postgres.Sql) {
   )`;
 }
 
+// TODO: Rename sequence_states to action_states when archive node is redeployed
+// https://github.com/o1-labs/Archive-Node-API/issues/56
+function emittedActionStateCTE(db_client: postgres.Sql) {
+  return db_client`
+  emitted_action_state AS
+  (
+    SELECT zkf.field AS action_state_value, emitted_actions.*
+    FROM emitted_actions
+    INNER JOIN zkapp_accounts zkacc
+    ON zkacc.id = emitted_actions.zkapp_id
+    INNER JOIN zkapp_sequence_states zks
+    ON zks.id = zkacc.sequence_state_id
+    INNER JOIN zkapp_field zkf
+    ON zkf.id = zks.element0
+  )`;
+}
+
 export function getEventsQuery(
   db_client: postgres.Sql,
   address: string,
@@ -154,9 +171,10 @@ export function getActionsQuery(
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},
-  ${emittedActionsCTE(db_client)}
+  ${emittedActionsCTE(db_client)},
+  ${emittedActionStateCTE(db_client)}
   SELECT *
-  FROM emitted_actions
+  FROM emitted_action_state 
   `;
 }
 
@@ -177,4 +195,8 @@ export const USED_TABLES = [
   'zkapp_events',
   'zkapp_field_array',
   'zkapp_field',
+  'zkapp_verification_key_hashes',
+  'zkapp_verification_keys',
+  'zkapp_accounts',
+  'zkapp_sequence_states',
 ] as const;

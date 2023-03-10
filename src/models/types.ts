@@ -41,6 +41,7 @@ export type Events = {
 }[];
 
 export type Actions = {
+  actionState: string;
   actionData: Action[];
   blockInfo: BlockInfo;
   transactionInfo: TransactionInfo;
