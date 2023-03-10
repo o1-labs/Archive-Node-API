@@ -57,6 +57,7 @@ export { BlockStatusFilter };
 export type EventData = {
   __typename?: 'EventData';
   data: Array<Maybe<Scalars['String']>>;
+  index: Scalars['String'];
 };
 
 export type EventFilterOptionsInput = {
@@ -308,6 +309,7 @@ export type EventDataResolvers<
     ParentType,
     ContextType
   >;
+  index?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

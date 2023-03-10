@@ -8,6 +8,7 @@ export enum BlockStatusFilter {
 }
 
 export type Event = {
+  index: string;
   data: string[];
 };
 

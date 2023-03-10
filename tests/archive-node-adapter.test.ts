@@ -127,6 +127,7 @@ describe('ArchiveNodeAdapter', async () => {
 
         expect(events.length).toBeTruthy();
         events.forEach((event) => {
+          expect(event).toHaveProperty('index');
           expect(event).toHaveProperty('data');
         });
       });
@@ -248,7 +249,7 @@ describe('ArchiveNodeAdapter', async () => {
         );
 
         eventsData.forEach((event) => {
-          const indexes = event.eventData.map((event) => event.data[0]);
+          const indexes = event.eventData.map((event) => event.index);
           expect(indexes).toEqual(indexes.sort());
         });
       });

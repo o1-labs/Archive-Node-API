@@ -24,8 +24,9 @@ export function createTransactionInfo(row: postgres.Row) {
   } as TransactionInfo;
 }
 
-export function createEvent(data: string[]) {
+export function createEvent(index: string, data: string[]) {
   return {
+    index,
     data,
   } as Event;
 }

@@ -184,7 +184,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-      events.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
+      events.sort((a, b) => Number(a.index) - Number(b.index));
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
@@ -271,7 +271,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
 
       if (kind === 'event') {
-        const event = createEvent(currentValue);
+        const event = createEvent(currentValue[0], currentValue.slice(1));
         data.push(event);
       } else {
         const action = createAction(currentValue);
