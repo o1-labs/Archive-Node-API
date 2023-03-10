@@ -2,6 +2,7 @@
 FROM node:14 as build
 WORKDIR /app
 COPY package*.json ./
+RUN npm i -g typescript
 RUN npm ci
 COPY . .
 RUN npm run build
