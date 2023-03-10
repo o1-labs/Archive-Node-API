@@ -184,7 +184,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-      if (events.every((event) => event.data.length >= 2)) {
+      if (events.every((event) => !this.isSingleEventType(event))) {
         events.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
       }
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
@@ -213,7 +213,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
       // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
       // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
-      else if (uniqueElementIds.length > 1) {
+      else if (element_ids.length > 1 && uniqueElementIds.length > 1) {
         seenEventIds.set(uniqueElementIdsKey, 1);
       }
       newBlocks.push(blocks[i]);
@@ -296,5 +296,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       elementIdValues.set(id, field);
     }
     return elementIdValues;
+  }
+
+  protected isSingleEventType(event: Event) {
+    return event.data.length === 1;
   }
 }
