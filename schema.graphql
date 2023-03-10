@@ -50,6 +50,7 @@ type ActionOutput {
   blockInfo: BlockInfo
   transactionInfo: TransactionInfo
   actionData: [ActionData]
+  actionState: String!
 }
 
 type Query {
