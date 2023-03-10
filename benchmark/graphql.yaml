@@ -44,7 +44,6 @@ scenarios:
                     memo
                   }
                   eventData {
-                    index
                     data
                   }
                 }
@@ -79,6 +78,7 @@ scenarios:
                     hash
                     memo
                   }
+                  actionState
                   actionData {
                     data
                   }

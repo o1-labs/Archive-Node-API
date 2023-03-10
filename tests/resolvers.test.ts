@@ -26,7 +26,6 @@ query getEvents($input: EventFilterOptionsInput!) {
       memo
     }
     eventData {
-      index
       data
     }
   }
@@ -44,6 +43,7 @@ query getEvents($input: EventFilterOptionsInput!) {
       chainStatus
       distanceFromMaxBlockHeight
     }
+    actionState
     transactionInfo {
       status
       hash

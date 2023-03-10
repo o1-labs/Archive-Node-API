@@ -35,6 +35,7 @@ export type ActionData = {
 export type ActionOutput = {
   __typename?: 'ActionOutput';
   actionData?: Maybe<Array<Maybe<ActionData>>>;
+  actionState: Scalars['String'];
   blockInfo?: Maybe<BlockInfo>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
@@ -57,7 +58,6 @@ export { BlockStatusFilter };
 export type EventData = {
   __typename?: 'EventData';
   data: Array<Maybe<Scalars['String']>>;
-  index: Scalars['String'];
 };
 
 export type EventFilterOptionsInput = {
@@ -254,6 +254,7 @@ export type ActionOutputResolvers<
     ParentType,
     ContextType
   >;
+  actionState?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   blockInfo?: Resolver<
     Maybe<ResolversTypes['BlockInfo']>,
     ParentType,
@@ -309,7 +310,6 @@ export type EventDataResolvers<
     ParentType,
     ContextType
   >;
-  index?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

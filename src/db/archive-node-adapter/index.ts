@@ -184,7 +184,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-      events.sort((a, b) => Number(a.index) - Number(b.index));
+      if (events.every((event) => event.data.length >= 2)) {
+        events.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
+      }
       eventsData.push({ blockInfo, transactionInfo, eventData: events });
     }
     return eventsData;
@@ -225,6 +227,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     const actionsData: Actions = [];
     for (const [, blocks] of blocksMap) {
+      const { action_state_value } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
       const actions = this.mapActionOrEvent(
@@ -232,7 +235,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blocks,
         elementIdFieldValues
       ) as Action[];
-      actionsData.push({ blockInfo, transactionInfo, actionData: actions });
+      actionsData.push({
+        blockInfo,
+        transactionInfo,
+        actionData: actions,
+        actionState: action_state_value,
+      });
     }
     return actionsData;
   }
@@ -271,7 +279,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
 
       if (kind === 'event') {
-        const event = createEvent(currentValue[0], currentValue.slice(1));
+        const event = createEvent(currentValue);
         data.push(event);
       } else {
         const action = createAction(currentValue);
