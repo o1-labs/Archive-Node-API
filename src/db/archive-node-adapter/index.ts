@@ -209,6 +209,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           continue;
         } else {
           seenEventIds.set(uniqueElementIdsKey, numberofUniqueElements + 1);
+          continue;
         }
       }
       // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
