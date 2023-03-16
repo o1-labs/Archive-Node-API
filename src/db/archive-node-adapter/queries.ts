@@ -1,4 +1,5 @@
 import type postgres from 'postgres';
+import { ArchiveNodeDatabaseRow } from 'src/models/types';
 import { BlockStatusFilter } from '../../resolvers-types';
 
 function fullChainCTE(db_client: postgres.Sql) {
@@ -64,6 +65,7 @@ function blocksAccessedCTE(
             parent_hash,
             height,
             global_slot_since_genesis,
+            global_slot_since_hard_fork,
             timestamp,
             chain_status,
             ledger_hash,
@@ -91,6 +93,7 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
     SELECT blocks_accessed.*,
             zkapp_fee_payer_body_id,
             zkapp_account_updates_ids,
+            authorization_kind,
             status,
             memo,
             hash,
@@ -165,7 +168,7 @@ export function getEventsQuery(
   to?: string,
   from?: string
 ) {
-  return db_client`
+  return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
@@ -185,7 +188,7 @@ export function getActionsQuery(
   to?: string,
   from?: string
 ) {
-  return db_client`
+  return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
