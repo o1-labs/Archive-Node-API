@@ -94,7 +94,7 @@ function emittedEventsCTE(db_client: postgres.Sql) {
   return db_client`
   emitted_events AS 
   (
-    SELECT *
+    SELECT *, zke.element_ids AS zkapp_event_element_ids
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
     ON zke.id = events_id
@@ -109,7 +109,7 @@ function emittedActionsCTE(db_client: postgres.Sql) {
   return db_client`
   emitted_actions AS
   (
-    SELECT *
+    SELECT *, zke.element_ids AS zkapp_event_element_ids
     FROM emitted_zkapp_commands
     INNER JOIN zkapp_events zke
     ON zke.id = actions_id

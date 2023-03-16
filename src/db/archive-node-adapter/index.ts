@@ -178,7 +178,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
-      const filteredBlocks = this.filterDuplicateEvents(blocks);
+      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
       const events = this.mapActionOrEvent(
         'event',
         filteredBlocks,
@@ -192,33 +192,39 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return eventsData;
   }
 
-  protected filterDuplicateEvents(blocks: postgres.Row[]) {
+  protected removeRedundantEmittedFields(blocks: postgres.Row[]) {
     const seenEventIds = new Map<string, number>();
     const newBlocks: postgres.Row[] = [];
-    for (let i = 0; i < blocks.length; i++) {
-      const { element_ids } = blocks[i];
+
+    for (const block of blocks) {
+      const { element_ids, zkapp_event_element_ids } = block;
       const uniqueElementIds = [...new Set(element_ids)];
-
       const uniqueElementIdsKey = uniqueElementIds.join(',');
-      const numberofUniqueElements = seenEventIds.get(uniqueElementIdsKey);
+      const numberOfUniqueElements = seenEventIds.get(uniqueElementIdsKey);
 
-      if (numberofUniqueElements) {
-        // If we have seen all the element ids before, we can remove the row.
-        if (numberofUniqueElements + 1 === uniqueElementIds.length) {
+      if (numberOfUniqueElements) {
+        if (numberOfUniqueElements + 1 === uniqueElementIds.length) {
           seenEventIds.delete(uniqueElementIdsKey);
-          continue;
         } else {
-          seenEventIds.set(uniqueElementIdsKey, numberofUniqueElements + 1);
-          continue;
+          seenEventIds.set(uniqueElementIdsKey, numberOfUniqueElements + 1);
         }
+        continue;
       }
-      // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
-      // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
-      else if (uniqueElementIds.length > 1) {
+
+      if (uniqueElementIds.length > 1) {
         seenEventIds.set(uniqueElementIdsKey, 1);
       }
-      newBlocks.push(blocks[i]);
+
+      const uniqueEventElementIds = new Set(zkapp_event_element_ids);
+      if (uniqueEventElementIds.size === 1) {
+        zkapp_event_element_ids.forEach(() => {
+          newBlocks.push(block);
+        });
+      } else {
+        newBlocks.push(block);
+      }
     }
+
     return newBlocks;
   }
 
@@ -231,9 +237,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const { action_state_value } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
+      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
       const actions = this.mapActionOrEvent(
         'action',
-        blocks,
+        filteredBlocks,
         elementIdFieldValues
       ) as Action[];
       actionsData.push({
