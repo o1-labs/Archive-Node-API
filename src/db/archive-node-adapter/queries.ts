@@ -55,7 +55,19 @@ function blocksAccessedCTE(
   return db_client`
   blocks_accessed AS 
   (
-    SELECT *
+    SELECT requesting_zkapp_account_identifier_id,
+            block_id,
+            account_identifier_id,
+            zkapp_id,
+            id AS account_access_id,
+            state_hash,
+            parent_hash,
+            height,
+            global_slot_since_genesis,
+            timestamp,
+            chain_status,
+            ledger_hash,
+            distance_from_max_block_height
     FROM account_identifier ai
     INNER JOIN accounts_accessed aa
     ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
@@ -76,7 +88,15 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
   return db_client`
   emitted_zkapp_commands AS 
   (
-    SELECT *
+    SELECT blocks_accessed.*,
+            zkapp_fee_payer_body_id,
+            zkapp_account_updates_ids,
+            status,
+            memo,
+            hash,
+            body_id,
+            events_id,
+            actions_id
     FROM blocks_accessed
     INNER JOIN blocks_zkapp_commands bzkc
     ON blocks_accessed.block_id = bzkc.block_id
