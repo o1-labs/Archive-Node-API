@@ -6,6 +6,7 @@ import {
   DEFAULT_TOKEN_ID,
   Event,
   Events,
+  ArchiveNodeDatabaseRow,
 } from '../../models/types';
 import {
   createBlockInfo,
@@ -171,7 +172,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: Map<string, postgres.Row[]>,
+    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
     elementIdFieldValues: Map<string, string>
   ) {
     const eventsData: Events = [];
@@ -192,9 +193,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return eventsData;
   }
 
-  protected removeRedundantEmittedFields(blocks: postgres.Row[]) {
+  protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
     const seenEventIds = new Map<string, number>();
-    const newBlocks: postgres.Row[] = [];
+    const newBlocks: ArchiveNodeDatabaseRow[] = [];
 
     for (const block of blocks) {
       const { element_ids, zkapp_event_element_ids } = block;
@@ -234,7 +235,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: Map<string, postgres.Row[]>,
+    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
     elementIdFieldValues: Map<string, string>
   ) {
     const actionsData: Actions = [];
@@ -252,14 +253,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blockInfo,
         transactionInfo,
         actionData: actions,
-        actionState: action_state_value,
+        actionState: action_state_value!,
       });
     }
     return actionsData;
   }
 
-  protected partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
-    const blocks: Map<string, postgres.Row[]> = new Map();
+  protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
+    const blocks: Map<string, ArchiveNodeDatabaseRow[]> = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
@@ -277,7 +278,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   protected mapActionOrEvent(
     kind: 'action' | 'event',
-    rows: postgres.Row[],
+    rows: ArchiveNodeDatabaseRow[],
     elementIdFieldValues: Map<string, string>
   ) {
     const data: (Event | Action)[] = [];
@@ -286,7 +287,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const { element_ids } = rows[i];
       const currentValue = [];
       for (const elementId of element_ids) {
-        const elementIdValue = elementIdFieldValues.get(elementId);
+        const elementIdValue = elementIdFieldValues.get(elementId.toString());
         if (elementIdValue === undefined) continue;
         currentValue.push(elementIdValue);
       }
@@ -302,11 +303,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return data;
   }
 
-  protected getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
+  protected getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
     const elementIdValues: Map<string, string> = new Map();
     for (let i = 0; i < rows.length; i++) {
       const { id, field } = rows[i];
-      elementIdValues.set(id, field);
+      elementIdValues.set(id.toString(), field);
     }
     return elementIdValues;
   }

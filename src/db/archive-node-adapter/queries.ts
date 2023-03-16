@@ -1,4 +1,5 @@
 import type postgres from 'postgres';
+import { ArchiveNodeDatabaseRow } from 'src/models/types';
 import { BlockStatusFilter } from '../../resolvers-types';
 
 function fullChainCTE(db_client: postgres.Sql) {
@@ -165,7 +166,7 @@ export function getEventsQuery(
   to?: string,
   from?: string
 ) {
-  return db_client`
+  return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
@@ -185,7 +186,7 @@ export function getActionsQuery(
   to?: string,
   from?: string
 ) {
-  return db_client`
+  return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
