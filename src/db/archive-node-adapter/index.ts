@@ -203,6 +203,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const numberOfUniqueElements = seenEventIds.get(uniqueElementIdsKey);
 
       if (numberOfUniqueElements) {
+        // If we have seen all the element ids before, we can remove the row.
         if (numberOfUniqueElements + 1 === uniqueElementIds.length) {
           seenEventIds.delete(uniqueElementIdsKey);
         } else {
@@ -211,10 +212,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         continue;
       }
 
+      // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
+      // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
       if (uniqueElementIds.length > 1) {
         seenEventIds.set(uniqueElementIdsKey, 1);
       }
 
+      // Events/Actions that are emitted with the same field multiple times will only have a single value for `element_ids`.
+      // Here, we check `zkapp_event_element_ids` have the same value repeated multiple times, meaning that the same event value was emitted multiple times and should be added
       const uniqueEventElementIds = new Set(zkapp_event_element_ids);
       if (uniqueEventElementIds.size === 1) {
         zkapp_event_element_ids.forEach(() => {
