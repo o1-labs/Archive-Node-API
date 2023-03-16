@@ -6,6 +6,7 @@ import {
   DEFAULT_TOKEN_ID,
   Event,
   Events,
+  ArchiveNodeDatabaseRow,
 } from '../../models/types';
 import {
   createBlockInfo,
@@ -171,14 +172,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: Map<string, postgres.Row[]>,
+    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
     elementIdFieldValues: Map<string, string>
   ) {
     const eventsData: Events = [];
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
-      const filteredBlocks = this.filterDuplicateEvents(blocks);
+      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
       const events = this.mapActionOrEvent(
         'event',
         filteredBlocks,
@@ -192,38 +193,49 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return eventsData;
   }
 
-  protected filterDuplicateEvents(blocks: postgres.Row[]) {
+  protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
     const seenEventIds = new Map<string, number>();
-    const newBlocks: postgres.Row[] = [];
-    for (let i = 0; i < blocks.length; i++) {
-      const { element_ids } = blocks[i];
+    const newBlocks: ArchiveNodeDatabaseRow[] = [];
+
+    for (const block of blocks) {
+      const { element_ids, zkapp_event_element_ids } = block;
       const uniqueElementIds = [...new Set(element_ids)];
-
       const uniqueElementIdsKey = uniqueElementIds.join(',');
-      const numberofUniqueElements = seenEventIds.get(uniqueElementIdsKey);
+      const numberOfUniqueElements = seenEventIds.get(uniqueElementIdsKey);
 
-      if (numberofUniqueElements) {
+      if (numberOfUniqueElements) {
         // If we have seen all the element ids before, we can remove the row.
-        if (numberofUniqueElements + 1 === uniqueElementIds.length) {
+        if (numberOfUniqueElements + 1 === uniqueElementIds.length) {
           seenEventIds.delete(uniqueElementIdsKey);
-          continue;
         } else {
-          seenEventIds.set(uniqueElementIdsKey, numberofUniqueElements + 1);
-          continue;
+          seenEventIds.set(uniqueElementIdsKey, numberOfUniqueElements + 1);
         }
+        continue;
       }
+
       // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
       // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
-      else if (uniqueElementIds.length > 1) {
+      if (uniqueElementIds.length > 1) {
         seenEventIds.set(uniqueElementIdsKey, 1);
       }
-      newBlocks.push(blocks[i]);
+
+      // Events/Actions that are emitted with the same field multiple times will only have a single value for `element_ids`.
+      // Here, we check `zkapp_event_element_ids` have the same value repeated multiple times, meaning that the same event value was emitted multiple times and should be added
+      const uniqueEventElementIds = new Set(zkapp_event_element_ids);
+      if (uniqueEventElementIds.size === 1) {
+        zkapp_event_element_ids.forEach(() => {
+          newBlocks.push(block);
+        });
+      } else {
+        newBlocks.push(block);
+      }
     }
+
     return newBlocks;
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: Map<string, postgres.Row[]>,
+    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
     elementIdFieldValues: Map<string, string>
   ) {
     const actionsData: Actions = [];
@@ -231,23 +243,24 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const { action_state_value } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
+      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
       const actions = this.mapActionOrEvent(
         'action',
-        blocks,
+        filteredBlocks,
         elementIdFieldValues
       ) as Action[];
       actionsData.push({
         blockInfo,
         transactionInfo,
         actionData: actions,
-        actionState: action_state_value,
+        actionState: action_state_value!,
       });
     }
     return actionsData;
   }
 
-  protected partitionBlocks(rows: postgres.RowList<postgres.Row[]>) {
-    const blocks: Map<string, postgres.Row[]> = new Map();
+  protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
+    const blocks: Map<string, ArchiveNodeDatabaseRow[]> = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
@@ -265,7 +278,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   protected mapActionOrEvent(
     kind: 'action' | 'event',
-    rows: postgres.Row[],
+    rows: ArchiveNodeDatabaseRow[],
     elementIdFieldValues: Map<string, string>
   ) {
     const data: (Event | Action)[] = [];
@@ -274,7 +287,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const { element_ids } = rows[i];
       const currentValue = [];
       for (const elementId of element_ids) {
-        const elementIdValue = elementIdFieldValues.get(elementId);
+        const elementIdValue = elementIdFieldValues.get(elementId.toString());
         if (elementIdValue === undefined) continue;
         currentValue.push(elementIdValue);
       }
@@ -290,11 +303,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return data;
   }
 
-  protected getElementIdFieldValues(rows: postgres.RowList<postgres.Row[]>) {
+  protected getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
     const elementIdValues: Map<string, string> = new Map();
     for (let i = 0; i < rows.length; i++) {
       const { id, field } = rows[i];
-      elementIdValues.set(id, field);
+      elementIdValues.set(id.toString(), field);
     }
     return elementIdValues;
   }

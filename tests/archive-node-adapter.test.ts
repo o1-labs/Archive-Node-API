@@ -109,7 +109,7 @@ describe('ArchiveNodeAdapter', async () => {
       const elementIdFieldValues =
         archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
       EventsMock.forEach((row: any) => {
-        expect(elementIdFieldValues.get(row.id)).toEqual(row.field);
+        expect(elementIdFieldValues.get(row.id.toString())).toEqual(row.field);
       });
     });
   });
