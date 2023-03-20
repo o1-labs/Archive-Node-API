@@ -30,9 +30,9 @@ export function createEvent(data: string[]) {
   } as Event;
 }
 
-export function createAction(id: string, data: string[]) {
+export function createAction(accountUpdateId: string, data: string[]) {
   return {
-    id,
+    accountUpdateId,
     data,
   } as Action;
 }

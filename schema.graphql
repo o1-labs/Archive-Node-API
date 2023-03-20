@@ -17,7 +17,7 @@ type EventData {
 }
 
 type ActionData {
-  id: String!
+  accountUpdateId: String!
   data: [String]!
 }
 

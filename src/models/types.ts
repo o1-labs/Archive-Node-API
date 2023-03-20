@@ -12,7 +12,7 @@ export type Event = {
 };
 
 export type Action = {
-  id: string;
+  accountUpdateId: string;
   data: string[];
 };
 
