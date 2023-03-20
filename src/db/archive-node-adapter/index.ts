@@ -296,7 +296,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         const event = createEvent(currentValue);
         data.push(event);
       } else {
-        const action = createAction(currentValue);
+        const { zkapp_account_update_id } = rows[i];
+        const action = createAction(
+          zkapp_account_update_id.toString(),
+          currentValue
+        );
         data.push(action);
       }
     }

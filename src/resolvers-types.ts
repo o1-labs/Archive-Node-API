@@ -29,6 +29,7 @@ export type Scalars = {
 
 export type ActionData = {
   __typename?: 'ActionData';
+  accountUpdateId: Scalars['String'];
   data: Array<Maybe<Scalars['String']>>;
 };
 
@@ -237,6 +238,7 @@ export type ActionDataResolvers<
   ContextType = GraphQLContext,
   ParentType extends ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData']
 > = {
+  accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   data?: Resolver<
     Array<Maybe<ResolversTypes['String']>>,
     ParentType,

@@ -91,6 +91,7 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
   emitted_zkapp_commands AS 
   (
     SELECT blocks_accessed.*,
+            zkcu.id AS zkapp_account_update_id,
             zkapp_fee_payer_body_id,
             zkapp_account_updates_ids,
             authorization_kind,
