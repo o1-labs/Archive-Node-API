@@ -20,12 +20,12 @@ query getEvents($input: EventFilterOptionsInput!) {
       chainStatus
       distanceFromMaxBlockHeight
     }
-    transactionInfo {
-      status
-      hash
-      memo
-    }
     eventData {
+      transactionInfo {
+        status
+        hash
+        memo
+      }
       data
     }
   }
@@ -44,12 +44,12 @@ query getEvents($input: EventFilterOptionsInput!) {
       distanceFromMaxBlockHeight
     }
     actionState
-    transactionInfo {
-      status
-      hash
-      memo
-    }
     actionData {
+      transactionInfo {
+       status
+       hash
+       memo
+      }
       data
     }
   }

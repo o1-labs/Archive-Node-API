@@ -178,17 +178,19 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const eventsData: Events = [];
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
-      const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const events = this.mapActionOrEvent(
+      const eventData = this.mapActionOrEvent(
         'event',
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-      if (events.every((event) => event.data.length >= 2)) {
-        events.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
+      if (eventData.every((event) => event.data.length >= 2)) {
+        eventData.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
       }
-      eventsData.push({ blockInfo, transactionInfo, eventData: events });
+      eventsData.push({
+        blockInfo,
+        eventData,
+      });
     }
     return eventsData;
   }
@@ -242,17 +244,15 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     for (const [, blocks] of blocksMap) {
       const { action_state_value } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
-      const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const actions = this.mapActionOrEvent(
+      const actionData = this.mapActionOrEvent(
         'action',
         filteredBlocks,
         elementIdFieldValues
       ) as Action[];
       actionsData.push({
         blockInfo,
-        transactionInfo,
-        actionData: actions,
+        actionData: actionData,
         actionState: action_state_value!,
       });
     }
@@ -293,13 +293,16 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
 
       if (kind === 'event') {
-        const event = createEvent(currentValue);
+        const transactionInfo = createTransactionInfo(rows[i]);
+        const event = createEvent(currentValue, transactionInfo);
         data.push(event);
       } else {
         const { zkapp_account_update_id } = rows[i];
+        const transactionInfo = createTransactionInfo(rows[i]);
         const action = createAction(
           zkapp_account_update_id.toString(),
-          currentValue
+          currentValue,
+          transactionInfo
         );
         data.push(action);
       }
