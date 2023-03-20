@@ -30,6 +30,7 @@ export type Scalars = {
 export type ActionData = {
   __typename?: 'ActionData';
   data: Array<Maybe<Scalars['String']>>;
+  id: Scalars['String'];
 };
 
 export type ActionOutput = {
@@ -242,6 +243,7 @@ export type ActionDataResolvers<
     ParentType,
     ContextType
   >;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

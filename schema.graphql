@@ -17,6 +17,7 @@ type EventData {
 }
 
 type ActionData {
+  id: String!
   data: [String]!
 }
 

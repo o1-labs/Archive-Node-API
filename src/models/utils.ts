@@ -30,8 +30,9 @@ export function createEvent(data: string[]) {
   } as Event;
 }
 
-export function createAction(data: string[]) {
+export function createAction(id: string, data: string[]) {
   return {
+    id,
     data,
   } as Action;
 }
