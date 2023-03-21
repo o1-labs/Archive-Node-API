@@ -12,6 +12,7 @@ export type Event = {
 };
 
 export type Action = {
+  accountUpdateId: string;
   data: string[];
 };
 
@@ -48,6 +49,7 @@ export type Actions = {
 }[];
 
 export type ArchiveNodeDatabaseRow = {
+  zkapp_account_update_id: number;
   requesting_zkapp_account_identifier_id: number;
   block_id: number;
   account_identifier_id: number;
