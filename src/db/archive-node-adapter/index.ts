@@ -80,6 +80,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
     const rows = await this.executeEventsQuery(input);
     sqlSpan?.end();
+    console.log(rows);
 
     const eventsProcessingSpan = traceInfo?.tracer.startSpan(
       'Events Processing',
