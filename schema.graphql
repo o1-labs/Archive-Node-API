@@ -12,16 +12,6 @@ input EventFilterOptionsInput {
   from: Int
 }
 
-input ActionFilterOptionsInput {
-  address: String!
-  tokenId: String
-  status: BlockStatusFilter
-  to: Int
-  from: Int
-  fromActionHash: String
-  endActionHash: String
-}
-
 type EventData {
   data: [String]!
 }
@@ -65,5 +55,5 @@ type ActionOutput {
 
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
-  actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  actions(input: EventFilterOptionsInput!): [ActionOutput]!
 }

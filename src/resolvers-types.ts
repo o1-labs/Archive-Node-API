@@ -33,16 +33,6 @@ export type ActionData = {
   data: Array<Maybe<Scalars['String']>>;
 };
 
-export type ActionFilterOptionsInput = {
-  address: Scalars['String'];
-  endActionHash?: InputMaybe<Scalars['String']>;
-  from?: InputMaybe<Scalars['Int']>;
-  fromActionHash?: InputMaybe<Scalars['String']>;
-  status?: InputMaybe<BlockStatusFilter>;
-  to?: InputMaybe<Scalars['Int']>;
-  tokenId?: InputMaybe<Scalars['String']>;
-};
-
 export type ActionOutput = {
   __typename?: 'ActionOutput';
   actionData?: Maybe<Array<Maybe<ActionData>>>;
@@ -93,7 +83,7 @@ export type Query = {
 };
 
 export type QueryActionsArgs = {
-  input: ActionFilterOptionsInput;
+  input: EventFilterOptionsInput;
 };
 
 export type QueryEventsArgs = {
@@ -216,7 +206,6 @@ export type DirectiveResolverFn<
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   ActionData: ResolverTypeWrapper<ActionData>;
-  ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ResolverTypeWrapper<ActionOutput>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
   BlockStatusFilter: BlockStatusFilter;
@@ -233,7 +222,6 @@ export type ResolversTypes = {
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
   ActionData: ActionData;
-  ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ActionOutput;
   BlockInfo: BlockInfo;
   Boolean: Scalars['Boolean'];

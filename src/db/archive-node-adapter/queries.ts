@@ -57,19 +57,19 @@ function blocksAccessedCTE(
   blocks_accessed AS 
   (
     SELECT requesting_zkapp_account_identifier_id,
-      block_id,
-      account_identifier_id,
-      zkapp_id,
-      id AS account_access_id,
-      state_hash,
-      parent_hash,
-      height,
-      global_slot_since_genesis,
-      global_slot_since_hard_fork,
-      timestamp,
-      chain_status,
-      ledger_hash,
-      distance_from_max_block_height
+            block_id,
+            account_identifier_id,
+            zkapp_id,
+            id AS account_access_id,
+            state_hash,
+            parent_hash,
+            height,
+            global_slot_since_genesis,
+            global_slot_since_hard_fork,
+            timestamp,
+            chain_status,
+            ledger_hash,
+            distance_from_max_block_height
     FROM account_identifier ai
     INNER JOIN accounts_accessed aa
     ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
@@ -91,16 +91,16 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
   emitted_zkapp_commands AS 
   (
     SELECT blocks_accessed.*,
-      zkcu.id AS zkapp_account_update_id,
-      zkapp_fee_payer_body_id,
-      zkapp_account_updates_ids,
-      authorization_kind,
-      status,
-      memo,
-      hash,
-      body_id,
-      events_id,
-      actions_id
+            zkcu.id AS zkapp_account_update_id,
+            zkapp_fee_payer_body_id,
+            zkapp_account_updates_ids,
+            authorization_kind,
+            status,
+            memo,
+            hash,
+            body_id,
+            events_id,
+            actions_id
     FROM blocks_accessed
     INNER JOIN blocks_zkapp_commands bzkc
     ON blocks_accessed.block_id = bzkc.block_id
@@ -146,15 +146,11 @@ function emittedActionsCTE(db_client: postgres.Sql) {
 
 // TODO: Rename sequence_states to action_states when archive node is redeployed
 // https://github.com/o1-labs/Archive-Node-API/issues/56
-function emittedActionStateCTE(
-  db_client: postgres.Sql,
-  fromActionHash?: string,
-  endActionHash?: string
-) {
+function emittedActionStateCTE(db_client: postgres.Sql) {
   return db_client`
   emitted_action_state AS
   (
-    SELECT zkf.field AS action_state_value, zkf.id AS action_state_id, emitted_actions.*
+    SELECT zkf.field AS action_state_value, emitted_actions.*
     FROM emitted_actions
     INNER JOIN zkapp_accounts zkacc
     ON zkacc.id = emitted_actions.zkapp_id
@@ -162,17 +158,6 @@ function emittedActionStateCTE(
     ON zks.id = zkacc.sequence_state_id
     INNER JOIN zkapp_field zkf
     ON zkf.id = zks.element0
-    WHERE 1 = 1
-    ${
-      fromActionHash
-        ? db_client`AND zkf.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionHash})`
-        : db_client``
-    }
-    ${
-      endActionHash
-        ? db_client`AND zkf.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionHash})`
-        : db_client``
-    }
   )`;
 }
 
@@ -202,9 +187,7 @@ export function getActionsQuery(
   tokenId: string,
   status: BlockStatusFilter,
   to?: string,
-  from?: string,
-  fromActionHash?: string,
-  endActionHash?: string
+  from?: string
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
@@ -213,7 +196,7 @@ export function getActionsQuery(
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedActionsCTE(db_client)},
-  ${emittedActionStateCTE(db_client, fromActionHash, endActionHash)}
+  ${emittedActionStateCTE(db_client)}
   SELECT *
   FROM emitted_action_state 
   `;
