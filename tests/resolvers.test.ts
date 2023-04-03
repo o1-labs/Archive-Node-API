@@ -33,7 +33,7 @@ query getEvents($input: EventFilterOptionsInput!) {
 `;
 
 const actionsQuery = `
-query getEvents($input: EventFilterOptionsInput!) {
+query getActions($input: ActionFilterOptionsInput!) {
   actions(input: $input) {
     blockInfo {
       stateHash
