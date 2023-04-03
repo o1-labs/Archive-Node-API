@@ -22,7 +22,10 @@ import {
 } from './queries';
 
 import type { DatabaseAdapter } from '../index';
-import type { EventFilterOptionsInput } from '../../resolvers-types';
+import type {
+  ActionFilterOptionsInput,
+  EventFilterOptionsInput,
+} from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
@@ -151,8 +154,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
   }
 
-  private async executeActionsQuery(input: EventFilterOptionsInput) {
-    const { address, to, from } = input;
+  private async executeActionsQuery(input: ActionFilterOptionsInput) {
+    const { address, to, from, fromActionHash, endActionHash } = input;
     let { tokenId, status } = input;
 
     tokenId ||= DEFAULT_TOKEN_ID;
@@ -167,7 +170,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       tokenId,
       status,
       to?.toString(),
-      from?.toString()
+      from?.toString(),
+      fromActionHash?.toString(),
+      endActionHash?.toString()
     );
   }
 
