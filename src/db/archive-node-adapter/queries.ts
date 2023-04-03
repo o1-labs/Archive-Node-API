@@ -154,7 +154,7 @@ function emittedActionStateCTE(
   return db_client`
   emitted_action_state AS
   (
-    SELECT zkf.field AS action_state_value, zkf.id AS action_state_id, emitted_actions.*
+    SELECT zkf.field AS action_state_value, emitted_actions.*
     FROM emitted_actions
     INNER JOIN zkapp_accounts zkacc
     ON zkacc.id = emitted_actions.zkapp_id
