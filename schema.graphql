@@ -13,11 +13,13 @@ input EventFilterOptionsInput {
 }
 
 type EventData {
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
 type ActionData {
   accountUpdateId: String!
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
@@ -42,7 +44,6 @@ type TransactionInfo {
 
 type EventOutput {
   blockInfo: BlockInfo
-  transactionInfo: TransactionInfo
   eventData: [EventData]
 }
 

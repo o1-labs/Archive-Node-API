@@ -24,15 +24,21 @@ export function createTransactionInfo(row: postgres.Row) {
   } as TransactionInfo;
 }
 
-export function createEvent(data: string[]) {
+export function createEvent(data: string[], transactionInfo: TransactionInfo) {
   return {
     data,
+    transactionInfo,
   } as Event;
 }
 
-export function createAction(accountUpdateId: string, data: string[]) {
+export function createAction(
+  accountUpdateId: string,
+  data: string[],
+  transactionInfo: TransactionInfo
+) {
   return {
     accountUpdateId,
     data,
+    transactionInfo,
   } as Action;
 }

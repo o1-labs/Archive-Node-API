@@ -8,11 +8,13 @@ export enum BlockStatusFilter {
 }
 
 export type Event = {
+  transactionInfo: TransactionInfo;
   data: string[];
 };
 
 export type Action = {
   accountUpdateId: string;
+  transactionInfo: TransactionInfo;
   data: string[];
 };
 
@@ -38,14 +40,12 @@ export type TransactionInfo = {
 export type Events = {
   eventData: Event[];
   blockInfo: BlockInfo;
-  transactionInfo: TransactionInfo;
 }[];
 
 export type Actions = {
   actionState: string;
   actionData: Action[];
   blockInfo: BlockInfo;
-  transactionInfo: TransactionInfo;
 }[];
 
 export type ArchiveNodeDatabaseRow = {
