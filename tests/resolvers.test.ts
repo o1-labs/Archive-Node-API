@@ -43,7 +43,13 @@ query getActions($input: ActionFilterOptionsInput!) {
       chainStatus
       distanceFromMaxBlockHeight
     }
-    actionState
+    actionState {
+      actionStateOne
+      actionStateTwo
+      actionStateThree
+      actionStateFour
+      actionStateFive
+    }
     transactionInfo {
       status
       hash
