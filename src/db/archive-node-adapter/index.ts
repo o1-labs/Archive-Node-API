@@ -245,7 +245,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     const actionsData: Actions = [];
     for (const [, blocks] of blocksMap) {
-      const { action_state_value } = blocks[0];
+      const {
+        action_state_value1,
+        action_state_value2,
+        action_state_value3,
+        action_state_value4,
+        action_state_value5,
+      } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
@@ -258,7 +264,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blockInfo,
         transactionInfo,
         actionData: actions,
-        actionState: action_state_value!,
+        actionState: {
+          actionStateOne: action_state_value1!,
+          actionStateTwo: action_state_value2!,
+          actionStateThree: action_state_value3!,
+          actionStateFour: action_state_value4!,
+          actionStateFive: action_state_value5!,
+        },
       });
     }
     return actionsData;

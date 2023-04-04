@@ -154,23 +154,31 @@ function emittedActionStateCTE(
   return db_client`
   emitted_action_state AS
   (
-    SELECT zkf.field AS action_state_value, emitted_actions.*
+    SELECT
+      zkf0.field AS action_state_value1,
+      zkf1.field AS action_state_value2,
+      zkf2.field AS action_state_value3,
+      zkf3.field AS action_state_value4,
+      zkf4.field AS action_state_value5,
+      emitted_actions.*
     FROM emitted_actions
-    INNER JOIN zkapp_accounts zkacc
-    ON zkacc.id = emitted_actions.zkapp_id
-    INNER JOIN zkapp_sequence_states zks
-    ON zks.id = zkacc.sequence_state_id
-    INNER JOIN zkapp_field zkf
-    ON zkf.id = zks.element0
+    INNER JOIN zkapp_accounts zkacc ON zkacc.id = emitted_actions.zkapp_id
+    INNER JOIN zkapp_sequence_states zks ON zks.id = zkacc.sequence_state_id
+    INNER JOIN zkapp_field zkf0 ON zkf0.id = zks.element0
+    INNER JOIN zkapp_field zkf1 ON zkf1.id = zks.element1
+    INNER JOIN zkapp_field zkf2 ON zkf2.id = zks.element2
+    INNER JOIN zkapp_field zkf3 ON zkf3.id = zks.element3
+    INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
+
     WHERE 1 = 1
     ${
       fromActionHash
-        ? db_client`AND zkf.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionHash})`
+        ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionHash})`
         : db_client``
     }
     ${
       endActionHash
-        ? db_client`AND zkf.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionHash})`
+        ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionHash})`
         : db_client``
     }
   )`;

@@ -50,6 +50,14 @@ type TransactionInfo {
   authorizationKind: String!
 }
 
+type ActionStates {
+  actionStateOne: String
+  actionStateTwo: String
+  actionStateThree: String
+  actionStateFour: String
+  actionStateFive: String
+}
+
 type EventOutput {
   blockInfo: BlockInfo
   transactionInfo: TransactionInfo
@@ -60,7 +68,7 @@ type ActionOutput {
   blockInfo: BlockInfo
   transactionInfo: TransactionInfo
   actionData: [ActionData]
-  actionState: String!
+  actionState: ActionStates!
 }
 
 type Query {
