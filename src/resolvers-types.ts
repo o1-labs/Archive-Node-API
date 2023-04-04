@@ -31,6 +31,7 @@ export type ActionData = {
   __typename?: 'ActionData';
   accountUpdateId: Scalars['String'];
   data: Array<Maybe<Scalars['String']>>;
+  transactionInfo?: Maybe<TransactionInfo>;
 };
 
 export type ActionFilterOptionsInput = {
@@ -78,6 +79,7 @@ export { BlockStatusFilter };
 export type EventData = {
   __typename?: 'EventData';
   data: Array<Maybe<Scalars['String']>>;
+  transactionInfo?: Maybe<TransactionInfo>;
 };
 
 export type EventFilterOptionsInput = {
@@ -92,7 +94,6 @@ export type EventOutput = {
   __typename?: 'EventOutput';
   blockInfo?: Maybe<BlockInfo>;
   eventData?: Maybe<Array<Maybe<EventData>>>;
-  transactionInfo?: Maybe<TransactionInfo>;
 };
 
 export type Query = {
@@ -267,6 +268,11 @@ export type ActionDataResolvers<
     ParentType,
     ContextType
   >;
+  transactionInfo?: Resolver<
+    Maybe<ResolversTypes['TransactionInfo']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -371,6 +377,11 @@ export type EventDataResolvers<
     ParentType,
     ContextType
   >;
+  transactionInfo?: Resolver<
+    Maybe<ResolversTypes['TransactionInfo']>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -385,11 +396,6 @@ export type EventOutputResolvers<
   >;
   eventData?: Resolver<
     Maybe<Array<Maybe<ResolversTypes['EventData']>>>,
-    ParentType,
-    ContextType
-  >;
-  transactionInfo?: Resolver<
-    Maybe<ResolversTypes['TransactionInfo']>,
     ParentType,
     ContextType
   >;

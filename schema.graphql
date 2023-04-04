@@ -23,11 +23,13 @@ input ActionFilterOptionsInput {
 }
 
 type EventData {
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
 type ActionData {
   accountUpdateId: String!
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
@@ -60,7 +62,6 @@ type ActionStates {
 
 type EventOutput {
   blockInfo: BlockInfo
-  transactionInfo: TransactionInfo
   eventData: [EventData]
 }
 
