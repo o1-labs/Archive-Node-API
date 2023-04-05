@@ -36,9 +36,9 @@ export type ActionData = {
 
 export type ActionFilterOptionsInput = {
   address: Scalars['String'];
-  endActionHash?: InputMaybe<Scalars['String']>;
+  endActionState?: InputMaybe<Scalars['String']>;
   from?: InputMaybe<Scalars['Int']>;
-  fromActionHash?: InputMaybe<Scalars['String']>;
+  fromActionState?: InputMaybe<Scalars['String']>;
   status?: InputMaybe<BlockStatusFilter>;
   to?: InputMaybe<Scalars['Int']>;
   tokenId?: InputMaybe<Scalars['String']>;

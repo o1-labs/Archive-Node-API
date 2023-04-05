@@ -148,8 +148,8 @@ function emittedActionsCTE(db_client: postgres.Sql) {
 // https://github.com/o1-labs/Archive-Node-API/issues/56
 function emittedActionStateCTE(
   db_client: postgres.Sql,
-  fromActionHash?: string,
-  endActionHash?: string
+  fromActionState?: string,
+  endActionState?: string
 ) {
   return db_client`
   emitted_action_state AS
@@ -172,13 +172,13 @@ function emittedActionStateCTE(
 
     WHERE 1 = 1
     ${
-      fromActionHash
-        ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionHash})`
+      fromActionState
+        ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionState})`
         : db_client``
     }
     ${
-      endActionHash
-        ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionHash})`
+      endActionState
+        ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionState})`
         : db_client``
     }
   )`;
@@ -211,8 +211,8 @@ export function getActionsQuery(
   status: BlockStatusFilter,
   to?: string,
   from?: string,
-  fromActionHash?: string,
-  endActionHash?: string
+  fromActionState?: string,
+  endActionState?: string
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
@@ -221,7 +221,7 @@ export function getActionsQuery(
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedActionsCTE(db_client)},
-  ${emittedActionStateCTE(db_client, fromActionHash, endActionHash)}
+  ${emittedActionStateCTE(db_client, fromActionState, endActionState)}
   SELECT *
   FROM emitted_action_state 
   `;

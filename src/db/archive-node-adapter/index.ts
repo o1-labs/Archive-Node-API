@@ -155,7 +155,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   private async executeActionsQuery(input: ActionFilterOptionsInput) {
-    const { address, to, from, fromActionHash, endActionHash } = input;
+    const { address, to, from, fromActionState, endActionState } = input;
     let { tokenId, status } = input;
 
     tokenId ||= DEFAULT_TOKEN_ID;
@@ -171,8 +171,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       status,
       to?.toString(),
       from?.toString(),
-      fromActionHash?.toString(),
-      endActionHash?.toString()
+      fromActionState?.toString(),
+      endActionState?.toString()
     );
   }
 

@@ -18,8 +18,8 @@ input ActionFilterOptionsInput {
   status: BlockStatusFilter
   to: Int
   from: Int
-  fromActionHash: String
-  endActionHash: String
+  fromActionState: String
+  endActionState: String
 }
 
 type EventData {
