@@ -169,7 +169,6 @@ function emittedActionStateCTE(
     INNER JOIN zkapp_field zkf2 ON zkf2.id = zks.element2
     INNER JOIN zkapp_field zkf3 ON zkf3.id = zks.element3
     INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
-
     WHERE 1 = 1
     ${
       fromActionState
