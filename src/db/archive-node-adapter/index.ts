@@ -22,7 +22,10 @@ import {
 } from './queries';
 
 import type { DatabaseAdapter } from '../index';
-import type { EventFilterOptionsInput } from '../../resolvers-types';
+import type {
+  ActionFilterOptionsInput,
+  EventFilterOptionsInput,
+} from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
@@ -151,8 +154,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
   }
 
-  private async executeActionsQuery(input: EventFilterOptionsInput) {
-    const { address, to, from } = input;
+  private async executeActionsQuery(input: ActionFilterOptionsInput) {
+    const { address, to, from, fromActionState, endActionState } = input;
     let { tokenId, status } = input;
 
     tokenId ||= DEFAULT_TOKEN_ID;
@@ -167,7 +170,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       tokenId,
       status,
       to?.toString(),
-      from?.toString()
+      from?.toString(),
+      fromActionState?.toString(),
+      endActionState?.toString()
     );
   }
 
@@ -242,7 +247,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     const actionsData: Actions = [];
     for (const [, blocks] of blocksMap) {
-      const { action_state_value } = blocks[0];
+      const {
+        action_state_value1,
+        action_state_value2,
+        action_state_value3,
+        action_state_value4,
+        action_state_value5,
+      } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
       const actionData = this.mapActionOrEvent(
@@ -253,7 +264,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       actionsData.push({
         blockInfo,
         actionData: actionData,
-        actionState: action_state_value!,
+        actionState: {
+          actionStateOne: action_state_value1!,
+          actionStateTwo: action_state_value2!,
+          actionStateThree: action_state_value3!,
+          actionStateFour: action_state_value4!,
+          actionStateFive: action_state_value5!,
+        },
       });
     }
     return actionsData;

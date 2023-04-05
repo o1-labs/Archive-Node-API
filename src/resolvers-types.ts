@@ -34,12 +34,31 @@ export type ActionData = {
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
+export type ActionFilterOptionsInput = {
+  address: Scalars['String'];
+  endActionState?: InputMaybe<Scalars['String']>;
+  from?: InputMaybe<Scalars['Int']>;
+  fromActionState?: InputMaybe<Scalars['String']>;
+  status?: InputMaybe<BlockStatusFilter>;
+  to?: InputMaybe<Scalars['Int']>;
+  tokenId?: InputMaybe<Scalars['String']>;
+};
+
 export type ActionOutput = {
   __typename?: 'ActionOutput';
   actionData?: Maybe<Array<Maybe<ActionData>>>;
-  actionState: Scalars['String'];
+  actionState: ActionStates;
   blockInfo?: Maybe<BlockInfo>;
   transactionInfo?: Maybe<TransactionInfo>;
+};
+
+export type ActionStates = {
+  __typename?: 'ActionStates';
+  actionStateFive?: Maybe<Scalars['String']>;
+  actionStateFour?: Maybe<Scalars['String']>;
+  actionStateOne?: Maybe<Scalars['String']>;
+  actionStateThree?: Maybe<Scalars['String']>;
+  actionStateTwo?: Maybe<Scalars['String']>;
 };
 
 export type BlockInfo = {
@@ -84,7 +103,7 @@ export type Query = {
 };
 
 export type QueryActionsArgs = {
-  input: EventFilterOptionsInput;
+  input: ActionFilterOptionsInput;
 };
 
 export type QueryEventsArgs = {
@@ -207,7 +226,9 @@ export type DirectiveResolverFn<
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   ActionData: ResolverTypeWrapper<ActionData>;
+  ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ResolverTypeWrapper<ActionOutput>;
+  ActionStates: ResolverTypeWrapper<ActionStates>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
   BlockStatusFilter: BlockStatusFilter;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
@@ -223,7 +244,9 @@ export type ResolversTypes = {
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
   ActionData: ActionData;
+  ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ActionOutput;
+  ActionStates: ActionStates;
   BlockInfo: BlockInfo;
   Boolean: Scalars['Boolean'];
   EventData: EventData;
@@ -262,7 +285,11 @@ export type ActionOutputResolvers<
     ParentType,
     ContextType
   >;
-  actionState?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  actionState?: Resolver<
+    ResolversTypes['ActionStates'],
+    ParentType,
+    ContextType
+  >;
   blockInfo?: Resolver<
     Maybe<ResolversTypes['BlockInfo']>,
     ParentType,
@@ -270,6 +297,38 @@ export type ActionOutputResolvers<
   >;
   transactionInfo?: Resolver<
     Maybe<ResolversTypes['TransactionInfo']>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ActionStatesResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends ResolversParentTypes['ActionStates'] = ResolversParentTypes['ActionStates']
+> = {
+  actionStateFive?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  actionStateFour?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  actionStateOne?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  actionStateThree?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  actionStateTwo?: Resolver<
+    Maybe<ResolversTypes['String']>,
     ParentType,
     ContextType
   >;
@@ -379,6 +438,7 @@ export type TransactionInfoResolvers<
 export type Resolvers<ContextType = GraphQLContext> = {
   ActionData?: ActionDataResolvers<ContextType>;
   ActionOutput?: ActionOutputResolvers<ContextType>;
+  ActionStates?: ActionStatesResolvers<ContextType>;
   BlockInfo?: BlockInfoResolvers<ContextType>;
   BlockStatusFilter?: BlockStatusFilterResolvers;
   EventData?: EventDataResolvers<ContextType>;

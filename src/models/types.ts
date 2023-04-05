@@ -42,8 +42,16 @@ export type Events = {
   blockInfo: BlockInfo;
 }[];
 
+export type ActionStates = {
+  actionStateOne: string;
+  actionStateTwo: string;
+  actionStateThree: string;
+  actionStateFour: string;
+  actionStateFive: string;
+};
+
 export type Actions = {
-  actionState: string;
+  actionState: ActionStates;
   actionData: Action[];
   blockInfo: BlockInfo;
 }[];
@@ -77,5 +85,9 @@ export type ArchiveNodeDatabaseRow = {
   element_ids: number[];
   field: string;
   zkapp_event_element_ids: number[];
-  action_state_value?: string;
+  action_state_value1?: string;
+  action_state_value2?: string;
+  action_state_value3?: string;
+  action_state_value4?: string;
+  action_state_value5?: string;
 };
