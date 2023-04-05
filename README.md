@@ -21,13 +21,13 @@ query getEvents {
       distanceFromMaxBlockHeight
       globalSlotSinceGenesis
     }
+    eventData {
+      data
+    }
     transactionInfo {
       status
       hash
       memo
-    }
-    eventData {
-      data
     }
   }
 }
@@ -44,14 +44,20 @@ query getActions {
       distanceFromMaxBlockHeight
       globalSlotSinceGenesis
     }
-    transactionInfo {
-      status
-      hash
-      memo
+    actionState {
+      actionStateOne
+      actionStateTwo
+      actionStateThree
+      actionStateFour
+      actionStateFive
     }
-    actionState
     actionData {
       data
+      transactionInfo {
+        status
+        hash
+        memo
+      }
     }
   }
 }
