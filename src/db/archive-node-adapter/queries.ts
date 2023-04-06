@@ -6,27 +6,38 @@ function fullChainCTE(db_client: postgres.Sql) {
   return db_client`
   RECURSIVE pending_chain AS (
     (
-      SELECT id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
-      FROM blocks b 
-      WHERE height = (SELECT max(height) FROM blocks) 
+      SELECT
+        id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+      FROM
+        blocks b
+      WHERE
+        height = (SELECT max(height) FROM blocks)
     ) 
     UNION ALL
-    SELECT b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash
-    FROM blocks b 
-    INNER JOIN pending_chain ON b.id = pending_chain.parent_id 
-    AND pending_chain.id <> pending_chain.parent_id 
+    SELECT
+      b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash
+    FROM
+      blocks b
+    INNER JOIN pending_chain ON b.id = pending_chain.parent_id
+    AND pending_chain.id <> pending_chain.parent_id
     AND pending_chain.chain_status <> 'canonical'
   ), 
   full_chain AS (
-    SELECT DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
-    FROM 
+    SELECT
+      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
+    FROM
       (
-        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash 
-        FROM pending_chain 
-        UNION ALL 
-        SELECT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
-        FROM blocks b 
-        WHERE chain_status = 'canonical'
+        SELECT
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+        FROM
+          pending_chain
+        UNION ALL
+        SELECT
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+        FROM
+          blocks b
+        WHERE
+          chain_status = 'canonical'
       ) AS full_chain
   )
   `;
@@ -38,12 +49,15 @@ function accountIdentifierCTE(
   tokenId: string
 ) {
   return db_client`
-  account_identifier AS 
-  (
-    SELECT id AS requesting_zkapp_account_identifier_id
-    FROM account_identifiers ai
-    WHERE ai.public_key_id = (SELECT id FROM public_keys WHERE value = ${address})
-    AND ai.token_id = (SELECT id FROM tokens WHERE value = ${tokenId})
+  account_identifier AS (
+    SELECT
+      id AS requesting_zkapp_account_identifier_id
+    FROM
+      account_identifiers ai
+    WHERE
+      ai.public_key_id = (SELECT id FROM public_keys WHERE value = ${address})
+      AND
+      ai.token_id = (SELECT id FROM tokens WHERE value = ${tokenId})
   )`;
 }
 
@@ -54,9 +68,10 @@ function blocksAccessedCTE(
   from?: string
 ) {
   return db_client`
-  blocks_accessed AS 
+  blocks_accessed AS
   (
-    SELECT requesting_zkapp_account_identifier_id,
+    SELECT
+      requesting_zkapp_account_identifier_id,
       block_id,
       account_identifier_id,
       zkapp_id,
@@ -70,12 +85,12 @@ function blocksAccessedCTE(
       chain_status,
       ledger_hash,
       distance_from_max_block_height
-    FROM account_identifier ai
-    INNER JOIN accounts_accessed aa
-    ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
-    INNER JOIN full_chain b
-    ON aa.block_id = b.id
-    WHERE 1 = 1
+  FROM
+    account_identifier ai
+    INNER JOIN accounts_accessed aa ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
+    INNER JOIN full_chain b ON aa.block_id = b.id
+  WHERE
+    1 = 1
     ${
       status === BlockStatusFilter.all
         ? db_client``
@@ -88,9 +103,9 @@ function blocksAccessedCTE(
 
 function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
   return db_client`
-  emitted_zkapp_commands AS 
-  (
-    SELECT blocks_accessed.*,
+  emitted_zkapp_commands AS (
+    SELECT
+      blocks_accessed.*,
       zkcu.id AS zkapp_account_update_id,
       zkapp_fee_payer_body_id,
       zkapp_account_updates_ids,
@@ -101,59 +116,55 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
       body_id,
       events_id,
       actions_id
-    FROM blocks_accessed
-    INNER JOIN blocks_zkapp_commands bzkc
-    ON blocks_accessed.block_id = bzkc.block_id
-    INNER JOIN zkapp_commands zkc
-    ON bzkc.zkapp_command_id = zkc.id
-    INNER JOIN zkapp_account_update zkcu
-    ON zkcu.id = ANY(zkc.zkapp_account_updates_ids)
-    INNER JOIN zkapp_account_update_body zkcu_body
-    ON zkcu_body.id = zkcu.body_id AND zkcu_body.account_identifier_id = requesting_zkapp_account_identifier_id
-    WHERE bzkc.status <> 'failed'
+    FROM
+      blocks_accessed
+      INNER JOIN blocks_zkapp_commands bzkc ON blocks_accessed.block_id = bzkc.block_id
+      INNER JOIN zkapp_commands zkc ON bzkc.zkapp_command_id = zkc.id
+      INNER JOIN zkapp_account_update zkcu ON zkcu.id = ANY(zkc.zkapp_account_updates_ids)
+      INNER JOIN zkapp_account_update_body zkcu_body ON zkcu_body.id = zkcu.body_id
+      AND zkcu_body.account_identifier_id = requesting_zkapp_account_identifier_id
+    WHERE 
+      bzkc.status <> 'failed'
   )`;
 }
 
 function emittedEventsCTE(db_client: postgres.Sql) {
   return db_client`
-  emitted_events AS 
-  (
-    SELECT *, zke.element_ids AS zkapp_event_element_ids
-    FROM emitted_zkapp_commands
-    INNER JOIN zkapp_events zke
-    ON zke.id = events_id
-    INNER JOIN zkapp_field_array zkfa
-    ON zkfa.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_field zkf
-    ON zkf.id = ANY(zkfa.element_ids)
-  )`;
+  emitted_events AS (
+    SELECT
+      *,
+      zke.element_ids AS zkapp_event_element_ids
+    FROM
+      emitted_zkapp_commands
+      INNER JOIN zkapp_events zke ON zke.id = events_id
+      INNER JOIN zkapp_field_array zkfa ON zkfa.id = ANY(zke.element_ids)
+      INNER JOIN zkapp_field zkf ON zkf.id = ANY(zkfa.element_ids)
+  )
+  `;
 }
 
 function emittedActionsCTE(db_client: postgres.Sql) {
   return db_client`
-  emitted_actions AS
-  (
-    SELECT *, zke.element_ids AS zkapp_event_element_ids
-    FROM emitted_zkapp_commands
-    INNER JOIN zkapp_events zke
-    ON zke.id = actions_id
-    INNER JOIN zkapp_field_array zkfa
-    ON zkfa.id = ANY(zke.element_ids)
-    INNER JOIN zkapp_field zkf
-    ON zkf.id = ANY(zkfa.element_ids)
-  )`;
+  emitted_actions AS (
+    SELECT
+      *,
+      zke.element_ids AS zkapp_event_element_ids
+    FROM
+      emitted_zkapp_commands
+      INNER JOIN zkapp_events zke ON zke.id = actions_id
+      INNER JOIN zkapp_field_array zkfa ON zkfa.id = ANY(zke.element_ids)
+      INNER JOIN zkapp_field zkf ON zkf.id = ANY(zkfa.element_ids)
+  )
+  `;
 }
 
-// TODO: Rename sequence_states to action_states when archive node is redeployed
-// https://github.com/o1-labs/Archive-Node-API/issues/56
 function emittedActionStateCTE(
   db_client: postgres.Sql,
   fromActionState?: string,
   endActionState?: string
 ) {
   return db_client`
-  emitted_action_state AS
-  (
+  emitted_action_state AS (
     SELECT
       zkf0.field AS action_state_value1,
       zkf1.field AS action_state_value2,
@@ -161,15 +172,17 @@ function emittedActionStateCTE(
       zkf3.field AS action_state_value4,
       zkf4.field AS action_state_value5,
       emitted_actions.*
-    FROM emitted_actions
-    INNER JOIN zkapp_accounts zkacc ON zkacc.id = emitted_actions.zkapp_id
-    INNER JOIN zkapp_sequence_states zks ON zks.id = zkacc.sequence_state_id
-    INNER JOIN zkapp_field zkf0 ON zkf0.id = zks.element0
-    INNER JOIN zkapp_field zkf1 ON zkf1.id = zks.element1
-    INNER JOIN zkapp_field zkf2 ON zkf2.id = zks.element2
-    INNER JOIN zkapp_field zkf3 ON zkf3.id = zks.element3
-    INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
-    WHERE 1 = 1
+    FROM
+      emitted_actions
+      INNER JOIN zkapp_accounts zkacc ON zkacc.id = emitted_actions.zkapp_id
+      INNER JOIN zkapp_action_states zks ON zks.id = zkacc.action_state_id
+      INNER JOIN zkapp_field zkf0 ON zkf0.id = zks.element0
+      INNER JOIN zkapp_field zkf1 ON zkf1.id = zks.element1
+      INNER JOIN zkapp_field zkf2 ON zkf2.id = zks.element2
+      INNER JOIN zkapp_field zkf3 ON zkf3.id = zks.element3
+      INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
+    WHERE
+      1 = 1
     ${
       fromActionState
         ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionState})`
@@ -222,7 +235,7 @@ export function getActionsQuery(
   ${emittedActionsCTE(db_client)},
   ${emittedActionStateCTE(db_client, fromActionState, endActionState)}
   SELECT *
-  FROM emitted_action_state 
+  FROM emitted_action_state
   `;
 }
 
@@ -246,5 +259,5 @@ export const USED_TABLES = [
   'zkapp_verification_key_hashes',
   'zkapp_verification_keys',
   'zkapp_accounts',
-  'zkapp_sequence_states',
+  'zkapp_action_states',
 ] as const;
