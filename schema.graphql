@@ -12,12 +12,24 @@ input EventFilterOptionsInput {
   from: Int
 }
 
+input ActionFilterOptionsInput {
+  address: String!
+  tokenId: String
+  status: BlockStatusFilter
+  to: Int
+  from: Int
+  fromActionState: String
+  endActionState: String
+}
+
 type EventData {
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
 type ActionData {
   accountUpdateId: String!
+  transactionInfo: TransactionInfo
   data: [String]!
 }
 
@@ -40,9 +52,16 @@ type TransactionInfo {
   authorizationKind: String!
 }
 
+type ActionStates {
+  actionStateOne: String
+  actionStateTwo: String
+  actionStateThree: String
+  actionStateFour: String
+  actionStateFive: String
+}
+
 type EventOutput {
   blockInfo: BlockInfo
-  transactionInfo: TransactionInfo
   eventData: [EventData]
 }
 
@@ -50,10 +69,10 @@ type ActionOutput {
   blockInfo: BlockInfo
   transactionInfo: TransactionInfo
   actionData: [ActionData]
-  actionState: String!
+  actionState: ActionStates!
 }
 
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
-  actions(input: EventFilterOptionsInput!): [ActionOutput]!
+  actions(input: ActionFilterOptionsInput!): [ActionOutput]!
 }

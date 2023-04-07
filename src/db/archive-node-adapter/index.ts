@@ -22,7 +22,10 @@ import {
 } from './queries';
 
 import type { DatabaseAdapter } from '../index';
-import type { EventFilterOptionsInput } from '../../resolvers-types';
+import type {
+  ActionFilterOptionsInput,
+  EventFilterOptionsInput,
+} from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
@@ -151,8 +154,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
   }
 
-  private async executeActionsQuery(input: EventFilterOptionsInput) {
-    const { address, to, from } = input;
+  private async executeActionsQuery(input: ActionFilterOptionsInput) {
+    const { address, to, from, fromActionState, endActionState } = input;
     let { tokenId, status } = input;
 
     tokenId ||= DEFAULT_TOKEN_ID;
@@ -167,7 +170,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       tokenId,
       status,
       to?.toString(),
-      from?.toString()
+      from?.toString(),
+      fromActionState?.toString(),
+      endActionState?.toString()
     );
   }
 
@@ -178,17 +183,19 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const eventsData: Events = [];
     for (const [, blocks] of blocksMap) {
       const blockInfo = createBlockInfo(blocks[0]);
-      const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const events = this.mapActionOrEvent(
+      const eventData = this.mapActionOrEvent(
         'event',
         filteredBlocks,
         elementIdFieldValues
       ) as Event[];
-      if (events.every((event) => event.data.length >= 2)) {
-        events.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
+      if (eventData.every((event) => event.data.length >= 2)) {
+        eventData.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
       }
-      eventsData.push({ blockInfo, transactionInfo, eventData: events });
+      eventsData.push({
+        blockInfo,
+        eventData,
+      });
     }
     return eventsData;
   }
@@ -240,20 +247,30 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   ) {
     const actionsData: Actions = [];
     for (const [, blocks] of blocksMap) {
-      const { action_state_value } = blocks[0];
+      const {
+        action_state_value1,
+        action_state_value2,
+        action_state_value3,
+        action_state_value4,
+        action_state_value5,
+      } = blocks[0];
       const blockInfo = createBlockInfo(blocks[0]);
-      const transactionInfo = createTransactionInfo(blocks[0]);
       const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const actions = this.mapActionOrEvent(
+      const actionData = this.mapActionOrEvent(
         'action',
         filteredBlocks,
         elementIdFieldValues
       ) as Action[];
       actionsData.push({
         blockInfo,
-        transactionInfo,
-        actionData: actions,
-        actionState: action_state_value!,
+        actionData: actionData,
+        actionState: {
+          actionStateOne: action_state_value1!,
+          actionStateTwo: action_state_value2!,
+          actionStateThree: action_state_value3!,
+          actionStateFour: action_state_value4!,
+          actionStateFive: action_state_value5!,
+        },
       });
     }
     return actionsData;
@@ -293,13 +310,16 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
 
       if (kind === 'event') {
-        const event = createEvent(currentValue);
+        const transactionInfo = createTransactionInfo(rows[i]);
+        const event = createEvent(currentValue, transactionInfo);
         data.push(event);
       } else {
         const { zkapp_account_update_id } = rows[i];
+        const transactionInfo = createTransactionInfo(rows[i]);
         const action = createAction(
           zkapp_account_update_id.toString(),
-          currentValue
+          currentValue,
+          transactionInfo
         );
         data.push(action);
       }
