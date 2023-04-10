@@ -177,34 +177,51 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
+    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
     elementIdFieldValues: Map<string, string>
   ) {
-    const eventsData: Events = [];
-    for (const [, blocks] of blocksMap) {
-      const blockInfo = createBlockInfo(blocks[0]);
-      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const eventData = this.mapActionOrEvent(
-        'event',
-        filteredBlocks,
-        elementIdFieldValues
-      ) as Event[];
-      if (eventData.every((event) => event.data.length >= 2)) {
-        eventData.sort((a, b) => Number(a.data[0]) - Number(b.data[0]));
+    const events: Events = [];
+    const blockMapEntries = Array.from(blocksMap.entries());
+    for (let i = 0; i < blockMapEntries.length; i++) {
+      const transactions = blockMapEntries[i][1];
+      const transaction = transactions.values().next().value[0];
+      const blockInfo = createBlockInfo(transaction);
+
+      const eventsData: Event[][] = [];
+
+      for (const [, transaction] of transactions) {
+        const filteredBlocks = this.removeRedundantEmittedFields(transaction);
+        const eventData = this.mapActionOrEvent(
+          'event',
+          filteredBlocks,
+          elementIdFieldValues
+        ) satisfies Event[];
+
+        eventsData.push(eventData);
       }
-      eventsData.push({
+
+      const flattenedEventsData: Event[] = [];
+      for (let i = 0; i < eventsData.length; i++) {
+        for (let j = 0; j < eventsData[i].length; j++) {
+          flattenedEventsData.push(eventsData[i][j]);
+        }
+      }
+      events.push({
         blockInfo,
-        eventData,
+        eventData: flattenedEventsData,
       });
     }
-    return eventsData;
+    return events;
   }
 
   protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
     const seenEventIds = new Map<string, number>();
     const newBlocks: ArchiveNodeDatabaseRow[] = [];
 
-    for (const block of blocks) {
+    console.log(blocks);
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
       const { element_ids, zkapp_event_element_ids } = block;
       const uniqueElementIds = [...new Set(element_ids)];
       const uniqueElementIdsKey = uniqueElementIds.join(',');
@@ -242,53 +259,67 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: Map<string, ArchiveNodeDatabaseRow[]>,
+    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
     elementIdFieldValues: Map<string, string>
   ) {
     const actionsData: Actions = [];
-    for (const [, blocks] of blocksMap) {
+    const blockMapEntries = Array.from(blocksMap.entries());
+    for (let i = 0; i < blockMapEntries.length; i++) {
+      const transactions = blockMapEntries[i][1];
+      const transaction = transactions.entries().next().value;
       const {
         action_state_value1,
         action_state_value2,
         action_state_value3,
         action_state_value4,
         action_state_value5,
-      } = blocks[0];
-      const blockInfo = createBlockInfo(blocks[0]);
-      const filteredBlocks = this.removeRedundantEmittedFields(blocks);
-      const actionData = this.mapActionOrEvent(
-        'action',
-        filteredBlocks,
-        elementIdFieldValues
-      ) as Action[];
-      actionsData.push({
-        blockInfo,
-        actionData: actionData,
-        actionState: {
-          actionStateOne: action_state_value1!,
-          actionStateTwo: action_state_value2!,
-          actionStateThree: action_state_value3!,
-          actionStateFour: action_state_value4!,
-          actionStateFive: action_state_value5!,
-        },
-      });
+      } = transaction[0];
+      const blockInfo = createBlockInfo(transaction);
+      for (const [, transaction] of transactions) {
+        const filteredBlocks = this.removeRedundantEmittedFields(transaction);
+        const actionData = this.mapActionOrEvent(
+          'action',
+          filteredBlocks,
+          elementIdFieldValues
+        ) as Action[];
+        actionsData.push({
+          blockInfo,
+          actionData: actionData,
+          actionState: {
+            actionStateOne: action_state_value1!,
+            actionStateTwo: action_state_value2!,
+            actionStateThree: action_state_value3!,
+            actionStateFour: action_state_value4!,
+            actionStateFive: action_state_value5!,
+          },
+        });
+      }
     }
     return actionsData;
   }
 
   protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
-    const blocks: Map<string, ArchiveNodeDatabaseRow[]> = new Map();
+    const blocks: Map<
+      string,
+      Map<string, ArchiveNodeDatabaseRow[]>
+    > = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
-      const blockHash = rows[i].state_hash;
-      let blockData = blocks.get(blockHash);
+      const { state_hash: blockHash, hash: transactionHash } = rows[i];
+      const blockData = blocks.get(blockHash);
 
       if (blockData === undefined) {
-        blockData = [];
-        blocks.set(blockHash, blockData);
+        const emptyEntry = new Map();
+        blocks.set(blockHash, emptyEntry);
+      } else {
+        const blockDataRows = blockData.get(transactionHash);
+        if (blockDataRows) {
+          blockDataRows.push(rows[i]);
+        } else {
+          blockData.set(transactionHash, [rows[i]]);
+        }
       }
-      blockData.push(rows[i]);
     }
     return blocks;
   }

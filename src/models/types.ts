@@ -67,7 +67,7 @@ export type ArchiveNodeDatabaseRow = {
   parent_hash: string;
   height: string;
   global_slot_since_genesis: string;
-  global_slot_since_hardfork: string;
+  global_slot_since_hard_fork: string;
   authorization_kind: string;
   timestamp: string;
   chain_status: string;

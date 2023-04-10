@@ -1,21 +1,26 @@
-import type postgres from 'postgres';
-import type { BlockInfo, TransactionInfo, Event, Action } from './types';
+import type {
+  BlockInfo,
+  TransactionInfo,
+  Event,
+  Action,
+  ArchiveNodeDatabaseRow,
+} from './types';
 
-export function createBlockInfo(row: postgres.Row) {
+export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
   return {
-    height: row.height,
+    height: Number(row.height),
     stateHash: row.state_hash,
     parentHash: row.parent_hash,
     ledgerHash: row.ledger_hash,
     chainStatus: row.chain_status,
     timestamp: row.timestamp,
-    globalSlotSinceHardfork: row.global_slot_since_hard_fork,
-    globalSlotSinceGenesis: row.global_slot_since_genesis,
-    distanceFromMaxBlockHeight: row.distance_from_max_block_height,
+    globalSlotSinceHardfork: Number(row.global_slot_since_hard_fork),
+    globalSlotSinceGenesis: Number(row.global_slot_since_genesis),
+    distanceFromMaxBlockHeight: Number(row.distance_from_max_block_height),
   } as BlockInfo;
 }
 
-export function createTransactionInfo(row: postgres.Row) {
+export function createTransactionInfo(row: ArchiveNodeDatabaseRow) {
   return {
     status: row.status,
     hash: row.hash,
