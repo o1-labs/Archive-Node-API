@@ -85,6 +85,7 @@ export type ArchiveNodeDatabaseRow = {
   element_ids: number[];
   field: string;
   zkapp_event_element_ids: number[];
+  zkapp_event_array_id: number;
   action_state_value1?: string;
   action_state_value2?: string;
   action_state_value3?: string;

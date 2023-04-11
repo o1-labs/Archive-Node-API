@@ -92,9 +92,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       blocksMap,
       elementIdFieldValues
     );
-    eventsData.sort(
-      (a, b) => Number(b.blockInfo.height) - Number(a.blockInfo.height)
-    );
     eventsProcessingSpan?.end();
     return eventsData ?? [];
   }
@@ -215,46 +212,24 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
-    const seenEventIds = new Map<string, number>();
     const newBlocks: ArchiveNodeDatabaseRow[] = [];
-
-    console.log(blocks);
+    const seenEventIds = new Set<number>();
 
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      const { element_ids, zkapp_event_element_ids } = block;
-      const uniqueElementIds = [...new Set(element_ids)];
-      const uniqueElementIdsKey = uniqueElementIds.join(',');
-      const numberOfUniqueElements = seenEventIds.get(uniqueElementIdsKey);
+      const { zkapp_event_array_id, zkapp_event_element_ids } = block;
 
-      if (numberOfUniqueElements) {
-        // If we have seen all the element ids before, we can remove the row.
-        if (numberOfUniqueElements + 1 === uniqueElementIds.length) {
-          seenEventIds.delete(uniqueElementIdsKey);
-        } else {
-          seenEventIds.set(uniqueElementIdsKey, numberOfUniqueElements + 1);
-        }
-        continue;
-      }
-
-      // If all the element ids are the same, there will only be one returned row, so we do not have to do any filtering.
-      // Otherwise, if the element ids have some unique values, we need to filter out the duplicate rows.
-      if (uniqueElementIds.length > 1) {
-        seenEventIds.set(uniqueElementIdsKey, 1);
-      }
-
-      // Events/Actions that are emitted with the same field multiple times will only have a single value for `element_ids`.
-      // Here, we check `zkapp_event_element_ids` have the same value repeated multiple times, meaning that the same event value was emitted multiple times and should be added
-      const uniqueEventElementIds = new Set(zkapp_event_element_ids);
-      if (uniqueEventElementIds.size === 1) {
-        zkapp_event_element_ids.forEach(() => {
-          newBlocks.push(block);
+      if (!seenEventIds.has(zkapp_event_array_id)) {
+        const indicies = findAllIndexes(
+          zkapp_event_element_ids,
+          zkapp_event_array_id
+        );
+        indicies.forEach((index) => {
+          newBlocks[index] = block;
         });
-      } else {
-        newBlocks.push(block);
+        seenEventIds.add(zkapp_event_array_id);
       }
     }
-
     return newBlocks;
   }
 
@@ -266,14 +241,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     const blockMapEntries = Array.from(blocksMap.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
-      const transaction = transactions.entries().next().value;
+      const transaction = transactions.values().next().value[0];
       const {
         action_state_value1,
         action_state_value2,
         action_state_value3,
         action_state_value4,
         action_state_value5,
-      } = transaction[0];
+      } = transaction;
       const blockInfo = createBlockInfo(transaction);
       for (const [, transaction] of transactions) {
         const filteredBlocks = this.removeRedundantEmittedFields(transaction);
@@ -310,8 +285,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const blockData = blocks.get(blockHash);
 
       if (blockData === undefined) {
-        const emptyEntry = new Map();
-        blocks.set(blockHash, emptyEntry);
+        const firstEntry = new Map();
+        firstEntry.set(transactionHash, [rows[i]]);
+        blocks.set(blockHash, firstEntry);
       } else {
         const blockDataRows = blockData.get(transactionHash);
         if (blockDataRows) {
@@ -366,4 +342,14 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     }
     return elementIdValues;
   }
+}
+
+function findAllIndexes<T>(arr: T[], target: T): number[] {
+  const indexes: number[] = [];
+  arr.forEach((element, index) => {
+    if (element === target) {
+      indexes.push(index);
+    }
+  });
+  return indexes;
 }
