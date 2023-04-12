@@ -185,27 +185,18 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       const blockInfo = createBlockInfo(transaction);
 
       const eventsData: Event[][] = [];
-
       for (const [, transaction] of transactions) {
         const filteredBlocks = this.removeRedundantEmittedFields(transaction);
         const eventData = this.mapActionOrEvent(
           'event',
           filteredBlocks,
           elementIdFieldValues
-        ) satisfies Event[];
-
+        ) as Event[];
         eventsData.push(eventData);
-      }
-
-      const flattenedEventsData: Event[] = [];
-      for (let i = 0; i < eventsData.length; i++) {
-        for (let j = 0; j < eventsData[i].length; j++) {
-          flattenedEventsData.push(eventsData[i][j]);
-        }
       }
       events.push({
         blockInfo,
-        eventData: flattenedEventsData,
+        eventData: eventsData.flat(),
       });
     }
     return events;
@@ -237,11 +228,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
     elementIdFieldValues: Map<string, string>
   ) {
-    const actionsData: Actions = [];
+    const actions: Actions = [];
     const blockMapEntries = Array.from(blocksMap.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
       const transaction = transactions.values().next().value[0];
+      const blockInfo = createBlockInfo(transaction);
       const {
         action_state_value1,
         action_state_value2,
@@ -249,7 +241,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         action_state_value4,
         action_state_value5,
       } = transaction;
-      const blockInfo = createBlockInfo(transaction);
+
+      const actionsData: Action[][] = [];
       for (const [, transaction] of transactions) {
         const filteredBlocks = this.removeRedundantEmittedFields(transaction);
         const actionData = this.mapActionOrEvent(
@@ -257,20 +250,21 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           filteredBlocks,
           elementIdFieldValues
         ) as Action[];
-        actionsData.push({
-          blockInfo,
-          actionData: actionData,
-          actionState: {
-            actionStateOne: action_state_value1!,
-            actionStateTwo: action_state_value2!,
-            actionStateThree: action_state_value3!,
-            actionStateFour: action_state_value4!,
-            actionStateFive: action_state_value5!,
-          },
-        });
+        actionsData.push(actionData);
       }
+      actions.push({
+        blockInfo,
+        actionData: actionsData.flat(),
+        actionState: {
+          actionStateOne: action_state_value1!,
+          actionStateTwo: action_state_value2!,
+          actionStateThree: action_state_value3!,
+          actionStateFour: action_state_value4!,
+          actionStateFive: action_state_value5!,
+        },
+      });
     }
-    return actionsData;
+    return actions;
   }
 
   protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
