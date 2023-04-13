@@ -92,6 +92,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       blocksMap,
       elementIdFieldValues
     );
+    eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
     eventsProcessingSpan?.end();
     return eventsData ?? [];
   }
@@ -124,9 +125,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       blocksMap,
       elementIdFieldValues
     );
-    actionsData.sort(
-      (a, b) => Number(b.blockInfo.height) - Number(a.blockInfo.height)
-    );
+    actionsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
     actionsProcessingSpan?.end();
     return actionsData ?? [];
   }
@@ -250,6 +249,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           filteredBlocks,
           elementIdFieldValues
         ) as Action[];
+        actionData.sort(
+          (a, b) => Number(a.accountUpdateId) - Number(b.accountUpdateId)
+        );
         actionsData.push(actionData);
       }
       actions.push({
