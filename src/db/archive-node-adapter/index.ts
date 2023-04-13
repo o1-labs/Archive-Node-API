@@ -201,28 +201,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     return events;
   }
 
-  protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
-    const newBlocks: ArchiveNodeDatabaseRow[] = [];
-    const seenEventIds = new Set<number>();
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      const { zkapp_event_array_id, zkapp_event_element_ids } = block;
-
-      if (!seenEventIds.has(zkapp_event_array_id)) {
-        const indicies = findAllIndexes(
-          zkapp_event_element_ids,
-          zkapp_event_array_id
-        );
-        indicies.forEach((index) => {
-          newBlocks[index] = block;
-        });
-        seenEventIds.add(zkapp_event_array_id);
-      }
-    }
-    return newBlocks;
-  }
-
   protected deriveActionsFromBlocks(
     blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
     elementIdFieldValues: Map<string, string>
@@ -294,6 +272,28 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       }
     }
     return blocks;
+  }
+
+  protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
+    const newBlocks: ArchiveNodeDatabaseRow[] = [];
+    const seenEventIds = new Set<number>();
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const { zkapp_event_array_id, zkapp_event_element_ids } = block;
+
+      if (!seenEventIds.has(zkapp_event_array_id)) {
+        const indicies = findAllIndexes(
+          zkapp_event_element_ids,
+          zkapp_event_array_id
+        );
+        indicies.forEach((index) => {
+          newBlocks[index] = block;
+        });
+        seenEventIds.add(zkapp_event_array_id);
+      }
+    }
+    return newBlocks;
   }
 
   protected mapActionOrEvent(
