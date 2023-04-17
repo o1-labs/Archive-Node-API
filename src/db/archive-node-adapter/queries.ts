@@ -7,7 +7,7 @@ function fullChainCTE(db_client: postgres.Sql) {
   RECURSIVE pending_chain AS (
     (
       SELECT
-        id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+        id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
       FROM
         blocks b
       WHERE
@@ -15,7 +15,8 @@ function fullChainCTE(db_client: postgres.Sql) {
     ) 
     UNION ALL
     SELECT
-      b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash
+      b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash, b.last_vrf_output, b.min_window_density, b.sub_window_densities
+
     FROM
       blocks b
     INNER JOIN pending_chain ON b.id = pending_chain.parent_id
@@ -24,16 +25,16 @@ function fullChainCTE(db_client: postgres.Sql) {
   ), 
   full_chain AS (
     SELECT
-      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height
+      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height, last_vrf_output, min_window_density, sub_window_densities
     FROM
       (
         SELECT
-          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
         FROM
           pending_chain
         UNION ALL
         SELECT
-          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
         FROM
           blocks b
         WHERE
@@ -84,7 +85,10 @@ function blocksAccessedCTE(
       timestamp,
       chain_status,
       ledger_hash,
-      distance_from_max_block_height
+      distance_from_max_block_height,
+      last_vrf_output,
+      min_window_density,
+      sub_window_densities
   FROM
     account_identifier ai
     INNER JOIN accounts_accessed aa ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
