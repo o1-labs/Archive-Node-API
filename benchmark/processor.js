@@ -4,7 +4,7 @@ function getRandomNumber(min, max) {
 
 module.exports = {
   generateRandomBlockRange: (userContext, _events, done) => {
-    const MAX_HEIGHT = 2000;
+    const MAX_HEIGHT = 5000;
     const from = getRandomNumber(0, MAX_HEIGHT);
     const to = getRandomNumber(0, MAX_HEIGHT);
 
