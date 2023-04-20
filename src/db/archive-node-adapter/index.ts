@@ -227,9 +227,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           filteredBlocks,
           elementIdFieldValues
         ) as Action[];
-        actionData.sort(
-          (a, b) => Number(a.accountUpdateId) - Number(b.accountUpdateId)
-        );
         actionsData.push(actionData);
       }
       actions.push({
