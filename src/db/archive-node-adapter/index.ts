@@ -7,6 +7,7 @@ import {
   Event,
   Events,
   ArchiveNodeDatabaseRow,
+  BlockInfo,
 } from '../../models/types';
 import {
   createBlockInfo,
@@ -27,6 +28,8 @@ import type {
   EventFilterOptionsInput,
 } from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
+
+import { blake2b } from 'blakejs';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
@@ -93,6 +96,25 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       elementIdFieldValues
     );
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
+    console.log('eventsData', eventsData[0].blockInfo.height);
+    // Get the events with distanceFromMaxBlockHeight === 0.
+    const latestEvents = eventsData.filter(
+      (event) => event.blockInfo.distanceFromMaxBlockHeight === 0
+    );
+    if (latestEvents.length > 1) {
+      console.log('latestEvents', latestEvents);
+      const selected = chainSelection(latestEvents);
+      // Replace all events with distanceFromMaxBlockHeight === 0 with the selected events.
+      for (let i = 0; i < eventsData.length; i++) {
+        if (eventsData[i].blockInfo.distanceFromMaxBlockHeight === 0) {
+          // Remove the event.
+          eventsData.splice(i, 1);
+        }
+      }
+      // Insert selected at the begining of the array.
+      eventsData.unshift(selected);
+    }
+
     eventsProcessingSpan?.end();
     return eventsData ?? [];
   }
@@ -348,4 +370,72 @@ function findAllIndexes<T>(arr: T[], target: T): number[] {
     }
   });
   return indexes;
+}
+
+function chainSelection(
+  blocks: {
+    eventData: Event[];
+    blockInfo: BlockInfo;
+  }[]
+) {
+  if (blocks.length === 1) return blocks[0];
+
+  let existing = blocks[0];
+
+  for (let i = 1; i < blocks.length; i++) {
+    const candidate = blocks[i];
+    existing = select(existing, candidate);
+  }
+  return existing;
+}
+
+function select(
+  existing: {
+    eventData: Event[];
+    blockInfo: BlockInfo;
+  },
+  candidate: {
+    eventData: Event[];
+    blockInfo: BlockInfo;
+  }
+) {
+  const existingHash = existing.blockInfo.stateHash;
+  const candidateHash = candidate.blockInfo.stateHash;
+
+  console.log('Existing: ', existing.blockInfo);
+  console.log('Candidate: ', candidate.blockInfo);
+
+  const lessThanOrEqualWhen = <T>(
+    a: T,
+    b: T,
+    compare: (a: T, b: T) => number,
+    condition: boolean
+  ): boolean => {
+    const c = compare(a, b);
+    return c < 0 || (c === 0 && condition);
+  };
+  const candidateHashIsBigger = candidateHash > existingHash;
+
+  const compareBlake2 = (existingHash: string, candidateHash: string) => {
+    const stringOfBlake2 = (hash: string) => {
+      return blake2b(Buffer.from(hash));
+    };
+    if (stringOfBlake2(existingHash) > stringOfBlake2(candidateHash)) {
+      return 1;
+    } else if (stringOfBlake2(existingHash) < stringOfBlake2(candidateHash)) {
+      return -1;
+    }
+    return 0;
+  };
+
+  const candidateVRFIsBigger = lessThanOrEqualWhen(
+    existing.blockInfo.lastVrfOutput,
+    candidate.blockInfo.lastVrfOutput,
+    compareBlake2,
+    candidateHashIsBigger
+  );
+
+  const r = candidateVRFIsBigger ? candidate : existing;
+  console.log('Selected: ', r.blockInfo);
+  return r;
 }

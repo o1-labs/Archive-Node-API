@@ -48,6 +48,7 @@
     "@graphql-tools/schema": "^9.0.16",
     "@opentelemetry/exporter-jaeger": "^1.9.1",
     "@opentelemetry/tracing": "^0.24.0",
+    "blakejs": "^1.2.1",
     "dotenv": "^16.0.3",
     "graphql": "^16.6.0",
     "graphql-yoga": "3.7.0",

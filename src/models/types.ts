@@ -28,6 +28,9 @@ export type BlockInfo = {
   globalSlotSinceHardfork: number;
   globalSlotSinceGenesis: number;
   distanceFromMaxBlockHeight: number;
+  lastVrfOutput: string;
+  minWindowDensity: string;
+  subWindowDensities: string[];
 };
 
 export type TransactionInfo = {
