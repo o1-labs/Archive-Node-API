@@ -89,9 +89,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       traceInfo.ctx
     );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksMap = this.partitionBlocks(rows);
+    const blocksWithTransactions = this.partitionBlocks(rows);
     const eventsData = this.deriveEventsFromBlocks(
-      blocksMap,
+      blocksWithTransactions,
       elementIdFieldValues
     );
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
@@ -122,9 +122,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       traceInfo.ctx
     );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksMap = this.partitionBlocks(rows);
+    const blocksWithTransactions = this.partitionBlocks(rows);
     const actionsData = this.deriveActionsFromBlocks(
-      blocksMap,
+      blocksWithTransactions,
       elementIdFieldValues
     );
     actionsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
@@ -175,11 +175,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: BlocksWithTransactionsMap,
+    blocksWithTransactions: BlocksWithTransactionsMap,
     elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const events: Events = [];
-    const blockMapEntries = Array.from(blocksMap.entries());
+    const blockMapEntries = Array.from(blocksWithTransactions.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
       const transaction = transactions.values().next().value[0];
@@ -204,11 +204,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: BlocksWithTransactionsMap,
+    blocksWithTransactions: BlocksWithTransactionsMap,
     elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const actions: Actions = [];
-    const blockMapEntries = Array.from(blocksMap.entries());
+    const blockMapEntries = Array.from(blocksWithTransactions.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
       const transaction = transactions.values().next().value[0];
@@ -235,11 +235,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         blockInfo,
         actionData: actionsData.flat(),
         actionState: {
+          /* eslint-disable */
           actionStateOne: action_state_value1!,
           actionStateTwo: action_state_value2!,
           actionStateThree: action_state_value3!,
           actionStateFour: action_state_value4!,
           actionStateFive: action_state_value5!,
+          /* eslint-enable */
         },
       });
     }
