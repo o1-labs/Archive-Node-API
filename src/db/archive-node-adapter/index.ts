@@ -7,6 +7,8 @@ import {
   Event,
   Events,
   ArchiveNodeDatabaseRow,
+  BlocksWithTransactionsMap,
+  FieldElementIdWithValueMap,
 } from '../../models/types';
 import {
   createBlockInfo,
@@ -173,8 +175,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
-    elementIdFieldValues: Map<string, string>
+    blocksMap: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const events: Events = [];
     const blockMapEntries = Array.from(blocksMap.entries());
@@ -202,8 +204,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
-    elementIdFieldValues: Map<string, string>
+    blocksMap: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const actions: Actions = [];
     const blockMapEntries = Array.from(blocksMap.entries());
@@ -245,10 +247,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
-    const blocks: Map<
-      string,
-      Map<string, ArchiveNodeDatabaseRow[]>
-    > = new Map();
+    const blocks: BlocksWithTransactionsMap = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
@@ -318,7 +317,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   protected mapActionOrEvent(
     kind: 'action' | 'event',
     rows: ArchiveNodeDatabaseRow[],
-    elementIdFieldValues: Map<string, string>
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const data: (Event | Action)[] = [];
 
@@ -350,7 +349,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
-    const elementIdValues: Map<string, string> = new Map();
+    const elementIdValues: FieldElementIdWithValueMap = new Map();
     for (let i = 0; i < rows.length; i++) {
       const { id, field } = rows[i];
       elementIdValues.set(id.toString(), field);
