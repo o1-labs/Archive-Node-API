@@ -99,7 +99,6 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     );
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
     filterBestTip(eventsData);
-
     eventsProcessingSpan?.end();
     return eventsData ?? [];
   }

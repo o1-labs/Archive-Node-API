@@ -18,8 +18,6 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
     globalSlotSinceGenesis: Number(row.global_slot_since_genesis),
     distanceFromMaxBlockHeight: Number(row.distance_from_max_block_height),
     lastVrfOutput: row.last_vrf_output,
-    minWindowDensity: row.min_window_density,
-    subWindowDensities: row.sub_window_densities,
   } as BlockInfo;
 }
 
