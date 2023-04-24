@@ -31,7 +31,7 @@ import type {
 } from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
 
-import { blake2b } from 'blakejs';
+import { blake2bHex } from 'blakejs';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
@@ -98,24 +98,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       elementIdFieldValues
     );
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
-    console.log('eventsData', eventsData[0].blockInfo.height);
-    // Get the events with distanceFromMaxBlockHeight === 0.
-    const latestEvents = eventsData.filter(
-      (event) => event.blockInfo.distanceFromMaxBlockHeight === 0
-    );
-    if (latestEvents.length > 1) {
-      console.log('latestEvents', latestEvents);
-      const selected = chainSelection(latestEvents);
-      // Replace all events with distanceFromMaxBlockHeight === 0 with the selected events.
-      for (let i = 0; i < eventsData.length; i++) {
-        if (eventsData[i].blockInfo.distanceFromMaxBlockHeight === 0) {
-          // Remove the event.
-          eventsData.splice(i, 1);
-        }
-      }
-      // Insert selected at the begining of the array.
-      eventsData.unshift(selected);
-    }
+    filterBestTip(eventsData);
 
     eventsProcessingSpan?.end();
     return eventsData ?? [];
@@ -150,6 +133,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       elementIdFieldValues
     );
     actionsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
+    filterBestTip(actionsData);
     actionsProcessingSpan?.end();
     return actionsData ?? [];
   }
@@ -392,16 +376,56 @@ function findAllIndexes<T>(arr: T[], target: T): number[] {
   return indexes;
 }
 
-function chainSelection(
-  blocks: {
-    eventData: Event[];
-    blockInfo: BlockInfo;
-  }[]
+function findLastIndexPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
+  for (let i = 0; i < array.length; i++) {
+    console.log(array[i], predicate(array[i]));
+    if (
+      predicate(array[i]) &&
+      i < array.length - 1 &&
+      !predicate(array[i + 1])
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
+  const data: T[] = [];
+  for (let i = 0; i < array.length; i++) {
+    if (predicate(array[i])) {
+      data.push(array[i]);
+    } else {
+      break;
+    }
+  }
+  return data;
+}
+
+function filterBestTip<T extends { blockInfo: BlockInfo }>(
+  eventOrActionData: T[]
 ) {
+  const highestTipBlocks = getAllPredicate(
+    eventOrActionData,
+    (e) => e.blockInfo.distanceFromMaxBlockHeight === 0
+  );
+  if (highestTipBlocks.length > 1) {
+    const index = findLastIndexPredicate(
+      eventOrActionData,
+      (event) => event.blockInfo.distanceFromMaxBlockHeight === 0
+    );
+    if (index === -1) {
+      return eventOrActionData;
+    }
+    const selectedTip = chainSelect(highestTipBlocks);
+    eventOrActionData.splice(0, index + 1);
+    eventOrActionData.unshift(selectedTip);
+  }
+}
+
+function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
   if (blocks.length === 1) return blocks[0];
-
   let existing = blocks[0];
-
   for (let i = 1; i < blocks.length; i++) {
     const candidate = blocks[i];
     existing = select(existing, candidate);
@@ -409,53 +433,34 @@ function chainSelection(
   return existing;
 }
 
-function select(
-  existing: {
-    eventData: Event[];
-    blockInfo: BlockInfo;
-  },
-  candidate: {
-    eventData: Event[];
-    blockInfo: BlockInfo;
+/**
+ * This function is used to select the best chain based on the tie breaker rules that the Mina Protocol uses.
+ *
+ * The tie breaker rules are as follows:
+ * 1. Take the block with the highest VRF output, denoted by comparing the VRF Blake2B hashes.
+ *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3004
+ * 2. If the VRF outputs are equal, take the block with the highest state hash.
+ *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3001
+ *
+ * The tie breaker rules are also more formally documented here: https://github.com/MinaProtocol/mina/blob/36d39cd0b2e3ba6c5e687770a5c683984ca587fc/docs/specs/consensus/README.md?plain=1#L1134
+ */
+
+function select<T extends { blockInfo: BlockInfo }>(existing: T, candidate: T) {
+  const existingVRFHash = blake2bHex(existing.blockInfo.lastVrfOutput);
+  const candidateVRFHash = blake2bHex(candidate.blockInfo.lastVrfOutput);
+  if (existingVRFHash > candidateVRFHash) {
+    return existing;
+  } else if (existingVRFHash < candidateVRFHash) {
+    return candidate;
   }
-) {
+
   const existingHash = existing.blockInfo.stateHash;
   const candidateHash = candidate.blockInfo.stateHash;
+  if (existingHash > candidateHash) {
+    return existing;
+  } else if (existingHash < candidateHash) {
+    return candidate;
+  }
 
-  console.log('Existing: ', existing.blockInfo);
-  console.log('Candidate: ', candidate.blockInfo);
-
-  const lessThanOrEqualWhen = <T>(
-    a: T,
-    b: T,
-    compare: (a: T, b: T) => number,
-    condition: boolean
-  ): boolean => {
-    const c = compare(a, b);
-    return c < 0 || (c === 0 && condition);
-  };
-  const candidateHashIsBigger = candidateHash > existingHash;
-
-  const compareBlake2 = (existingHash: string, candidateHash: string) => {
-    const stringOfBlake2 = (hash: string) => {
-      return blake2b(Buffer.from(hash));
-    };
-    if (stringOfBlake2(existingHash) > stringOfBlake2(candidateHash)) {
-      return 1;
-    } else if (stringOfBlake2(existingHash) < stringOfBlake2(candidateHash)) {
-      return -1;
-    }
-    return 0;
-  };
-
-  const candidateVRFIsBigger = lessThanOrEqualWhen(
-    existing.blockInfo.lastVrfOutput,
-    candidate.blockInfo.lastVrfOutput,
-    compareBlake2,
-    candidateHashIsBigger
-  );
-
-  const r = candidateVRFIsBigger ? candidate : existing;
-  console.log('Selected: ', r.blockInfo);
-  return r;
+  return existing;
 }
