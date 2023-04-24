@@ -13,6 +13,7 @@
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
     "test": "cross-env NODE_ENV=development vitest run",
+    "gen-test-mocks": "npx ts-node tests/mocked_sql/generate_mock_data.ts",
     "benchmark-report": "node node_modules/.bin/artillery run benchmark/graphql.yaml --output benchmark/report.json",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .ts",

@@ -8,6 +8,8 @@ import {
   Events,
   ArchiveNodeDatabaseRow,
   BlockInfo,
+  BlocksWithTransactionsMap,
+  FieldElementIdWithValueMap,
 } from '../../models/types';
 import {
   createBlockInfo,
@@ -90,9 +92,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       traceInfo.ctx
     );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksMap = this.partitionBlocks(rows);
+    const blocksWithTransactions = this.partitionBlocks(rows);
     const eventsData = this.deriveEventsFromBlocks(
-      blocksMap,
+      blocksWithTransactions,
       elementIdFieldValues
     );
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
@@ -142,9 +144,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       traceInfo.ctx
     );
     const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksMap = this.partitionBlocks(rows);
+    const blocksWithTransactions = this.partitionBlocks(rows);
     const actionsData = this.deriveActionsFromBlocks(
-      blocksMap,
+      blocksWithTransactions,
       elementIdFieldValues
     );
     actionsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
@@ -195,11 +197,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveEventsFromBlocks(
-    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
-    elementIdFieldValues: Map<string, string>
+    blocksWithTransactions: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const events: Events = [];
-    const blockMapEntries = Array.from(blocksMap.entries());
+    const blockMapEntries = Array.from(blocksWithTransactions.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
       const transaction = transactions.values().next().value[0];
@@ -224,11 +226,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected deriveActionsFromBlocks(
-    blocksMap: Map<string, Map<string, ArchiveNodeDatabaseRow[]>>,
-    elementIdFieldValues: Map<string, string>
+    blocksWithTransactions: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const actions: Actions = [];
-    const blockMapEntries = Array.from(blocksMap.entries());
+    const blockMapEntries = Array.from(blocksWithTransactions.entries());
     for (let i = 0; i < blockMapEntries.length; i++) {
       const transactions = blockMapEntries[i][1];
       const transaction = transactions.values().next().value[0];
@@ -249,20 +251,19 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           filteredBlocks,
           elementIdFieldValues
         ) as Action[];
-        actionData.sort(
-          (a, b) => Number(a.accountUpdateId) - Number(b.accountUpdateId)
-        );
         actionsData.push(actionData);
       }
       actions.push({
         blockInfo,
         actionData: actionsData.flat(),
         actionState: {
+          /* eslint-disable */
           actionStateOne: action_state_value1!,
           actionStateTwo: action_state_value2!,
           actionStateThree: action_state_value3!,
           actionStateFour: action_state_value4!,
           actionStateFive: action_state_value5!,
+          /* eslint-enable */
         },
       });
     }
@@ -270,10 +271,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
-    const blocks: Map<
-      string,
-      Map<string, ArchiveNodeDatabaseRow[]>
-    > = new Map();
+    const blocks: BlocksWithTransactionsMap = new Map();
     if (rows.length === 0) return blocks;
 
     for (let i = 0; i < rows.length; i++) {
@@ -297,31 +295,53 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
-    const newBlocks: ArchiveNodeDatabaseRow[] = [];
-    const seenEventIds = new Set<number>();
+    const newBlocks: ArchiveNodeDatabaseRow[][] = [];
+    const seenEventIds = new Set<string>();
 
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      const { zkapp_event_array_id, zkapp_event_element_ids } = block;
-
-      if (!seenEventIds.has(zkapp_event_array_id)) {
-        const indicies = findAllIndexes(
+      const {
+        zkapp_event_array_id,
+        zkapp_event_element_ids,
+        zkapp_account_update_id,
+        zkapp_account_updates_ids,
+      } = block;
+      const uniqueId = [zkapp_account_update_id, zkapp_event_array_id].join(
+        ','
+      );
+      if (!seenEventIds.has(uniqueId)) {
+        const accountUpdateIndexes = findAllIndexes(
+          zkapp_account_updates_ids,
+          zkapp_account_update_id
+        );
+        if (accountUpdateIndexes.length === 0) {
+          throw new Error(
+            `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${zkapp_event_array_id}).`
+          );
+        }
+        // AccountUpdate Ids are always unique so we can assume it will return an array with one element
+        const accountUpdateIdIndex = accountUpdateIndexes[0];
+        const eventIndexes = findAllIndexes(
           zkapp_event_element_ids,
           zkapp_event_array_id
         );
-        indicies.forEach((index) => {
-          newBlocks[index] = block;
+
+        eventIndexes.forEach((index) => {
+          if (newBlocks[accountUpdateIdIndex] === undefined) {
+            newBlocks[accountUpdateIdIndex] = [];
+          }
+          newBlocks[accountUpdateIdIndex][index] = block;
         });
-        seenEventIds.add(zkapp_event_array_id);
+        seenEventIds.add(uniqueId);
       }
     }
-    return newBlocks;
+    return newBlocks.flat();
   }
 
   protected mapActionOrEvent(
     kind: 'action' | 'event',
     rows: ArchiveNodeDatabaseRow[],
-    elementIdFieldValues: Map<string, string>
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const data: (Event | Action)[] = [];
 
@@ -353,7 +373,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   }
 
   protected getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
-    const elementIdValues: Map<string, string> = new Map();
+    const elementIdValues: FieldElementIdWithValueMap = new Map();
     for (let i = 0; i < rows.length; i++) {
       const { id, field } = rows[i];
       elementIdValues.set(id.toString(), field);
