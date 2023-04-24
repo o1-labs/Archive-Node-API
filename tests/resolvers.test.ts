@@ -19,14 +19,16 @@ query getEvents($input: EventFilterOptionsInput!) {
       parentHash
       chainStatus
       distanceFromMaxBlockHeight
+      globalSlotSinceHardfork
+      globalSlotSinceGenesis
     }
     eventData {
+      data
       transactionInfo {
         status
         hash
         memo
       }
-      data
     }
   }
 }
@@ -42,6 +44,7 @@ query getActions($input: ActionFilterOptionsInput!) {
       parentHash
       chainStatus
       distanceFromMaxBlockHeight
+      globalSlotSinceGenesis
     }
     actionState {
       actionStateOne
@@ -51,18 +54,19 @@ query getActions($input: ActionFilterOptionsInput!) {
       actionStateFive
     }
     actionData {
-      transactionInfo {
-       status
-       hash
-       memo
-      }
       data
+      accountUpdateId
+      transactionInfo {
+        status
+        hash
+        memo
+      }
     }
   }
 }
 `;
 
-const address = 'B62qrfn5xxChtPGJne9HuDJZ4ziWVgWxeL3hntGBqMmf45p4hudo3tw';
+const address = 'B62qngHtRemqzpwhrpohji5K1iTknVdHXyWvDyRpXFhjHZ1JF4uaZZC';
 
 const PG_CONN = process.env.GITHUB_ACTIONS
   ? 'postgres://postgres:password@postgres:5432/archive'

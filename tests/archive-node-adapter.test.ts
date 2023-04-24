@@ -6,7 +6,13 @@ import ActionsMock from './mocked_sql/database_mock_actions.json';
 
 import { ArchiveNodeAdapter } from '../src/db';
 import { createBlockInfo, createTransactionInfo } from '../src/models/utils';
-import { Action, Event } from '../src/models/types';
+import {
+  Action,
+  ArchiveNodeDatabaseRow,
+  BlocksWithTransactionsMap,
+  Event,
+  FieldElementIdWithValueMap,
+} from '../src/models/types';
 
 const PG_CONN = process.env.GITHUB_ACTIONS
   ? 'postgres://postgres:password@postgres:5432/archive'
@@ -17,38 +23,46 @@ class ArchiveNodeAdapterExtend extends ArchiveNodeAdapter {
     super(connectionString);
   }
 
-  partitionBlocksExtended(rows: postgres.RowList<postgres.Row[]>) {
+  partitionBlocksExtended(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
     return this.partitionBlocks(rows);
   }
 
-  getElementIdFieldValuesExtended(rows: postgres.RowList<postgres.Row[]>) {
+  getElementIdFieldValuesExtended(
+    rows: postgres.RowList<ArchiveNodeDatabaseRow[]>
+  ) {
     return this.getElementIdFieldValues(rows);
   }
 
   mapActionOrEventExtended(
     kind: 'action' | 'event',
-    rows: postgres.Row[],
-    elementIdFieldValues: Map<string, string>
+    rows: ArchiveNodeDatabaseRow[],
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     return this.mapActionOrEvent(kind, rows, elementIdFieldValues);
   }
 
   deriveEventsFromBlocksExtended(
-    blocksMap: Map<string, postgres.Row[]>,
-    elementIdFieldValues: Map<string, string>
+    blocksWithTransactions: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
-    return this.deriveEventsFromBlocks(blocksMap, elementIdFieldValues);
+    return this.deriveEventsFromBlocks(
+      blocksWithTransactions,
+      elementIdFieldValues
+    );
   }
 
   deriveActionsFromBlocksExtended(
-    blocksMap: Map<string, postgres.Row[]>,
-    elementIdFieldValues: Map<string, string>
+    blocksWithTransactions: BlocksWithTransactionsMap,
+    elementIdFieldValues: FieldElementIdWithValueMap
   ) {
-    return this.deriveActionsFromBlocks(blocksMap, elementIdFieldValues);
+    return this.deriveActionsFromBlocks(
+      blocksWithTransactions,
+      elementIdFieldValues
+    );
   }
 }
 
-let archiveNodeAdapter;
+let archiveNodeAdapter: ArchiveNodeAdapterExtend;
 
 describe('ArchiveNodeAdapter', async () => {
   beforeAll(() => {
@@ -57,20 +71,22 @@ describe('ArchiveNodeAdapter', async () => {
 
   describe('partitionBlocks', async () => {
     test('partitionBlocks should return a non-empty map', async () => {
-      const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
+      const blocksWithTransactions = archiveNodeAdapter.partitionBlocksExtended(
         EventsMock as any
       );
-      expect(blocksMap.size).toBeTruthy();
+      expect(blocksWithTransactions.size).toBeTruthy();
     });
 
     test('partitionBlocks values should be able to create blockInfo', async () => {
-      const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
+      const blocksWithTransactions = archiveNodeAdapter.partitionBlocksExtended(
         EventsMock as any
       );
 
-      const blockHash = blocksMap.keys().next().value;
-      const blockRows = blocksMap.get(blockHash);
-      const blockInfo = createBlockInfo(blockRows![0]);
+      const blockHash = blocksWithTransactions.keys().next().value;
+      const blockRows = blocksWithTransactions.get(blockHash);
+      const transactionHash = blockRows?.keys().next().value;
+      const transactionRows = blockRows?.get(transactionHash)!;
+      const blockInfo = createBlockInfo(transactionRows[0]);
 
       expect(blockInfo.height).toBeTruthy();
       expect(blockInfo.stateHash).toBeTruthy();
@@ -83,13 +99,15 @@ describe('ArchiveNodeAdapter', async () => {
     });
 
     test('partitionBlocks values should be able to create transactionInfo', async () => {
-      const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
+      const blocksWithTransactions = archiveNodeAdapter.partitionBlocksExtended(
         EventsMock as any
       );
 
-      const blockHash = blocksMap.keys().next().value;
-      const blockRows = blocksMap.get(blockHash);
-      const transactionInfo = createTransactionInfo(blockRows![0]);
+      const blockHash = blocksWithTransactions.keys().next().value;
+      const blockRows = blocksWithTransactions.get(blockHash);
+      const transactionHash = blockRows?.keys().next().value;
+      const transactionRows = blockRows?.get(transactionHash)!;
+      const transactionInfo = createTransactionInfo(transactionRows[0]);
 
       expect(transactionInfo.authorizationKind).toBeTruthy();
       expect(transactionInfo.hash).toBeTruthy();
@@ -141,8 +159,12 @@ describe('ArchiveNodeAdapter', async () => {
         ) as Event[];
 
         events.forEach((event) => {
-          for (const field in event.data) {
-            expect(EventsMock.find((row) => row.field === field)).toBeTruthy();
+          for (const field of event.data) {
+            expect(
+              EventsMock.find((row) => {
+                return row.field === field;
+              })
+            ).toBeTruthy();
           }
         });
       });
@@ -189,13 +211,12 @@ describe('ArchiveNodeAdapter', async () => {
   describe('deriveFromBlocks', async () => {
     describe('Events', async () => {
       test('should return a non-empty list of events if are specified', async () => {
-        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          EventsMock as any
-        );
+        const blocksWithTransactions =
+          archiveNodeAdapter.partitionBlocksExtended(EventsMock as any);
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
-          blocksMap,
+          blocksWithTransactions,
           elementIdFieldValues
         );
 
@@ -203,13 +224,12 @@ describe('ArchiveNodeAdapter', async () => {
       });
 
       test('should return a list of events with values all contained in mocked data', async () => {
-        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          EventsMock as any
-        );
+        const blocksWithTransactions =
+          archiveNodeAdapter.partitionBlocksExtended(EventsMock as any);
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
-          blocksMap,
+          blocksWithTransactions,
           elementIdFieldValues
         );
 
@@ -237,13 +257,12 @@ describe('ArchiveNodeAdapter', async () => {
       });
 
       test('should return an ordered list of events by index ', async () => {
-        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          EventsMock as any
-        );
+        const blocksWithTransactions =
+          archiveNodeAdapter.partitionBlocksExtended(EventsMock as any);
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(EventsMock as any);
         const eventsData = archiveNodeAdapter.deriveEventsFromBlocksExtended(
-          blocksMap,
+          blocksWithTransactions,
           elementIdFieldValues
         );
 
@@ -256,15 +275,14 @@ describe('ArchiveNodeAdapter', async () => {
 
     describe('Actions', async () => {
       test('should return a non-empty list of actions if are specified', async () => {
-        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          ActionsMock as any
-        );
+        const blocksWithTransactions =
+          archiveNodeAdapter.partitionBlocksExtended(ActionsMock as any);
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
             ActionsMock as any
           );
         const actionsData = archiveNodeAdapter.deriveActionsFromBlocksExtended(
-          blocksMap,
+          blocksWithTransactions,
           elementIdFieldValues
         );
 
@@ -272,15 +290,14 @@ describe('ArchiveNodeAdapter', async () => {
       });
 
       test('should return a list of actions with values all contained in mocked data', async () => {
-        const blocksMap = archiveNodeAdapter.partitionBlocksExtended(
-          ActionsMock as any
-        );
+        const blocksWithTransactions =
+          archiveNodeAdapter.partitionBlocksExtended(ActionsMock as any);
         const elementIdFieldValues =
           archiveNodeAdapter.getElementIdFieldValuesExtended(
             ActionsMock as any
           );
         const actionsData = archiveNodeAdapter.deriveActionsFromBlocksExtended(
-          blocksMap,
+          blocksWithTransactions,
           elementIdFieldValues
         );
 
