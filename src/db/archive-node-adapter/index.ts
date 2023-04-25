@@ -375,20 +375,6 @@ function findAllIndexes<T>(arr: T[], target: T): number[] {
   return indexes;
 }
 
-function findLastIndexPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
-  for (let i = 0; i < array.length; i++) {
-    console.log(array[i], predicate(array[i]));
-    if (
-      predicate(array[i]) &&
-      i < array.length - 1 &&
-      !predicate(array[i + 1])
-    ) {
-      return i;
-    }
-  }
-  return -1;
-}
-
 function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
   const data: T[] = [];
   for (let i = 0; i < array.length; i++) {
@@ -409,16 +395,8 @@ function filterBestTip<T extends { blockInfo: BlockInfo }>(
     (e) => e.blockInfo.distanceFromMaxBlockHeight === 0
   );
   if (highestTipBlocks.length > 1) {
-    const index = findLastIndexPredicate(
-      eventOrActionData,
-      (event) => event.blockInfo.distanceFromMaxBlockHeight === 0
-    );
-    if (index === -1) {
-      return eventOrActionData;
-    }
-    const selectedTip = chainSelect(highestTipBlocks);
-    eventOrActionData.splice(0, index + 1);
-    eventOrActionData.unshift(selectedTip);
+    const selectedBlock = chainSelect(highestTipBlocks);
+    eventOrActionData.splice(0, highestTipBlocks.length + 1, selectedBlock);
   }
 }
 
@@ -426,8 +404,7 @@ function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
   if (blocks.length === 1) return blocks[0];
   let existing = blocks[0];
   for (let i = 1; i < blocks.length; i++) {
-    const candidate = blocks[i];
-    existing = select(existing, candidate);
+    existing = select(existing, blocks[i]);
   }
   return existing;
 }
