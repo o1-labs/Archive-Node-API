@@ -51,7 +51,7 @@ services:
       PGDATA: ${PGDATA}
     volumes:
       - "./data/${PG_DUMP}:/data/${PG_DUMP}"
-      - "./scripts/init.sh:/docker-entrypoint-initdb.d/init.sh"
+      - "./scripts/init_docker_compose.sh:/docker-entrypoint-initdb.d/init.sh"
       - "./db:/var/lib/postgresql/data"
     command: postgres -N 1000
     networks:
