@@ -5,6 +5,11 @@
 # It will generate a keypair under /HOME/keys and name the keys "libp2p-keys".
 # These should not be used in production, and are only used for local development.
 
+# To run this script, make sure you have the following installed:
+# - Docker: https://docs.docker.com/engine/install
+# - Mina Daemon: https://docs.minaprotocol.com/node-operators/getting-started
+
+
 # Enable debug mode
 set -x
 
