@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# This script generates a Mina keypair and a libp2p keypair. 
+# This is used to bootstrap the Mina daemon in the docker container that's used by the docker compose network.
+# It will generate a keypair under /HOME/keys and name the keys "libp2p-keys".
+# These should not be used in production, and are only used for local development.
+
 # Enable debug mode
 set -x
 
