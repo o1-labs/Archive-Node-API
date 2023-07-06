@@ -12,6 +12,7 @@ set -x
 set -eo pipefail
 
 # Set environment variable
+# Make sure these match the environment variables used in the docker-compose.yml file
 export MINA_PRIVKEY_PASS="passlib"
 export MINA_LIBP2P_PASS="passlib"
 
@@ -35,7 +36,7 @@ fi
 # Generate Mina keypair using Docker
 echo "Generating Mina keypair using Docker..."
 docker run --interactive --tty --rm \
-		--env "MINA_PRIVKEY_PASS=$MINA_PRIVKEY_PASS" \
+    --env "MINA_PRIVKEY_PASS=$MINA_PRIVKEY_PASS" \
     --volume $HOME_KEYPAIR_DIR:/keys $MINA_KEYPAIR_IMAGE \
     --privkey-path $KEYPAIR_PATH
 
