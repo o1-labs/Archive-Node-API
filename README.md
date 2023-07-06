@@ -224,3 +224,31 @@ As a short-term solution, due to not knowing what block to return at the tip of 
 A long-term solution would be porting over the selection algorithm to TypeScript and emulating the same algorithm to decide which block to return at the tip of the network. However, this is not possible now, given that the Archive Node database schema currently doesn’t store the data needed to run the selection algorithm that the Mina client has access to (mainly `last_vrf_output` and `sub_window_densities`).
 
 This issue of deciding what to return at the tip of the network only happens at the maximum block height. All blocks below the height of the network will have one block returned and will avoid this issue. The need for this data has been raised to the current maintainers of the Archive Node. Once the Archive Node includes `last_vrf_output` and `sub_window_densities` into its schema, the selection algorithm can be implemented later to solve this issue. The issue tracking this is [listed here](https://github.com/o1-labs/Archive-Node-API/issues/7)
+
+## Setting Up Local Development Environment Using Docker Compose
+
+The provided `docker-compose.yml` file simplifies the process of setting up a local development environment. This file orchestrates the creation of a Docker network comprising of Mina daemon, Archive Node, GraphQL server, and Jaeger. Follow the steps below to get everything up and running:
+
+**Step 1: Libp2p Keypair Generation**
+
+You will need a libp2p keypair for the setup. If you don't already have one, you can easily generate a keypair specifically for local development (note: this should not be used in production). Use the script provided in the repository:
+
+```bash
+./scripts/generate_libp2p.sh
+```
+
+**Step 2: Update Environment Variables**
+
+Once you have generated the keypair, make sure to update your `.env` file with the passwords that were used during the keypair generation process.
+
+**Step 3: Launch the Docker Network**
+
+With the prerequisites in place, start the Docker network by running the following command in your terminal:
+
+```bash
+docker compose up
+```
+
+This command pulls the necessary Docker images and launches them, setting up a local environment ideal for server development.
+
+That's it! Your local development environment is now ready for use.
