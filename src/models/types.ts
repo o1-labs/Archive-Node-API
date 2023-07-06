@@ -1,6 +1,13 @@
 export const DEFAULT_TOKEN_ID =
   'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf' as const;
 
+export type BlocksWithTransactionsMap = Map<
+  string,
+  Map<string, ArchiveNodeDatabaseRow[]>
+>;
+
+export type FieldElementIdWithValueMap = Map<string, string>;
+
 export enum BlockStatusFilter {
   all = 'ALL',
   pending = 'PENDING',
@@ -67,7 +74,7 @@ export type ArchiveNodeDatabaseRow = {
   parent_hash: string;
   height: string;
   global_slot_since_genesis: string;
-  global_slot_since_hardfork: string;
+  global_slot_since_hard_fork: string;
   authorization_kind: string;
   timestamp: string;
   chain_status: string;
@@ -85,6 +92,7 @@ export type ArchiveNodeDatabaseRow = {
   element_ids: number[];
   field: string;
   zkapp_event_element_ids: number[];
+  zkapp_event_array_id: number;
   action_state_value1?: string;
   action_state_value2?: string;
   action_state_value3?: string;
