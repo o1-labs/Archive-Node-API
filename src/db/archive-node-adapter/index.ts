@@ -23,6 +23,7 @@ import {
   getTables,
   USED_TABLES,
 } from './queries';
+import { select } from '../../consensus/mina-consensus';
 
 import type { DatabaseAdapter } from '../index';
 import type {
@@ -30,8 +31,6 @@ import type {
   EventFilterOptionsInput,
 } from '../../resolvers-types';
 import { TraceInfo } from 'src/tracing';
-
-import { blake2bHex } from 'blakejs';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
@@ -406,37 +405,5 @@ function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
   for (let i = 1; i < blocks.length; i++) {
     existing = select(existing, blocks[i]);
   }
-  return existing;
-}
-
-/**
- * This function is used to select the best chain based on the tie breaker rules that the Mina Protocol uses.
- *
- * The tie breaker rules are as follows:
- * 1. Take the block with the highest VRF output, denoted by comparing the VRF Blake2B hashes.
- *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3004
- * 2. If the VRF outputs are equal, take the block with the highest state hash.
- *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3001
- *
- * The tie breaker rules are also more formally documented here: https://github.com/MinaProtocol/mina/blob/36d39cd0b2e3ba6c5e687770a5c683984ca587fc/docs/specs/consensus/README.md?plain=1#L1134
- */
-
-function select<T extends { blockInfo: BlockInfo }>(existing: T, candidate: T) {
-  const existingVRFHash = blake2bHex(existing.blockInfo.lastVrfOutput);
-  const candidateVRFHash = blake2bHex(candidate.blockInfo.lastVrfOutput);
-  if (existingVRFHash > candidateVRFHash) {
-    return existing;
-  } else if (existingVRFHash < candidateVRFHash) {
-    return candidate;
-  }
-
-  const existingHash = existing.blockInfo.stateHash;
-  const candidateHash = candidate.blockInfo.stateHash;
-  if (existingHash > candidateHash) {
-    return existing;
-  } else if (existingHash < candidateHash) {
-    return candidate;
-  }
-
   return existing;
 }
