@@ -19,6 +19,8 @@ import {
 } from './utils';
 import { createBlockInfo } from '../../models/utils';
 
+import util from 'util';
+
 export { EventsService };
 
 class EventsService {
@@ -34,25 +36,30 @@ class EventsService {
   }
 
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    let eventsData = await this.getEventData(input);
-    eventsData = sortAndFilterBlocks(eventsData);
+    const eventsData = await this.getEventData(input);
     return eventsData ?? [];
   }
 
   async getEventData(input: EventFilterOptionsInput): Promise<Events> {
     this.tracingService.startSpan('Events SQL');
     const rows = await this.executeEventsQuery(input);
+    console.log(rows);
     this.tracingService.endSpan();
 
     this.tracingService.startSpan('Events Processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
+
+    // print out map
+    // console.log(util.inspect(blocksWithTransactions, false, null, true));
+
     const eventsData = this.deriveEventsFromBlocks(
       blocksWithTransactions,
       elementIdFieldValues
     );
     this.tracingService.endSpan();
-    return eventsData;
+    const sortedEventsData = sortAndFilterBlocks(eventsData);
+    return sortedEventsData;
   }
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {

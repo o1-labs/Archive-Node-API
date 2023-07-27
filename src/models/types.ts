@@ -36,6 +36,8 @@ export type BlockInfo = {
   globalSlotSinceGenesis: number;
   distanceFromMaxBlockHeight: number;
   lastVrfOutput: string;
+  minWindowDensity: number;
+  subWindowDensities: number[];
 };
 
 export type TransactionInfo = {
@@ -95,6 +97,8 @@ export type ArchiveNodeDatabaseRow = {
   zkapp_event_element_ids: number[];
   zkapp_event_array_id: number;
   last_vrf_output: string;
+  min_window_density: string;
+  sub_window_densities: string[];
   action_state_value1?: string;
   action_state_value2?: string;
   action_state_value3?: string;

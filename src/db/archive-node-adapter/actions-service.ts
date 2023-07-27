@@ -31,8 +31,7 @@ class ActionsService {
   }
 
   async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
-    let actionsData = await this.getActionData(input);
-    actionsData = sortAndFilterBlocks(actionsData);
+    const actionsData = await this.getActionData(input);
     return actionsData ?? [];
   }
 
@@ -49,7 +48,8 @@ class ActionsService {
       elementIdFieldValues
     );
     this.tracingService.endSpan();
-    return actionsData;
+    const sortedActionsData = sortAndFilterBlocks(actionsData);
+    return sortedActionsData;
   }
 
   async executeActionsQuery(input: ActionFilterOptionsInput) {

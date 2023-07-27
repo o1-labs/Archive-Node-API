@@ -5,13 +5,13 @@ import {
   ArchiveNodeDatabaseRow,
   BlocksWithTransactionsMap,
   FieldElementIdWithValueMap,
+  BlockInfo,
 } from 'src/models/types';
 import {
   createTransactionInfo,
   createEvent,
   createAction,
 } from '../../models/utils';
-import { BlockInfo } from 'src/resolvers-types';
 import { filterBestTip, findAllIndexes } from '../../consensus/mina-consensus';
 
 export {
@@ -56,7 +56,24 @@ function partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
       }
     }
   }
-  return blocks;
+  return sortParitionedBlocks(blocks);
+}
+
+function sortParitionedBlocks(
+  blocks: BlocksWithTransactionsMap
+): BlocksWithTransactionsMap {
+  const sortedBlocks: BlocksWithTransactionsMap = new Map();
+  for (const [blockHash, transactions] of blocks) {
+    const sortedTransactions = new Map(
+      [...transactions.entries()].sort((a, b) => {
+        const aHeight = a[1][0].height;
+        const bHeight = b[1][0].height;
+        return Number(bHeight) - Number(aHeight);
+      })
+    );
+    sortedBlocks.set(blockHash, sortedTransactions);
+  }
+  return sortedBlocks;
 }
 
 /**
@@ -196,7 +213,6 @@ function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(
   data: T[]
 ): T[] {
   data.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
-  // TODO: Get this working
-  // filterBestTip(data);
+  filterBestTip(data);
   return data;
 }
