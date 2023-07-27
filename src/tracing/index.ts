@@ -25,10 +25,19 @@ export type TraceInfo = {
   parentSpan: Span;
 };
 
-export function getTracingInfo(parentSpan: Span | undefined) {
+export function getTraceInfoFromGraphQL(parentSpan: Span | undefined) {
   if (!parentSpan) return null;
   const tracer = trace.getTracer('graphql');
   const ctx = trace.setSpan(context.active(), parentSpan);
 
   return { tracer, ctx, parentSpan } as TraceInfo;
+}
+
+export function getTraceInfoFromOptions(options: unknown): TraceInfo {
+  if (options && typeof options === 'object' && 'traceInfo' in options) {
+    return options.traceInfo as TraceInfo;
+  }
+  throw new Error(
+    "Invalid options object: Missing or invalid 'traceInfo' property"
+  );
 }

@@ -1,349 +1,47 @@
 import postgres from 'postgres';
-import {
-  Action,
-  Actions,
-  BlockStatusFilter,
-  DEFAULT_TOKEN_ID,
-  Event,
-  Events,
-  ArchiveNodeDatabaseRow,
-  BlocksWithTransactionsMap,
-  FieldElementIdWithValueMap,
-} from '../../models/types';
-import {
-  createBlockInfo,
-  createTransactionInfo,
-  createEvent,
-  createAction,
-} from '../../models/utils';
-import {
-  getActionsQuery,
-  getEventsQuery,
-  getTables,
-  USED_TABLES,
-} from './queries';
-import { findAllIndexes, filterBestTip } from '../../consensus/mina-consensus';
-
-import type { DatabaseAdapter } from '../index';
+import { Actions, Events } from 'src/models/types';
+import { getTables, USED_TABLES } from 'src/db/archive-node-adapter/queries';
+import type { DatabaseAdapter } from 'src/db/index';
 import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
-} from '../../resolvers-types';
-import { TraceInfo } from 'src/tracing';
+} from 'src/resolvers-types';
+import { getTraceInfoFromOptions } from 'src/tracing';
+import { TracingService } from 'src/tracing/tracing';
+import { EventsService } from 'src/db/archive-node-adapter/events-service';
+import { ActionsService } from 'src/db/archive-node-adapter/actions-service';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
+  /**
+   * Connections are created lazily once a query is created.
+   * This means that simply doing const sql = postgres(...) won't have any
+   * effect other than instantiating a new sql instance. Because of this, sharing the
+   * `postgres.Sql` instance across the adapter is safe.
+   */
   private client: postgres.Sql;
+  private tracingService: TracingService;
+  private eventsService: EventsService;
+  private actionsService: ActionsService;
 
-  constructor(connectionString: string | undefined) {
+  constructor(connectionString: string | undefined, options: unknown) {
     if (!connectionString)
       throw new Error(
         'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
       );
     this.client = postgres(connectionString);
+
+    const traceInfo = getTraceInfoFromOptions(options);
+    this.tracingService = new TracingService(traceInfo);
+    this.eventsService = new EventsService(this.client, this.tracingService);
+    this.actionsService = new ActionsService(this.client, this.tracingService);
   }
 
-  async getEventData(
-    input: EventFilterOptionsInput,
-    traceInfo: TraceInfo | undefined
-  ): Promise<Events> {
-    const sqlSpan = traceInfo?.tracer.startSpan(
-      'Events SQL',
-      undefined,
-      traceInfo.ctx
-    );
-    const rows = await this.executeEventsQuery(input);
-    sqlSpan?.end();
-
-    const eventsProcessingSpan = traceInfo?.tracer.startSpan(
-      'Events Processing',
-      undefined,
-      traceInfo.ctx
-    );
-    const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksWithTransactions = this.partitionBlocks(rows);
-    const eventsData = this.deriveEventsFromBlocks(
-      blocksWithTransactions,
-      elementIdFieldValues
-    );
-    eventsProcessingSpan?.end();
-    return eventsData;
+  async getEvents(input: EventFilterOptionsInput): Promise<Events> {
+    return this.eventsService.getEvents(input);
   }
 
-  sortAndFilterEvents(eventsData: Events): Events {
-    eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
-    filterBestTip(eventsData);
-    return eventsData;
-  }
-
-  async getEvents(
-    input: EventFilterOptionsInput,
-    options?: unknown
-  ): Promise<Events> {
-    const traceInfo = this.getTraceInfo(options);
-    let eventsData = await this.getEventData(input, traceInfo);
-    eventsData = this.sortAndFilterEvents(eventsData);
-    return eventsData ?? [];
-  }
-
-  async getActions(
-    input: EventFilterOptionsInput,
-    options: unknown
-  ): Promise<Actions> {
-    let traceInfo;
-    if (options && typeof options === 'object' && 'traceInfo' in options) {
-      traceInfo = options.traceInfo as TraceInfo;
-    }
-
-    const sqlSpan = traceInfo?.tracer.startSpan(
-      'Actions SQL',
-      undefined,
-      traceInfo.ctx
-    );
-    const rows = await this.executeActionsQuery(input);
-    sqlSpan?.end();
-
-    const actionsProcessingSpan = traceInfo?.tracer.startSpan(
-      'Actions Processing',
-      undefined,
-      traceInfo.ctx
-    );
-    const elementIdFieldValues = this.getElementIdFieldValues(rows);
-    const blocksWithTransactions = this.partitionBlocks(rows);
-    const actionsData = this.deriveActionsFromBlocks(
-      blocksWithTransactions,
-      elementIdFieldValues
-    );
-    actionsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
-    filterBestTip(actionsData);
-    actionsProcessingSpan?.end();
-    return actionsData ?? [];
-  }
-
-  private async executeEventsQuery(input: EventFilterOptionsInput) {
-    const { address, to, from } = input;
-    let { tokenId, status } = input;
-
-    tokenId ||= DEFAULT_TOKEN_ID;
-    status ||= BlockStatusFilter.all;
-    if (to && from && to < from) {
-      throw new Error('to must be greater than from');
-    }
-
-    return getEventsQuery(
-      this.client,
-      address,
-      tokenId,
-      status,
-      to?.toString(),
-      from?.toString()
-    );
-  }
-
-  private async executeActionsQuery(input: ActionFilterOptionsInput) {
-    const { address, to, from, fromActionState, endActionState } = input;
-    let { tokenId, status } = input;
-
-    tokenId ||= DEFAULT_TOKEN_ID;
-    status ||= BlockStatusFilter.all;
-    if (to && from && to < from) {
-      throw new Error('to must be greater than from');
-    }
-
-    return getActionsQuery(
-      this.client,
-      address,
-      tokenId,
-      status,
-      to?.toString(),
-      from?.toString(),
-      fromActionState?.toString(),
-      endActionState?.toString()
-    );
-  }
-
-  protected deriveEventsFromBlocks(
-    blocksWithTransactions: BlocksWithTransactionsMap,
-    elementIdFieldValues: FieldElementIdWithValueMap
-  ) {
-    const events: Events = [];
-    const blockMapEntries = Array.from(blocksWithTransactions.entries());
-    for (let i = 0; i < blockMapEntries.length; i++) {
-      const transactions = blockMapEntries[i][1];
-      const transaction = transactions.values().next().value[0];
-      const blockInfo = createBlockInfo(transaction);
-
-      const eventsData: Event[][] = [];
-      for (const [, transaction] of transactions) {
-        const filteredBlocks = this.removeRedundantEmittedFields(transaction);
-        const eventData = this.mapActionOrEvent(
-          'event',
-          filteredBlocks,
-          elementIdFieldValues
-        ) as Event[];
-        eventsData.push(eventData);
-      }
-      events.push({
-        blockInfo,
-        eventData: eventsData.flat(),
-      });
-    }
-    return events;
-  }
-
-  protected deriveActionsFromBlocks(
-    blocksWithTransactions: BlocksWithTransactionsMap,
-    elementIdFieldValues: FieldElementIdWithValueMap
-  ) {
-    const actions: Actions = [];
-    const blockMapEntries = Array.from(blocksWithTransactions.entries());
-    for (let i = 0; i < blockMapEntries.length; i++) {
-      const transactions = blockMapEntries[i][1];
-      const transaction = transactions.values().next().value[0];
-      const blockInfo = createBlockInfo(transaction);
-      const {
-        action_state_value1,
-        action_state_value2,
-        action_state_value3,
-        action_state_value4,
-        action_state_value5,
-      } = transaction;
-
-      const actionsData: Action[][] = [];
-      for (const [, transaction] of transactions) {
-        const filteredBlocks = this.removeRedundantEmittedFields(transaction);
-        const actionData = this.mapActionOrEvent(
-          'action',
-          filteredBlocks,
-          elementIdFieldValues
-        ) as Action[];
-        actionsData.push(actionData);
-      }
-      actions.push({
-        blockInfo,
-        actionData: actionsData.flat(),
-        actionState: {
-          /* eslint-disable */
-          actionStateOne: action_state_value1!,
-          actionStateTwo: action_state_value2!,
-          actionStateThree: action_state_value3!,
-          actionStateFour: action_state_value4!,
-          actionStateFive: action_state_value5!,
-          /* eslint-enable */
-        },
-      });
-    }
-    return actions;
-  }
-
-  protected partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
-    const blocks: BlocksWithTransactionsMap = new Map();
-    if (rows.length === 0) return blocks;
-
-    for (let i = 0; i < rows.length; i++) {
-      const { state_hash: blockHash, hash: transactionHash } = rows[i];
-      const blockData = blocks.get(blockHash);
-
-      if (blockData === undefined) {
-        const firstEntry = new Map();
-        firstEntry.set(transactionHash, [rows[i]]);
-        blocks.set(blockHash, firstEntry);
-      } else {
-        const blockDataRows = blockData.get(transactionHash);
-        if (blockDataRows) {
-          blockDataRows.push(rows[i]);
-        } else {
-          blockData.set(transactionHash, [rows[i]]);
-        }
-      }
-    }
-    return blocks;
-  }
-
-  protected removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
-    const newBlocks: ArchiveNodeDatabaseRow[][] = [];
-    const seenEventIds = new Set<string>();
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      const {
-        zkapp_event_array_id,
-        zkapp_event_element_ids,
-        zkapp_account_update_id,
-        zkapp_account_updates_ids,
-      } = block;
-      const uniqueId = [zkapp_account_update_id, zkapp_event_array_id].join(
-        ','
-      );
-      if (!seenEventIds.has(uniqueId)) {
-        const accountUpdateIndexes = findAllIndexes(
-          zkapp_account_updates_ids,
-          zkapp_account_update_id
-        );
-        if (accountUpdateIndexes.length === 0) {
-          throw new Error(
-            `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${zkapp_event_array_id}).`
-          );
-        }
-        // AccountUpdate Ids are always unique so we can assume it will return an array with one element
-        const accountUpdateIdIndex = accountUpdateIndexes[0];
-        const eventIndexes = findAllIndexes(
-          zkapp_event_element_ids,
-          zkapp_event_array_id
-        );
-
-        eventIndexes.forEach((index) => {
-          if (newBlocks[accountUpdateIdIndex] === undefined) {
-            newBlocks[accountUpdateIdIndex] = [];
-          }
-          newBlocks[accountUpdateIdIndex][index] = block;
-        });
-        seenEventIds.add(uniqueId);
-      }
-    }
-    return newBlocks.flat();
-  }
-
-  protected mapActionOrEvent(
-    kind: 'action' | 'event',
-    rows: ArchiveNodeDatabaseRow[],
-    elementIdFieldValues: FieldElementIdWithValueMap
-  ) {
-    const data: (Event | Action)[] = [];
-
-    for (let i = 0; i < rows.length; i++) {
-      const { element_ids } = rows[i];
-      const currentValue = [];
-      for (const elementId of element_ids) {
-        const elementIdValue = elementIdFieldValues.get(elementId.toString());
-        if (elementIdValue === undefined) continue;
-        currentValue.push(elementIdValue);
-      }
-
-      if (kind === 'event') {
-        const transactionInfo = createTransactionInfo(rows[i]);
-        const event = createEvent(currentValue, transactionInfo);
-        data.push(event);
-      } else {
-        const { zkapp_account_update_id } = rows[i];
-        const transactionInfo = createTransactionInfo(rows[i]);
-        const action = createAction(
-          zkapp_account_update_id.toString(),
-          currentValue,
-          transactionInfo
-        );
-        data.push(action);
-      }
-    }
-    return data;
-  }
-
-  protected getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
-    const elementIdValues: FieldElementIdWithValueMap = new Map();
-    for (let i = 0; i < rows.length; i++) {
-      const { id, field } = rows[i];
-      elementIdValues.set(id.toString(), field);
-    }
-    return elementIdValues;
+  async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
+    return this.actionsService.getActions(input);
   }
 
   async checkSQLSchema() {
@@ -369,12 +67,5 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   async close() {
     return this.client.end();
-  }
-
-  getTraceInfo(options: unknown): TraceInfo | undefined {
-    if (options && typeof options === 'object' && 'traceInfo' in options) {
-      return options.traceInfo as TraceInfo;
-    }
-    return undefined;
   }
 }

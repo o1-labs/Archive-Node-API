@@ -2,13 +2,13 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { Resolvers } from './resolvers-types';
-import { getTracingInfo } from './tracing';
+import { getTraceInfoFromGraphQL } from './tracing';
 
 export const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, context) => {
       const contextSymbols = Object.getOwnPropertySymbols(context);
-      const traceInfo = getTracingInfo(context[contextSymbols?.[0]]);
+      const traceInfo = getTraceInfoFromGraphQL(context[contextSymbols?.[0]]);
 
       if (!traceInfo) {
         return context.db_client.getEvents(input);
@@ -20,7 +20,7 @@ export const resolvers: Resolvers = {
     },
     actions: async (_, { input }, context) => {
       const contextSymbols = Object.getOwnPropertySymbols(context);
-      const traceInfo = getTracingInfo(context[contextSymbols?.[0]]);
+      const traceInfo = getTraceInfoFromGraphQL(context[contextSymbols?.[0]]);
 
       if (!traceInfo) {
         return context.db_client.getActions(input);
