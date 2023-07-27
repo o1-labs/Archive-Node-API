@@ -1,18 +1,25 @@
 # Stage 1: Build the TypeScript code
-FROM node:14 as build
+FROM node:18-alpine as build
 WORKDIR /app
 COPY package*.json ./
-RUN npm i -g typescript
 RUN npm ci
-COPY . .
+COPY src ./src
+COPY tsconfig.json ./
 RUN npm run build
 
-# Stage 2: Copy the built code and install the production dependencies
-FROM node:14
+# Stage 2: Copy the built code and the node modules
+FROM node:18-alpine
 WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
 COPY package*.json ./
 COPY schema.graphql ./
-RUN npm ci --only=production
-COPY --from=build /app/build /app/build
+
+# Don't run as root
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodeuser -u 1001
+RUN chown -R nodeuser:nodejs /app
+USER nodeuser
+
 EXPOSE 8080
-CMD [ "npm", "start" ]
+CMD ["npm", "start"]
