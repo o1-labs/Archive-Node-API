@@ -1,0 +1,79 @@
+version: '3.3'
+
+services:
+  archive:
+    image: ${ARCHIVE}
+    container_name: archive
+    depends_on:
+      - postgres
+    pid: host
+    restart: always
+    env_file:
+      - ./.env
+    command: mina-archive run --postgres-uri ${PGURI} --server-port 3086 --log-level debug
+    networks:
+      - archive
+      - mina
+
+  postgres:
+    image: ${POSTGRES}
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+      PGDATA: ${PGDATA}
+    volumes:
+      - './data/${PG_DUMP}:/data/${PG_DUMP}'
+      - './scripts/init_docker_compose.sh:/docker-entrypoint-initdb.d/init.sh'
+      - './db:/var/lib/postgresql/data'
+    command: postgres -N 1000
+    networks:
+      - archive
+
+  jaeger:
+    image: ${JAEGER}
+    container_name: jaeger
+    env_file:
+      - ./.env
+    restart: always
+    ports:
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '9411:9411'
+      - '${JAEGER_FRONTEND}:16686'
+      - '${JAEGER_LOG_PORT}:14268'
+    networks:
+      - archive
+
+  app:
+    build: .
+    container_name: app
+    depends_on:
+      - postgres
+    env_file:
+      - ./.env
+    restart: always
+    ports:
+      - '8080:8080'
+    command: npm run dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - archive
+
+volumes:
+  db:
+
+networks:
+  archive:
+    driver: bridge
+  mina:
+    driver: bridge
