@@ -7,7 +7,6 @@ import {
   Event,
   Events,
   ArchiveNodeDatabaseRow,
-  BlockInfo,
   BlocksWithTransactionsMap,
   FieldElementIdWithValueMap,
 } from '../../models/types';
@@ -23,7 +22,7 @@ import {
   getTables,
   USED_TABLES,
 } from './queries';
-import { select } from '../../consensus/mina-consensus';
+import { findAllIndexes, filterBestTip } from '../../consensus/mina-consensus';
 
 import type { DatabaseAdapter } from '../index';
 import type {
@@ -43,40 +42,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.client = postgres(connectionString);
   }
 
-  async checkSQLSchema() {
-    let tables;
-    try {
-      tables = await (
-        await getTables(this.client)
-      ).map((table) => table.tablename);
-    } catch (e) {
-      throw new Error(
-        `Could not connect to Postgres with the specified connection string. Please check that Postgres is available and that your connection string is correct and try again.\nReason: ${e}`
-      );
-    }
-
-    for (const table of USED_TABLES) {
-      if (!tables.includes(table)) {
-        throw new Error(
-          `Missing table ${table}. Please make sure the table exists in the database.`
-        );
-      }
-    }
-  }
-
-  async close() {
-    return this.client.end();
-  }
-
-  async getEvents(
+  async getEventData(
     input: EventFilterOptionsInput,
-    options?: unknown
+    traceInfo: TraceInfo | undefined
   ): Promise<Events> {
-    let traceInfo;
-    if (options && typeof options === 'object' && 'traceInfo' in options) {
-      traceInfo = options.traceInfo as TraceInfo;
-    }
-
     const sqlSpan = traceInfo?.tracer.startSpan(
       'Events SQL',
       undefined,
@@ -96,9 +65,23 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       blocksWithTransactions,
       elementIdFieldValues
     );
+    eventsProcessingSpan?.end();
+    return eventsData;
+  }
+
+  sortAndFilterEvents(eventsData: Events): Events {
     eventsData.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
     filterBestTip(eventsData);
-    eventsProcessingSpan?.end();
+    return eventsData;
+  }
+
+  async getEvents(
+    input: EventFilterOptionsInput,
+    options?: unknown
+  ): Promise<Events> {
+    const traceInfo = this.getTraceInfo(options);
+    let eventsData = await this.getEventData(input, traceInfo);
+    eventsData = this.sortAndFilterEvents(eventsData);
     return eventsData ?? [];
   }
 
@@ -362,48 +345,36 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     }
     return elementIdValues;
   }
-}
 
-function findAllIndexes<T>(arr: T[], target: T): number[] {
-  const indexes: number[] = [];
-  arr.forEach((element, index) => {
-    if (element === target) {
-      indexes.push(index);
+  async checkSQLSchema() {
+    let tables;
+    try {
+      tables = await (
+        await getTables(this.client)
+      ).map((table) => table.tablename);
+    } catch (e) {
+      throw new Error(
+        `Could not connect to Postgres with the specified connection string. Please check that Postgres is available and that your connection string is correct and try again.\nReason: ${e}`
+      );
     }
-  });
-  return indexes;
-}
 
-function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
-  const data: T[] = [];
-  for (let i = 0; i < array.length; i++) {
-    if (predicate(array[i])) {
-      data.push(array[i]);
-    } else {
-      break;
+    for (const table of USED_TABLES) {
+      if (!tables.includes(table)) {
+        throw new Error(
+          `Missing table ${table}. Please make sure the table exists in the database.`
+        );
+      }
     }
   }
-  return data;
-}
 
-function filterBestTip<T extends { blockInfo: BlockInfo }>(
-  eventOrActionData: T[]
-) {
-  const highestTipBlocks = getAllPredicate(
-    eventOrActionData,
-    (e) => e.blockInfo.distanceFromMaxBlockHeight === 0
-  );
-  if (highestTipBlocks.length > 1) {
-    const selectedBlock = chainSelect(highestTipBlocks);
-    eventOrActionData.splice(0, highestTipBlocks.length + 1, selectedBlock);
+  async close() {
+    return this.client.end();
   }
-}
 
-function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
-  if (blocks.length === 1) return blocks[0];
-  let existing = blocks[0];
-  for (let i = 1; i < blocks.length; i++) {
-    existing = select(existing, blocks[i]);
+  getTraceInfo(options: unknown): TraceInfo | undefined {
+    if (options && typeof options === 'object' && 'traceInfo' in options) {
+      return options.traceInfo as TraceInfo;
+    }
+    return undefined;
   }
-  return existing;
 }
