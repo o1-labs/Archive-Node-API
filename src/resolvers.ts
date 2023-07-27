@@ -23,7 +23,9 @@ export const resolvers: Resolvers = {
       const traceInfo = getTraceInfoFromGraphQL(context[contextSymbols?.[0]]);
 
       if (!traceInfo) {
-        return context.db_client.getActions(input);
+        return context.db_client.getActions(input, {
+          traceInfo,
+        });
       }
 
       return context.db_client.getActions(input, {

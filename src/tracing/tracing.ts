@@ -4,12 +4,12 @@ import { Span } from '@opentelemetry/api';
 export { TracingService };
 
 class TracingService {
-  private spans: Span[];
+  private spanStack: Span[];
   private traceInfo: TraceInfo;
 
   constructor(traceInfo: TraceInfo) {
     this.traceInfo = traceInfo;
-    this.spans = [];
+    this.spanStack = [];
   }
 
   startSpan(name: string) {
@@ -18,14 +18,14 @@ class TracingService {
       undefined,
       this.traceInfo.ctx
     );
-    this.spans.push(span);
+    this.spanStack.push(span);
   }
 
   endSpan() {
-    if (this.spans.length === 0) {
+    if (this.spanStack.length === 0) {
       throw Error('No spans to end');
     }
-    const span = this.spans.pop();
+    const span = this.spanStack.pop();
     if (!span) return;
     span.end();
   }

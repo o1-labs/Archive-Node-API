@@ -4,8 +4,9 @@ import {
   BlocksWithTransactionsMap,
   DEFAULT_TOKEN_ID,
   FieldElementIdWithValueMap,
-} from 'src/models/types';
-import { Events, Event } from 'src/models/types';
+  Events,
+  Event,
+} from '../../models/types';
 import { EventFilterOptionsInput } from 'src/resolvers-types';
 import { TracingService } from 'src/tracing/tracing';
 import { getEventsQuery } from './queries';
@@ -16,7 +17,7 @@ import {
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
 } from './utils';
-import { createBlockInfo } from 'src/models/utils';
+import { createBlockInfo } from '../../models/utils';
 
 export { EventsService };
 
@@ -26,6 +27,9 @@ class EventsService {
     private tracingService: TracingService
   ) {
     this.client = client;
+  }
+
+  setTracingService(tracingService: TracingService) {
     this.tracingService = tracingService;
   }
 

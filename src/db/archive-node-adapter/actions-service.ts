@@ -4,8 +4,9 @@ import {
   BlocksWithTransactionsMap,
   DEFAULT_TOKEN_ID,
   FieldElementIdWithValueMap,
-} from 'src/models/types';
-import { Action, Actions } from 'src/models/types';
+  Action,
+  Actions,
+} from '../../models/types';
 import { ActionFilterOptionsInput } from 'src/resolvers-types';
 import { TracingService } from 'src/tracing/tracing';
 import { getActionsQuery } from './queries';
@@ -16,7 +17,7 @@ import {
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
 } from './utils';
-import { createBlockInfo } from 'src/models/utils';
+import { createBlockInfo } from '../../models/utils';
 
 export { ActionsService };
 

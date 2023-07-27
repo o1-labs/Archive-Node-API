@@ -1,5 +1,4 @@
 import postgres from 'postgres';
-import { findAllIndexes } from 'src/consensus/mina-consensus';
 import {
   Action,
   Event,
@@ -11,9 +10,9 @@ import {
   createTransactionInfo,
   createEvent,
   createAction,
-} from 'src/models/utils';
+} from '../../models/utils';
 import { BlockInfo } from 'src/resolvers-types';
-import { filterBestTip } from 'src/consensus/mina-consensus';
+import { filterBestTip, findAllIndexes } from '../../consensus/mina-consensus';
 
 export {
   partitionBlocks,
