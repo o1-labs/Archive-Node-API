@@ -93,14 +93,12 @@ function main() {
 
   for (let i = 0; i < currentChain.length; i++) {
     const block = currentChain[i];
-    const json: { blocks: BlockFileOutput } = {
-      blocks: {
-        height: block.height,
-        parent_state_hash: block.parentHash,
-        previous_state_hash: block.parentHash,
-        curr_global_slot: block.globalSlotSinceHardfork,
-        global_slot_since_genesis: block.globalSlotSinceGenesis,
-      },
+    const json: BlockFileOutput = {
+      height: block.height,
+      previous_state_hash: block.parentHash,
+      curr_global_slot: block.globalSlotSinceHardfork,
+      global_slot_since_genesis: block.globalSlotSinceGenesis,
+      timestamp: block.timestamp,
     };
 
     fs.writeFileSync(
