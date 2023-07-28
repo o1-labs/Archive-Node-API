@@ -14,8 +14,10 @@
 import fs from 'fs';
 import path from 'path';
 import { BlockInfo } from 'src/models/types';
-import { GetSlot, PrecomputedBlock } from './precomputed-block';
+import { BlockFileOutput, GetSlot, PrecomputedBlock } from './types';
 import { select } from './mina-consensus';
+
+const outputDir = process.env.OUTPUT_DIR || 'compare';
 
 const currentChain: BlockInfo[] = [];
 
@@ -89,8 +91,23 @@ function main() {
     runSelect(block);
   }
 
-  console.log('Last 10 blocks:');
-  console.log(currentChain.slice(-10));
+  for (let i = 0; i < currentChain.length; i++) {
+    const block = currentChain[i];
+    const json: { blocks: BlockFileOutput } = {
+      blocks: {
+        height: block.height,
+        parent_state_hash: block.parentHash,
+        previous_state_hash: block.parentHash,
+        curr_global_slot: block.globalSlotSinceHardfork,
+        global_slot_since_genesis: block.globalSlotSinceGenesis,
+      },
+    };
+
+    fs.writeFileSync(
+      path.join(process.cwd(), outputDir, `block_${i}.json`),
+      JSON.stringify(json)
+    );
+  }
 }
 
 main();
