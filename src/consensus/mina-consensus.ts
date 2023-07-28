@@ -1,19 +1,3 @@
-/*
-	Steps this program needs to accomplish:
-
-  1. Read in all block data in a list ordered by timestamp
-
-  2. For each block, check if the block is valid
-
-  3. If the block is valid, convert it into an OCaml block type
-
-  4. Initialize any PoS data structures
-
-  5. Run the PoS selection algorithm on the blocks
-
-  6. Print out the results
-*/
-
 import { blake2bHex } from 'blakejs';
 import { type BlockInfo } from 'src/models/types';
 export { select, findAllIndexes, getAllPredicate, filterBestTip };
@@ -78,18 +62,11 @@ function select<T extends { blockInfo: BlockInfo }>(
   existing: T,
   candidate: T
 ): T {
-  const candidateHashIsBigger = compareWithCondition(
-    existing.blockInfo,
-    candidate.blockInfo,
-    compareHash,
-    true
-  );
-
   const candidateVRFIsBigger = compareWithCondition(
     existing.blockInfo,
     candidate.blockInfo,
     compareVRF,
-    candidateHashIsBigger
+    true
   );
 
   const candidateLengthIsBigger = compareWithCondition(
@@ -137,14 +114,8 @@ function compareVRF(existing: BlockInfo, candidate: BlockInfo): number {
   return compareStrings(existingVRFHash, candidateVRFHash);
 }
 
-function compareHash(existing: BlockInfo, candidate: BlockInfo): number {
-  return compareStrings(existing.stateHash, candidate.stateHash);
-}
-
 function compareBlockChainLength(existing: BlockInfo, candidate: BlockInfo) {
-  return (
-    existing.distanceFromMaxBlockHeight - candidate.distanceFromMaxBlockHeight
-  );
+  return existing.height - candidate.height;
 }
 
 function longForkChainQualityIsBetter(

@@ -19,8 +19,6 @@ import {
 } from './utils';
 import { createBlockInfo } from '../../models/utils';
 
-import util from 'util';
-
 export { EventsService };
 
 class EventsService {
