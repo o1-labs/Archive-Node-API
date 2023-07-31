@@ -1,5 +1,5 @@
 /**
- * Usage: npx ts-node ./src/consensus/run-consensus-precomputed.ts
+ * Usage: npx ts-node ./src/consensus/run/run-consensus-precomputed.ts
  *
  * Steps this program needs to accomplish:
  *
@@ -14,8 +14,8 @@
 import fs from 'fs';
 import path from 'path';
 import { BlockInfo } from 'src/models/types';
-import { BlockFileOutput, GetSlot, PrecomputedBlock } from './types';
-import { select } from './mina-consensus';
+import { BlockFileOutput, GetSlot, PrecomputedBlock } from '../types';
+import { select } from '../mina-consensus';
 
 const outputDir = process.env.OUTPUT_DIR || 'compare';
 

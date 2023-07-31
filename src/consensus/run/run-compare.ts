@@ -1,5 +1,5 @@
 /**
- * Usage: npx ts-node ./src/consensus/run-compare.ts
+ * Usage: npx ts-node ./src/consensus/run/run-compare.ts
  */
 
 import pwd from 'process';
