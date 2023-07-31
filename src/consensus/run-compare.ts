@@ -1,3 +1,7 @@
+/**
+ * Usage: npx ts-node ./src/consensus/run-compare.ts
+ */
+
 import pwd from 'process';
 import path from 'path';
 import fs from 'fs/promises';
