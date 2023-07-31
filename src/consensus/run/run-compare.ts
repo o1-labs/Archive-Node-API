@@ -6,9 +6,12 @@ import pwd from 'process';
 import path from 'path';
 import fs from 'fs/promises';
 
-// TODO: Make these paths configurable
-const TYPESCRIPT_DIR = path.join(pwd.cwd(), 'compare-ts');
-const OCAML_DIR = path.join(pwd.cwd(), 'compare-ocaml');
+const TYPESCRIPT_OUTPUT_DIR_NAME =
+  process.env.TYPESCRIPT_OUTPUT_DIR_NAME || 'compare-ts';
+const OCAML_OUTPUT_DIR_NAME =
+  process.env.OCAML_OUTPUT_DIR_NAME || 'compare-ocaml';
+const TYPESCRIPT_DIR = path.join(pwd.cwd(), TYPESCRIPT_OUTPUT_DIR_NAME);
+const OCAML_DIR = path.join(pwd.cwd(), OCAML_OUTPUT_DIR_NAME);
 
 async function compareFiles() {
   // Get all file names in each directory
