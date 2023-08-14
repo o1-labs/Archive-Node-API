@@ -46,7 +46,7 @@ class EventsService {
     this.tracingService.startSpan('Events Processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
-    const eventsData = this.deriveEventsFromBlocks(
+    const eventsData = this.blocksToEvents(
       blocksWithTransactions,
       elementIdFieldValues
     );
@@ -74,7 +74,7 @@ class EventsService {
     );
   }
 
-  deriveEventsFromBlocks(
+  blocksToEvents(
     blocksWithTransactions: BlocksWithTransactionsMap,
     elementIdFieldValues: FieldElementIdWithValueMap
   ) {
