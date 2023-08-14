@@ -34,8 +34,7 @@ class EventsService {
   }
 
   async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    const eventsData = await this.getEventData(input);
-    return eventsData ?? [];
+    return (await this.getEventData(input)) ?? [];
   }
 
   async getEventData(input: EventFilterOptionsInput): Promise<Events> {

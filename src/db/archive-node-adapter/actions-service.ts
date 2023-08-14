@@ -31,8 +31,7 @@ class ActionsService {
   }
 
   async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
-    const actionsData = await this.getActionData(input);
-    return actionsData ?? [];
+    return (await this.getActionData(input)) ?? [];
   }
 
   async getActionData(input: ActionFilterOptionsInput): Promise<Actions> {
