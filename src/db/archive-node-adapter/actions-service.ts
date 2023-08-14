@@ -30,25 +30,25 @@ class ActionsService {
     this.tracingService = tracingService;
   }
 
-  async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
-    return (await this.getActionData(input)) ?? [];
-  }
-
   async getActionData(input: ActionFilterOptionsInput): Promise<Actions> {
+    // Request action zkApp info from the Archive Node Database
     this.tracingService.startSpan('Actions SQL');
     const rows = await this.executeActionsQuery(input);
     this.tracingService.endSpan();
 
     this.tracingService.startSpan('Actions Processing');
+    // Partition the rows into a map where the keys are element ids and the values are field values.
     const elementIdFieldValues = getElementIdFieldValues(rows);
+    // Partition the rows into a map where the keys are block hashes and the values are maps of transaction hashes to array of rows.
     const blocksWithTransactions = partitionBlocks(rows);
-    const actionsData = this.deriveActionsFromBlocks(
+    // Map the rows into Action instances.
+    const actionsData = this.blocksToActions(
       blocksWithTransactions,
       elementIdFieldValues
     );
     this.tracingService.endSpan();
-    const sortedActionsData = sortAndFilterBlocks(actionsData);
-    return sortedActionsData;
+    // Sort and filter the actions.
+    return sortAndFilterBlocks(actionsData);
   }
 
   async executeActionsQuery(input: ActionFilterOptionsInput) {
@@ -71,7 +71,7 @@ class ActionsService {
     );
   }
 
-  deriveActionsFromBlocks(
+  blocksToActions(
     blocksWithTransactions: BlocksWithTransactionsMap,
     elementIdFieldValues: FieldElementIdWithValueMap
   ) {
