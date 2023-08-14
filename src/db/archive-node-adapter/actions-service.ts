@@ -30,6 +30,10 @@ class ActionsService {
     this.tracingService = tracingService;
   }
 
+  async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
+    return (await this.getActionData(input)) ?? [];
+  }
+
   async getActionData(input: ActionFilterOptionsInput): Promise<Actions> {
     // Request action zkApp info from the Archive Node Database
     this.tracingService.startSpan('Actions SQL');
