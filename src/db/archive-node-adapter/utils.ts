@@ -96,65 +96,74 @@ function getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
   return elementIdValues;
 }
 
+function createUniqueEventId(
+  zkapp_account_update_id: number,
+  zkapp_event_array_id: number
+) {
+  return [zkapp_account_update_id, zkapp_event_array_id].join(',');
+}
+
 /**
- * Removes redundant fields from an array of blocks based on unique event and account update identifiers.
+ * Removes redundant fields from an array of rows based on unique event and account update identifiers.
  *
- * This function iterates over each block in the input array, and for each block,
- * it retrieves the event array id, event element ids, account update id, and account updates ids.
- *
- * It then constructs a unique identifier for each block by joining the account update id and
- * event array id with a comma. If this unique identifier has not been seen before, the function
- * continues processing the block and adding it to a new array of blocks.
- *
- * If any inconsistencies are detected during the processing of a block, such as a missing account
- * update for a given id, the function will throw an error.
- *
- * @param blocks An array of ArchiveNodeDatabaseRow objects to process.
+ * @param archiveNodeRow An array of ArchiveNodeDatabaseRow objects to process.
  * @returns A new array of ArchiveNodeDatabaseRow objects where redundant fields have been removed.
  * @throws {Error} If no matching account update is found for a given account update id and event array id.
  */
-function removeRedundantEmittedFields(blocks: ArchiveNodeDatabaseRow[]) {
-  const newBlocks: ArchiveNodeDatabaseRow[][] = [];
+function removeRedundantEmittedFields(
+  archiveNodeRow: ArchiveNodeDatabaseRow[]
+) {
+  const newRows: ArchiveNodeDatabaseRow[][] = [];
   const seenEventIds = new Set<string>();
 
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i];
+  for (let i = 0; i < archiveNodeRow.length; i++) {
+    const currentRow = archiveNodeRow[i];
+
     const {
-      zkapp_event_array_id,
-      zkapp_event_element_ids,
+      zkapp_event_array_id, // Unique event/action identifier
+      zkapp_event_element_ids, // List of element ids that map to field values
+      zkapp_account_update_id, // Unique account update identifier
+      zkapp_account_updates_ids, // List of all account update ids inside the transaction
+    } = currentRow;
+
+    const uniqueEventId = createUniqueEventId(
       zkapp_account_update_id,
-      zkapp_account_updates_ids,
-    } = block;
-    const uniqueId = [zkapp_account_update_id, zkapp_event_array_id].join(',');
-    if (!seenEventIds.has(uniqueId)) {
+      zkapp_event_array_id
+    );
+
+    if (!seenEventIds.has(uniqueEventId)) {
+      // Find the indexes of the specific account update id in the list of account update ids inside a transaction
       const accountUpdateIndexes = findAllIndexes(
         zkapp_account_updates_ids,
         zkapp_account_update_id
       );
+
       if (accountUpdateIndexes.length === 0) {
         throw new Error(
           `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${zkapp_event_array_id}).`
         );
       }
+
       // AccountUpdate Ids are always unique so we can assume it will return an array with one element
       const accountUpdateIdIndex = accountUpdateIndexes[0];
-      const eventIndexes = findAllIndexes(
+      // Find the indexes of the specific event array id in the list of event array ids inside a transaction
+      const elementIndexes = findAllIndexes(
         zkapp_event_element_ids,
         zkapp_event_array_id
       );
 
-      eventIndexes.forEach((index) => {
-        if (newBlocks[accountUpdateIdIndex] === undefined) {
-          newBlocks[accountUpdateIdIndex] = [];
+      // For each element index found, we insert the field value into the newRows array at the corresponding account update id index
+      elementIndexes.forEach((index) => {
+        if (newRows[accountUpdateIdIndex] === undefined) {
+          newRows[accountUpdateIdIndex] = [];
         }
-        newBlocks[accountUpdateIdIndex][index] = block;
+        newRows[accountUpdateIdIndex][index] = currentRow;
       });
-      seenEventIds.add(uniqueId);
+      seenEventIds.add(uniqueEventId);
     }
   }
-  return newBlocks.flat();
+  return newRows.flat();
 }
-
 /**
  * Maps an array of database rows into an array of Action or Event instances.
  *
