@@ -75,9 +75,11 @@ class ActionsService {
     elementIdFieldValues: FieldElementIdWithValueMap
   ) {
     const actions: Actions = [];
-    const blockMapEntries = Array.from(blocksWithTransactions.entries());
-    for (let i = 0; i < blockMapEntries.length; i++) {
-      const transactions = blockMapEntries[i][1];
+    const blockTransactionEntries = Array.from(
+      blocksWithTransactions.entries()
+    );
+    for (let i = 0; i < blockTransactionEntries.length; i++) {
+      const transactions = blockTransactionEntries[i][1];
       const transaction = transactions.values().next().value[0];
       const blockInfo = createBlockInfo(transaction);
       const {
