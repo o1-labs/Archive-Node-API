@@ -1,9 +1,9 @@
 export const DEFAULT_TOKEN_ID =
   'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf' as const;
 
-export type Transaction = Map<string, ArchiveNodeDatabaseRow[]>;
+export type Transactions = Map<string, ArchiveNodeDatabaseRow[]>;
 
-export type BlocksWithTransactionsMap = Map<string, Transaction>;
+export type BlocksWithTransactionsMap = Map<string, Transactions>;
 
 export type FieldElementIdWithValueMap = Map<string, string>;
 
