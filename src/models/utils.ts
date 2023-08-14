@@ -6,7 +6,7 @@ import type {
   ArchiveNodeDatabaseRow,
 } from './types';
 
-export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
+export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
   return {
     height: Number(row.height),
     stateHash: row.state_hash,
@@ -20,33 +20,38 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
     lastVrfOutput: row.last_vrf_output,
     minWindowDensity: Number(row.min_window_density),
     subWindowDensities: row.sub_window_densities.map(Number),
-  } as BlockInfo;
+  };
 }
 
-export function createTransactionInfo(row: ArchiveNodeDatabaseRow) {
+export function createTransactionInfo(
+  row: ArchiveNodeDatabaseRow
+): TransactionInfo {
   return {
     status: row.status,
     hash: row.hash,
     memo: row.memo,
     authorizationKind: row.authorization_kind,
-  } as TransactionInfo;
+  };
 }
 
-export function createEvent(data: string[], transactionInfo: TransactionInfo) {
+export function createEvent(
+  data: string[],
+  transactionInfo: TransactionInfo
+): Event {
   return {
     data,
     transactionInfo,
-  } as Event;
+  };
 }
 
 export function createAction(
   accountUpdateId: string,
   data: string[],
   transactionInfo: TransactionInfo
-) {
+): Action {
   return {
     accountUpdateId,
     data,
     transactionInfo,
-  } as Action;
+  };
 }
