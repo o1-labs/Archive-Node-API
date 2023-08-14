@@ -1,16 +1,6 @@
 import { blake2bHex } from 'blakejs';
 import { type BlockInfo } from 'src/models/types';
-export { select, findAllIndexes, getAllPredicate, filterBestTip };
-
-function findAllIndexes<T>(arr: T[], target: T): number[] {
-  const indexes: number[] = [];
-  arr.forEach((element, index) => {
-    if (element === target) {
-      indexes.push(index);
-    }
-  });
-  return indexes;
-}
+export { select, getAllPredicate, filterBestTip };
 
 function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
   const data: T[] = [];

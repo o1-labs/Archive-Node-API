@@ -12,7 +12,7 @@ import {
   createEvent,
   createAction,
 } from '../../models/utils';
-import { filterBestTip, findAllIndexes } from '../../consensus/mina-consensus';
+import { filterBestTip } from '../../consensus/mina-consensus';
 
 export {
   partitionBlocks,
@@ -224,4 +224,14 @@ function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(
   data.sort((a, b) => b.blockInfo.height - a.blockInfo.height);
   filterBestTip(data);
   return data;
+}
+
+function findAllIndexes<T>(arr: T[], target: T): number[] {
+  const indexes: number[] = [];
+  arr.forEach((element, index) => {
+    if (element === target) {
+      indexes.push(index);
+    }
+  });
+  return indexes;
 }
