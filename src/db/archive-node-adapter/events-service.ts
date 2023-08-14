@@ -46,17 +46,12 @@ class EventsService {
     this.tracingService.startSpan('Events Processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
-
-    // print out map
-    // console.log(util.inspect(blocksWithTransactions, false, null, true));
-
     const eventsData = this.deriveEventsFromBlocks(
       blocksWithTransactions,
       elementIdFieldValues
     );
     this.tracingService.endSpan();
-    const sortedEventsData = sortAndFilterBlocks(eventsData);
-    return sortedEventsData;
+    return sortAndFilterBlocks(eventsData);
   }
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {
