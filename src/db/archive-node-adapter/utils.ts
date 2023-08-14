@@ -55,24 +55,7 @@ function partitionBlocks(rows: ArchiveNodeDatabaseRow[]) {
       }
     }
   }
-  return sortParitionedBlocks(blocks);
-}
-
-function sortParitionedBlocks(
-  blocks: BlocksWithTransactionsMap
-): BlocksWithTransactionsMap {
-  const sortedBlocks: BlocksWithTransactionsMap = new Map();
-  for (const [blockHash, transactions] of blocks) {
-    const sortedTransactions = new Map(
-      [...transactions.entries()].sort((a, b) => {
-        const aHeight = a[1][0].height;
-        const bHeight = b[1][0].height;
-        return Number(bHeight) - Number(aHeight);
-      })
-    );
-    sortedBlocks.set(blockHash, sortedTransactions);
-  }
-  return sortedBlocks;
+  return blocks;
 }
 
 /**
