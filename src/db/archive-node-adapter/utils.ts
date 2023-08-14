@@ -1,4 +1,3 @@
-import postgres from 'postgres';
 import {
   Action,
   Event,
@@ -35,7 +34,7 @@ export {
  * @param rows The array of rows to be partitioned.
  * @returns A map where the keys are block hashes and the values are maps of transaction hashes to array of rows.
  */
-function partitionBlocks(rows: postgres.RowList<ArchiveNodeDatabaseRow[]>) {
+function partitionBlocks(rows: ArchiveNodeDatabaseRow[]) {
   const blocks: BlocksWithTransactionsMap = new Map();
   if (rows.length === 0) return blocks;
 
