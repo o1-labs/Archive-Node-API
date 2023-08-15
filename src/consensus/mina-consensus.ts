@@ -1,6 +1,10 @@
+import { readConfig } from './config';
 import { blake2bHex } from 'blakejs';
 import { type BlockInfo } from 'src/models/types';
+
 export { select, getAllPredicate, filterBestTip };
+
+const CONFIG = readConfig('./src/consensus/devnet.mlh');
 
 function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
   const data: T[] = [];
@@ -131,21 +135,19 @@ function getVirtualMinWindowDensity(b: BlockInfo, maxSlot: number) {
   }
 }
 
-const subWindowsPerWindow = 8;
-
 function getMinWindowDensity(b: BlockInfo, maxSlot: number): number {
-  const prevGlobalSubWindow = b.globalSlotSinceGenesis;
+  const prevGlobalSubWindow = ofGlobalSlot(b.globalSlotSinceGenesis);
+  const nextGlobalSubWindow = ofGlobalSlot(maxSlot);
+  const isSameSubWindow = prevGlobalSubWindow === nextGlobalSubWindow;
+
   const prevSubWindowDensities = b.subWindowDensities;
   const prevMinWindowDensity = b.minWindowDensity;
-  const nextGlobalSubWindow = maxSlot;
-
-  const isSameSubWindow = prevGlobalSubWindow === nextGlobalSubWindow;
 
   const prevRelativeSubWindow = subWindow(prevGlobalSubWindow);
   const nextRelativeSubWindow = subWindow(nextGlobalSubWindow);
 
   const overlappingWindow =
-    prevGlobalSubWindow + subWindowsPerWindow >= nextGlobalSubWindow;
+    prevGlobalSubWindow + CONFIG.subWindowsPerWindow >= nextGlobalSubWindow;
 
   const currentSubWindowDensities = prevSubWindowDensities.map((density, i) => {
     const gtPrevSubWindow = i > prevRelativeSubWindow;
@@ -170,13 +172,17 @@ function getMinWindowDensity(b: BlockInfo, maxSlot: number): number {
   );
 
   const minWindowDensity =
-    isSameSubWindow || b.globalSlotSinceGenesis
+    isSameSubWindow || b.globalSlotSinceHardfork < CONFIG.gracePeriodEnd
       ? prevMinWindowDensity
       : Math.min(currentWindowDensity, prevMinWindowDensity);
 
   return minWindowDensity;
 }
 
-function subWindow(t: number): number {
-  return t % subWindowsPerWindow;
+function ofGlobalSlot(s: number): number {
+  return Math.floor(s / CONFIG.subWindowsPerWindow);
+}
+
+function subWindow(t: number) {
+  return t % CONFIG.subWindowsPerWindow;
 }

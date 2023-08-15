@@ -7,9 +7,9 @@ import path from 'path';
 import fs from 'fs/promises';
 
 const TYPESCRIPT_OUTPUT_DIR_NAME =
-  process.env.TYPESCRIPT_OUTPUT_DIR_NAME || 'compare-ts';
+  process.env.TYPESCRIPT_OUTPUT_DIR_NAME || 'ts_blocks';
 const OCAML_OUTPUT_DIR_NAME =
-  process.env.OCAML_OUTPUT_DIR_NAME || 'compare-ocaml';
+  process.env.OCAML_OUTPUT_DIR_NAME || 'ocaml_blocks';
 const TYPESCRIPT_DIR = path.join(pwd.cwd(), TYPESCRIPT_OUTPUT_DIR_NAME);
 const OCAML_DIR = path.join(pwd.cwd(), OCAML_OUTPUT_DIR_NAME);
 

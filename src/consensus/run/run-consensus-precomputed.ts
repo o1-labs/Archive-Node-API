@@ -17,12 +17,12 @@ import { BlockInfo } from 'src/models/types';
 import { BlockFileOutput, GetSlot, PrecomputedBlock } from '../types';
 import { select } from '../mina-consensus';
 
-const outputDir = process.env.OUTPUT_DIR || 'compare';
+const outputDir = process.env.OUTPUT_DIR || 'ts_blocks';
 
 const currentChain: BlockInfo[] = [];
 
 function readBlocks() {
-  const directoryPath = path.join(process.cwd(), 'block_data');
+  const directoryPath = path.join(process.cwd(), 'precomputed_blocks');
   const files = fs.readdirSync(directoryPath);
 
   const blocks = [];
@@ -89,6 +89,10 @@ function main() {
 
   for (const block of precomputedBlocks) {
     runSelect(block);
+  }
+
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
   }
 
   for (let i = 0; i < currentChain.length; i++) {
