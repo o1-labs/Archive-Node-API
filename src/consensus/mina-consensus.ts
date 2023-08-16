@@ -1,10 +1,8 @@
-import { readConfig } from './config';
+import { CONFIG } from './config';
 import { blake2bHex } from 'blakejs';
 import { type BlockInfo } from 'src/models/types';
 
 export { select, getAllPredicate, filterBestTip };
-
-const CONFIG = readConfig('./src/consensus/devnet.mlh');
 
 function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
   const data: T[] = [];

@@ -1,5 +1,5 @@
 import fs from 'fs';
-export { Config, readConfig };
+export { CONFIG };
 
 type Config = {
   k: number;
@@ -10,6 +10,26 @@ type Config = {
   blockWindowDuration: number;
   gracePeriodEnd: number;
 };
+
+const CONFIG = readConfig('config');
+
+function readConfig(path: string): Config {
+  const contents = fs.readFileSync(path, 'utf8');
+
+  const blockWindowDuration = extractValue(contents, 'block_window_duration');
+  const slotsPerEpoch = extractValue(contents, 'slots_per_epoch');
+  const gracePeriodEnd = genGracePeriodEnd(slotsPerEpoch, blockWindowDuration);
+
+  return {
+    k: extractValue(contents, 'k'),
+    delta: extractValue(contents, 'delta'),
+    slotsPerEpoch,
+    slotsPerSubWindow: extractValue(contents, 'slots_per_sub_window'),
+    subWindowsPerWindow: extractValue(contents, 'sub_windows_per_window'),
+    blockWindowDuration,
+    gracePeriodEnd,
+  };
+}
 
 function extractValue(contents: string, key: string): number {
   const regex = new RegExp(`\\[%%define ${key} (?:")?(\\d+)(?:")?\\]`);
@@ -30,22 +50,4 @@ function genGracePeriodEnd(
     slotsPerEpoch
   );
   return gracePeriodEnd;
-}
-
-function readConfig(path: string): Config {
-  const contents = fs.readFileSync(path, 'utf8');
-
-  const blockWindowDuration = extractValue(contents, 'block_window_duration');
-  const slotsPerEpoch = extractValue(contents, 'slots_per_epoch');
-  const gracePeriodEnd = genGracePeriodEnd(slotsPerEpoch, blockWindowDuration);
-
-  return {
-    k: extractValue(contents, 'k'),
-    delta: extractValue(contents, 'delta'),
-    slotsPerEpoch,
-    slotsPerSubWindow: extractValue(contents, 'slots_per_sub_window'),
-    subWindowsPerWindow: extractValue(contents, 'sub_windows_per_window'),
-    blockWindowDuration,
-    gracePeriodEnd,
-  };
 }

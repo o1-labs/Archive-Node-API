@@ -1,31 +1,20 @@
 /**
- * Usage: npx ts-node ./src/consensus/run/run-consensus-precomputed.ts
- *
- * Steps this program needs to accomplish:
- *
- * 1. Read in all block data in a list ordered by timestamp
- * 2. For each block, check if the block is valid
- * 3. If the block is valid, convert it into an OCaml block type
- * 4. Initialize any PoS data structures
- * 5. Run the PoS selection algorithm on the blocks
- * 6. Print out the results
+ * Usage: npx ts-node ./tests/consensus/run/run-consensus-precomputed.ts
  */
 
 import fs from 'fs';
 import path from 'path';
-import { BlockInfo } from 'src/models/types';
-import { BlockFileOutput, GetSlot, PrecomputedBlock } from '../types';
-import { select } from '../mina-consensus';
+import { BlockInfo } from '../../src/models/types';
+import { BlockFileOutput, GetSlot, PrecomputedBlock } from './types';
+import { select } from '../../src/consensus/mina-consensus';
 
 const outputDir = process.env.OUTPUT_DIR || 'ts_blocks';
 
-const currentChain: BlockInfo[] = [];
-
-function readBlocks() {
+function readPrecomputedBlocks() {
   const directoryPath = path.join(process.cwd(), 'precomputed_blocks');
   const files = fs.readdirSync(directoryPath);
 
-  const blocks = [];
+  const blocks: BlockInfo[] = [];
   for (const file of files) {
     const data = fs.readFileSync(path.join(directoryPath, file));
     const block = mapPrecomputedToBlockInfo(data.toString());
@@ -68,7 +57,7 @@ function mapPrecomputedToBlockInfo(block: string): BlockInfo {
   };
 }
 
-function runSelect(candidate: BlockInfo) {
+function runSelect(candidate: BlockInfo, currentChain: BlockInfo[]) {
   const existing = currentChain[currentChain.length - 1];
   const newBlock = select({ blockInfo: existing }, { blockInfo: candidate });
 
@@ -82,21 +71,13 @@ function runSelect(candidate: BlockInfo) {
   }
 }
 
-function main() {
-  const blocks = readBlocks();
-  const [firstBlock, ...precomputedBlocks] = blocks;
-  currentChain.push(firstBlock);
-
-  for (const block of precomputedBlocks) {
-    runSelect(block);
-  }
-
+function writeBlocksOutput(blocks: BlockInfo[]) {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  for (let i = 0; i < currentChain.length; i++) {
-    const block = currentChain[i];
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
     const json: BlockFileOutput = {
       height: block.height,
       previous_state_hash: block.parentHash,
@@ -110,6 +91,19 @@ function main() {
       JSON.stringify(json)
     );
   }
+}
+
+function main() {
+  const precomputed_blocks = readPrecomputedBlocks();
+  const [firstBlock, ...restOfPrecomputedBlocks] = precomputed_blocks;
+
+  const currentChain: BlockInfo[] = [];
+  currentChain.push(firstBlock);
+
+  for (const precomputed_block of restOfPrecomputedBlocks) {
+    runSelect(precomputed_block, currentChain);
+  }
+  writeBlocksOutput(currentChain);
 }
 
 main();
