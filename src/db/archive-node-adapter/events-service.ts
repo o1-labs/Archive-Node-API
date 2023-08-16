@@ -40,7 +40,6 @@ class EventsService {
   async getEventData(input: EventFilterOptionsInput): Promise<Events> {
     this.tracingService.startSpan('Events SQL');
     const rows = await this.executeEventsQuery(input);
-    console.log(rows);
     this.tracingService.endSpan();
 
     this.tracingService.startSpan('Events Processing');

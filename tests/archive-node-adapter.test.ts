@@ -158,8 +158,6 @@ describe('ArchiveNodeAdapter', async () => {
           elementIdFieldValues
         ) as Event[];
 
-        console.log('events', events);
-
         events.forEach((event) => {
           for (const field of event.data) {
             expect(
