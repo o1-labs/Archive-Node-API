@@ -35,11 +35,11 @@ class ActionsService {
   }
 
   async getActionData(input: ActionFilterOptionsInput): Promise<Actions> {
-    this.tracingService.startSpan('Actions SQL');
+    this.tracingService.startSpan('actions.SQL');
     const rows = await this.executeActionsQuery(input);
     this.tracingService.endSpan();
 
-    this.tracingService.startSpan('Actions Processing');
+    this.tracingService.startSpan('actions.processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
     const actionsData = this.blocksToActions(

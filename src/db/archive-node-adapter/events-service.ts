@@ -38,11 +38,11 @@ class EventsService {
   }
 
   async getEventData(input: EventFilterOptionsInput): Promise<Events> {
-    this.tracingService.startSpan('Events SQL');
+    this.tracingService.startSpan('events.SQL');
     const rows = await this.executeEventsQuery(input);
     this.tracingService.endSpan();
 
-    this.tracingService.startSpan('Events Processing');
+    this.tracingService.startSpan('events.processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
     const eventsData = this.blocksToEvents(

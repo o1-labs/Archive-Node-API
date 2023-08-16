@@ -15,13 +15,13 @@ import { BlockStatusFilter } from '../../src/models/types';
   const sql = postgres('postgres://postgres:password@localhost:5432/archive');
   const eventsQuery = await getEventsQuery(
     sql,
-    'B62qngHtRemqzpwhrpohji5K1iTknVdHXyWvDyRpXFhjHZ1JF4uaZZC',
+    'B62qpS7LDaLc7ZYSbKXDDWJQ4mFbHYQwsivyKyRtjz8e1BjmAjJBJMe',
     'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf',
     BlockStatusFilter.all
   );
   const actionsQuery = await getActionsQuery(
     sql,
-    'B62qngHtRemqzpwhrpohji5K1iTknVdHXyWvDyRpXFhjHZ1JF4uaZZC',
+    'B62qpS7LDaLc7ZYSbKXDDWJQ4mFbHYQwsivyKyRtjz8e1BjmAjJBJMe',
     'wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf',
     BlockStatusFilter.all
   );

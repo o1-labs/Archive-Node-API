@@ -198,32 +198,41 @@ function mapActionOrEvent(
   elementIdFieldValues: FieldElementIdWithValueMap
 ) {
   const data: (Event | Action)[] = [];
-
   for (let i = 0; i < rows.length; i++) {
     const { element_ids } = rows[i];
-    const currentValue = [];
-    for (const elementId of element_ids) {
-      const elementIdValue = elementIdFieldValues.get(elementId.toString());
-      if (elementIdValue === undefined) continue;
-      currentValue.push(elementIdValue);
-    }
+    const transactionInfo = createTransactionInfo(rows[i]);
+    const elementIdToFieldValues = getFieldValuesFromElementIds(
+      element_ids,
+      elementIdFieldValues
+    );
 
     if (kind === 'event') {
-      const transactionInfo = createTransactionInfo(rows[i]);
-      const event = createEvent(currentValue, transactionInfo);
+      const event = createEvent(elementIdToFieldValues, transactionInfo);
       data.push(event);
     } else {
       const { zkapp_account_update_id } = rows[i];
-      const transactionInfo = createTransactionInfo(rows[i]);
       const action = createAction(
         zkapp_account_update_id.toString(),
-        currentValue,
+        elementIdToFieldValues,
         transactionInfo
       );
       data.push(action);
     }
   }
   return data;
+}
+
+function getFieldValuesFromElementIds(
+  element_ids: number[],
+  elementIdFieldValues: FieldElementIdWithValueMap
+) {
+  const elementIdToFieldValues = [];
+  for (const elementId of element_ids) {
+    const elementIdFieldValue = elementIdFieldValues.get(elementId.toString());
+    if (elementIdFieldValue === undefined) continue;
+    elementIdToFieldValues.push(elementIdFieldValue);
+  }
+  return elementIdToFieldValues;
 }
 
 function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(

@@ -2,34 +2,26 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { Resolvers } from './resolvers-types';
-import { getTraceInfoFromGraphQL } from './tracing';
+import { getCurrentSpanFromGraphQLContext } from './context';
+import { createTraceInfo, getGlobalTracer } from './tracing';
 
 export const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, context) => {
-      const contextSymbols = Object.getOwnPropertySymbols(context);
-      const traceInfo = getTraceInfoFromGraphQL(context[contextSymbols?.[0]]);
-
-      if (!traceInfo) {
-        return context.db_client.getEvents(input);
-      }
+      const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
+      const parentSpan = graphQLSpan || getGlobalTracer().startSpan('graphql');
 
       return context.db_client.getEvents(input, {
-        traceInfo,
+        traceInfo: createTraceInfo(parentSpan),
       });
     },
-    actions: async (_, { input }, context) => {
-      const contextSymbols = Object.getOwnPropertySymbols(context);
-      const traceInfo = getTraceInfoFromGraphQL(context[contextSymbols?.[0]]);
 
-      if (!traceInfo) {
-        return context.db_client.getActions(input, {
-          traceInfo,
-        });
-      }
+    actions: async (_, { input }, context) => {
+      const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
+      const parentSpan = graphQLSpan || getGlobalTracer().startSpan('graphql');
 
       return context.db_client.getActions(input, {
-        traceInfo,
+        traceInfo: createTraceInfo(parentSpan),
       });
     },
   },

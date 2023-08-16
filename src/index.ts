@@ -13,7 +13,6 @@ const PORT = process.env.PORT || 8080;
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
     process.on(signal, () => server.close());
   });
-
   server.on('close', async () => {
     await context.db_client.close();
     process.exit(1);
