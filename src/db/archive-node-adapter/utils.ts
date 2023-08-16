@@ -88,6 +88,29 @@ function createUniqueEventId(
 /**
  * Removes redundant fields from an array of rows based on unique event and account update identifiers.
  *
+ * There are redundant fields in the database output because a single action/event can be made up of multiple fields, which means
+ * we get rows with the same account update id and event array id but different field values.
+ *
+ * We remove rows that refer to the same event/action that is emitted, but just keep one row since
+ * one row can be used to derive all event/action field values (by it's element_ids).
+ *
+ * @example
+ * The following rows are returned from the database, which represents one event/action:
+ * [
+ *    { id: 1, field: "1", element_ids: [3, 2, 1], zkapp_event_array_id: 1, zkapp_account_update_id: 1, zkapp_account_updates_ids: [1, 2, 3] },
+ *    { id: 2, field: "2", element_ids: [3, 2, 1], zkapp_event_array_id: 1, zkapp_account_update_id: 1, zkapp_account_updates_ids: [1, 2, 3] },
+ *    { id: 3, field: "3", element_ids: [3, 2, 1], zkapp_event_array_id: 1, zkapp_account_update_id: 1, zkapp_account_updates_ids: [1, 2, 3] },
+ * ]
+ *
+ * `id` corresponds to the field id, the `field` corresponds to the field value, and the `element_ids` correspond to the field ids. Since these rows
+ * represent a single event/action, they are all redundant because they have the same event array id and account update id.
+ *
+ * The output of this function will be:
+ * [
+ *   { id: 1, field: "1", element_ids: [3, 2, 1], zkapp_event_array_id: 1, zkapp_account_update_id: 1, zkapp_account_updates_ids: [1, 2, 3] },
+ * ]
+ *
+ *
  * @param archiveNodeRow An array of ArchiveNodeDatabaseRow objects to process.
  * @returns A new array of ArchiveNodeDatabaseRow objects where redundant fields have been removed.
  * @throws {Error} If no matching account update is found for a given account update id and event array id.
@@ -95,26 +118,33 @@ function createUniqueEventId(
 function removeRedundantEmittedFields(
   archiveNodeRow: ArchiveNodeDatabaseRow[]
 ) {
-  const newRows: ArchiveNodeDatabaseRow[][] = [];
-  const seenEventIds = new Set<string>();
-
+  const inOrderTransactionRows: ArchiveNodeDatabaseRow[][] = [];
+  const seenEventOrActionIds = new Set<string>();
   for (let i = 0; i < archiveNodeRow.length; i++) {
     const currentRow = archiveNodeRow[i];
-
     const {
-      zkapp_event_array_id, // Unique event/action identifier
-      zkapp_event_element_ids, // List of element ids that map to field values
-      zkapp_account_update_id, // Unique account update identifier
+      zkapp_event_array_id, // The unique id for the event/action emitted
+      zkapp_event_element_ids, // The list of field ids that make up the event/action
+      zkapp_account_update_id, // The unique id for the account update that emitted the event/action
       zkapp_account_updates_ids, // List of all account update ids inside the transaction
     } = currentRow;
 
+    // Create a unique Id consisting of the account update id and event/action id emitted
+    // This is used to check if we have already seen this event/action before.
     const uniqueEventId = createUniqueEventId(
       zkapp_account_update_id,
       zkapp_event_array_id
     );
 
-    if (!seenEventIds.has(uniqueEventId)) {
-      // Find the indexes of the specific account update id in the list of account update ids inside a transaction
+    if (!seenEventOrActionIds.has(uniqueEventId)) {
+      // Since multiple events/actions can be emitted in a single account update, we want to put back the event/action
+      // in the correct place. To do this, we need to know the index of the event array id in the list of event array ids (these stored in order by the Archive Node)
+      const emittedEventOrActionIndexes = findAllIndexes(
+        zkapp_event_element_ids,
+        zkapp_event_array_id
+      );
+
+      // Since multiple account updates can be emitted in a single transaction, we need to know the index of the account update id in the list of account update ids
       const accountUpdateIndexes = findAllIndexes(
         zkapp_account_updates_ids,
         zkapp_account_update_id
@@ -126,25 +156,21 @@ function removeRedundantEmittedFields(
         );
       }
 
-      // AccountUpdate Ids are always unique so we can assume it will return an array with one element
       const accountUpdateIdIndex = accountUpdateIndexes[0];
-      // Find the indexes of the specific event array id in the list of event array ids inside a transaction
-      const elementIndexes = findAllIndexes(
-        zkapp_event_element_ids,
-        zkapp_event_array_id
-      );
 
-      // For each element index found, we insert the field value into the newRows array at the corresponding account update id index
-      elementIndexes.forEach((index) => {
-        if (newRows[accountUpdateIdIndex] === undefined) {
-          newRows[accountUpdateIdIndex] = [];
+      // Put the event/action back in the correct place. The specific event/action should go into the index of the account update that emitted it.
+      // When we put this all together, the transaction will be in the correct order.
+      emittedEventOrActionIndexes.forEach((eventOrActionIndex) => {
+        if (inOrderTransactionRows[accountUpdateIdIndex] === undefined) {
+          inOrderTransactionRows[accountUpdateIdIndex] = [];
         }
-        newRows[accountUpdateIdIndex][index] = currentRow;
+        inOrderTransactionRows[accountUpdateIdIndex][eventOrActionIndex] =
+          currentRow;
       });
-      seenEventIds.add(uniqueEventId);
+      seenEventOrActionIds.add(uniqueEventId);
     }
   }
-  return newRows.flat();
+  return inOrderTransactionRows.flat();
 }
 /**
  * Maps an array of database rows into an array of Action or Event instances.
