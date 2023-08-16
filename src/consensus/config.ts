@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 export { CONFIG };
 
 type Config = {
@@ -11,7 +12,7 @@ type Config = {
   gracePeriodEnd: number;
 };
 
-const CONFIG = readConfig('config');
+const CONFIG = readConfig(path.join('src', 'consensus', 'config.mlh'));
 
 function readConfig(path: string): Config {
   const contents = fs.readFileSync(path, 'utf8');
