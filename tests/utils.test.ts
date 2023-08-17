@@ -6,6 +6,7 @@ import {
   mapActionOrEvent,
 } from '../src/services/utils/utils';
 import { Action, Event } from '../src/blockchain/types';
+import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types';
 
 describe('utils', () => {
   describe('partitionBlocks', () => {
@@ -17,7 +18,7 @@ describe('utils', () => {
         { state_hash: 'state_hash_2', hash: 'hash_4' },
       ];
 
-      const result = partitionBlocks(rows);
+      const result = partitionBlocks(rows as ArchiveNodeDatabaseRow[]);
 
       const stateHash1 = result.get('state_hash_1');
       const stateHash2 = result.get('state_hash_2');
@@ -44,7 +45,7 @@ describe('utils', () => {
         { id: 3, field: 'field_3' },
       ];
 
-      const result = getElementIdFieldValues(rows);
+      const result = getElementIdFieldValues(rows as ArchiveNodeDatabaseRow[]);
 
       expect(result.get('1')).toBe('field_1');
       expect(result.get('2')).toBe('field_2');
@@ -82,7 +83,9 @@ describe('utils', () => {
         },
       ];
 
-      const result = removeRedundantEmittedFields(rows);
+      const result = removeRedundantEmittedFields(
+        rows as ArchiveNodeDatabaseRow[]
+      );
       expect(result.length).toBe(2); // Since one of the rows is a duplicate
     });
 
@@ -96,9 +99,9 @@ describe('utils', () => {
         },
       ];
 
-      expect(() => removeRedundantEmittedFields(rows)).toThrowError(
-        /No matching account update found/
-      );
+      expect(() =>
+        removeRedundantEmittedFields(rows as ArchiveNodeDatabaseRow[])
+      ).toThrowError(/No matching account update found/);
     });
 
     describe('mapActionOrEvent', () => {
@@ -116,7 +119,7 @@ describe('utils', () => {
 
           const result: Event[] = mapActionOrEvent(
             'event',
-            rows,
+            rows as ArchiveNodeDatabaseRow[],
             mockElementIdFieldValues
           );
 
@@ -134,11 +137,11 @@ describe('utils', () => {
             },
           ];
 
-          const result: Action[] = mapActionOrEvent(
+          const result = mapActionOrEvent(
             'action',
-            rows,
+            rows as ArchiveNodeDatabaseRow[],
             mockElementIdFieldValues
-          );
+          ) as Action[];
 
           expect(result[0].data).toBeDefined();
           expect(result[0].transactionInfo).toBeDefined();

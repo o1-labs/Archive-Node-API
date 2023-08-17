@@ -1,6 +1,6 @@
 import { Span } from '@opentelemetry/tracing';
-import { ArchiveNodeAdapter } from 'src/db/archive-node-adapter/archive-node-adapter';
-import { DatabaseAdapter } from 'src/db/archive-node-adapter/archive-node-adapter.interface';
+import { ArchiveNodeAdapter } from './db/archive-node-adapter/archive-node-adapter';
+import { DatabaseAdapter } from './db/archive-node-adapter/archive-node-adapter.interface';
 
 export interface GraphQLContext {
   db_client: DatabaseAdapter;

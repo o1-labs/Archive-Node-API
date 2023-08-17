@@ -1,4 +1,4 @@
-import { ArchiveNodeDatabaseRow } from 'src/db/sql/events-actions/types';
+import { ArchiveNodeDatabaseRow } from '../db/sql/events-actions/types';
 
 export type Transactions = Map<string, ArchiveNodeDatabaseRow[]>;
 

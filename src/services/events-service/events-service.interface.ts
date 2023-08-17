@@ -1,5 +1,5 @@
-import { Events } from 'src/blockchain/types';
-import { EventFilterOptionsInput } from 'src/resolvers-types';
+import { Events } from '../../blockchain/types';
+import { EventFilterOptionsInput } from '../../resolvers-types';
 
 export interface IEventsService {
   getEvents(input: EventFilterOptionsInput): Promise<Events>;

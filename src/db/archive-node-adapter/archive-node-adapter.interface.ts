@@ -1,5 +1,5 @@
-import type { EventFilterOptionsInput } from 'src/resolvers-types';
-import type { Actions, Events } from 'src/blockchain/types';
+import type { EventFilterOptionsInput } from '../../resolvers-types';
+import type { Actions, Events } from '../../blockchain/types';
 
 export interface DatabaseAdapter {
   getEvents(input: EventFilterOptionsInput, options?: unknown): Promise<Events>;

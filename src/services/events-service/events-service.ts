@@ -5,19 +5,19 @@ import {
   FieldElementIdWithValueMap,
   Events,
   Event,
-} from 'src/blockchain/types';
-import type { ITracingService } from 'src/services/tracing-service/tracing-service.interface';
-import type { EventFilterOptionsInput } from 'src/resolvers-types';
-import { createBlockInfo } from 'src/blockchain/utils';
-import { DEFAULT_TOKEN_ID } from 'src/blockchain/constants';
-import { getEventsQuery } from 'src/db/sql/events-actions/queries';
+} from '../../blockchain/types';
+import type { ITracingService } from '../tracing-service/tracing-service.interface';
+import type { EventFilterOptionsInput } from '../../resolvers-types';
+import { createBlockInfo } from '../../blockchain/utils';
+import { DEFAULT_TOKEN_ID } from '../../blockchain/constants';
+import { getEventsQuery } from '../../db/sql/events-actions/queries';
 import {
   partitionBlocks,
   getElementIdFieldValues,
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from 'src/services/utils/utils';
+} from '../utils/utils';
 import { IEventsService } from './events-service.interface';
 
 export { EventsService };

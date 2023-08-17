@@ -1,18 +1,18 @@
 import postgres from 'postgres';
-import type { Actions, Events } from 'src/blockchain/types';
+import type { Actions, Events } from '../../blockchain/types';
 import type { DatabaseAdapter } from './archive-node-adapter.interface';
 import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
-} from 'src/resolvers-types';
-import { getTraceInfoFromOptions } from 'src/tracing';
-import { getTables, USED_TABLES } from 'src/db/sql/events-actions/queries';
-import { EventsService } from 'src/services/events-service/events-service';
-import { IEventsService } from 'src/services/events-service/events-service.interface';
-import { ActionsService } from 'src/services/actions-service/actions-service';
-import { IActionsService } from 'src/services/actions-service/actions-service.interface';
-import { TracingService } from 'src/services/tracing-service/tracing-service';
-import { ITracingService } from 'src/services/tracing-service/tracing-service.interface';
+} from '../../resolvers-types';
+import { getTraceInfoFromOptions } from '../../tracing';
+import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries';
+import { EventsService } from '../../services/events-service/events-service';
+import { IEventsService } from '../../services/events-service/events-service.interface';
+import { ActionsService } from '../../services/actions-service/actions-service';
+import { IActionsService } from '../../services/actions-service/actions-service.interface';
+import { TracingService } from '../../services/tracing-service/tracing-service';
+import { ITracingService } from '../../services/tracing-service/tracing-service.interface';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
