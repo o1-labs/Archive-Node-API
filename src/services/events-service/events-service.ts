@@ -2,34 +2,35 @@ import type postgres from 'postgres';
 import {
   BlockStatusFilter,
   BlocksWithTransactionsMap,
-  DEFAULT_TOKEN_ID,
   FieldElementIdWithValueMap,
   Events,
   Event,
-} from '../../models/types';
-import { EventFilterOptionsInput } from 'src/resolvers-types';
-import { TracingService } from 'src/tracing/tracing';
-import { getEventsQuery } from './queries';
+} from 'src/blockchain/types';
+import type { ITracingService } from 'src/services/tracing-service/tracing-service.interface';
+import type { EventFilterOptionsInput } from 'src/resolvers-types';
+import { createBlockInfo } from 'src/blockchain/utils';
+import { DEFAULT_TOKEN_ID } from 'src/blockchain/constants';
+import { getEventsQuery } from 'src/db/sql/events-actions/queries';
 import {
   partitionBlocks,
   getElementIdFieldValues,
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from './utils';
-import { createBlockInfo } from '../../models/utils';
+} from 'src/services/utils/utils';
+import { IEventsService } from './events-service.interface';
 
 export { EventsService };
 
-class EventsService {
+class EventsService implements IEventsService {
   constructor(
     private client: postgres.Sql,
-    private tracingService: TracingService
+    private tracingService: ITracingService
   ) {
     this.client = client;
   }
 
-  setTracingService(tracingService: TracingService) {
+  setTracingService(tracingService: ITracingService) {
     this.tracingService = tracingService;
   }
 

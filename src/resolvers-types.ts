@@ -1,4 +1,4 @@
-import { BlockStatusFilter } from './models/types';
+import { BlockStatusFilter } from './blockchain/types';
 import { GraphQLResolveInfo } from 'graphql';
 import { GraphQLContext } from './context';
 export type Maybe<T> = T | null;

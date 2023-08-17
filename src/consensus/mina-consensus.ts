@@ -1,6 +1,6 @@
 import { CONFIG } from './config';
 import { blake2bHex } from 'blakejs';
-import { type BlockInfo } from 'src/models/types';
+import { type BlockInfo } from 'src/blockchain/types';
 
 export { select, getAllPredicate, filterBestTip };
 

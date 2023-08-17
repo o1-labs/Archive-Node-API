@@ -1,9 +1,10 @@
-import { TraceInfo } from './index';
-import { Span } from '@opentelemetry/api';
+import type { Span } from '@opentelemetry/api';
+import type { TraceInfo } from 'src/tracing';
+import type { ITracingService } from './tracing-service.interface';
 
 export { TracingService };
 
-class TracingService {
+class TracingService implements ITracingService {
   private spanStack: Span[];
   private traceInfo: TraceInfo;
 

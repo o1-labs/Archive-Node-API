@@ -1,17 +1,17 @@
-import {
+import type {
   Action,
   Event,
-  ArchiveNodeDatabaseRow,
   BlocksWithTransactionsMap,
   FieldElementIdWithValueMap,
   BlockInfo,
-} from 'src/models/types';
+} from 'src/blockchain/types';
+import type { ArchiveNodeDatabaseRow } from 'src/db/sql/events-actions/types';
 import {
   createTransactionInfo,
   createEvent,
   createAction,
-} from '../../models/utils';
-import { filterBestTip } from '../../consensus/mina-consensus';
+} from 'src/blockchain/utils';
+import { filterBestTip } from 'src/consensus/mina-consensus';
 
 export {
   partitionBlocks,

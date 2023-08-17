@@ -1,15 +1,18 @@
 import postgres from 'postgres';
-import { Actions, Events } from 'src/models/types';
-import { getTables, USED_TABLES } from './queries';
-import type { DatabaseAdapter } from 'src/db/index';
+import type { Actions, Events } from 'src/blockchain/types';
+import type { DatabaseAdapter } from './archive-node-adapter.interface';
 import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
 } from 'src/resolvers-types';
-import { EventsService } from './events-service';
-import { ActionsService } from './actions-service';
-import { getTraceInfoFromOptions } from '../../tracing';
-import { TracingService } from '../../tracing/tracing';
+import { getTraceInfoFromOptions } from 'src/tracing';
+import { getTables, USED_TABLES } from 'src/db/sql/events-actions/queries';
+import { EventsService } from 'src/services/events-service/events-service';
+import { IEventsService } from 'src/services/events-service/events-service.interface';
+import { ActionsService } from 'src/services/actions-service/actions-service';
+import { IActionsService } from 'src/services/actions-service/actions-service.interface';
+import { TracingService } from 'src/services/tracing-service/tracing-service';
+import { ITracingService } from 'src/services/tracing-service/tracing-service.interface';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
@@ -19,9 +22,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
    * `postgres.Sql` instance across the adapter is safe.
    */
   private client: postgres.Sql;
-  private tracingService: TracingService | null;
-  private eventsService: EventsService | null;
-  private actionsService: ActionsService | null;
+  private tracingService: ITracingService | null;
+  private eventsService: IEventsService | null;
+  private actionsService: IActionsService | null;
 
   constructor(connectionString: string | undefined) {
     if (!connectionString)

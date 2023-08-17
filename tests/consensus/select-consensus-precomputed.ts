@@ -4,9 +4,10 @@
 
 import fs from 'fs';
 import path from 'path';
-import { BlockInfo } from '../../src/models/types';
-import { BlockFileOutput, GetSlot, PrecomputedBlock } from './types';
+
 import { select } from '../../src/consensus/mina-consensus';
+import type { BlockInfo } from '../../src/blockchain/types';
+import { type BlockFileOutput, type PrecomputedBlock, GetSlot } from './types';
 
 const outputDir = process.env.OUTPUT_DIR || 'ts_blocks';
 
