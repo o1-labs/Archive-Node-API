@@ -4,10 +4,8 @@ import {
   getElementIdFieldValues,
   removeRedundantEmittedFields,
   mapActionOrEvent,
-  sortAndFilterBlocks,
-} from '../src/db/archive-node-adapter/utils';
-
-import { Action, Event } from '../src/models/types';
+} from '../src/services/utils/utils';
+import { Action, Event } from '../src/blockchain/types';
 
 describe('utils', () => {
   describe('partitionBlocks', () => {
