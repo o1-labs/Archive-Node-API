@@ -78,6 +78,24 @@ function select<T extends { blockInfo: BlockInfo }>(
   return candidateWindowDensityIsBigger ? candidate : existing;
 }
 
+/**
+ * Takes two values and compares them using the provided compare function.
+ *
+ * In our compare function, the following semantics should apply:
+ *  - If `a` is less than `b`, then a negative number should be returned.
+ *  - If `a` is greater than `b`, then a positive number should be returned.
+ *  - If `a` is equal to `b`, then 0 should be returned.
+ *
+ * When we call `compare`, if the result is negative, then `a` is returned.A positive result means `b` is returned.
+ * If the result is 0, then the `condition` is used to determine which value is returned.
+ * Meaning, if the `condition` is true, then `b` is returned. Otherwise, `a` is returned.
+ *
+ * @param a - The first value to compare
+ * @param b - The second value to compare
+ * @param compare - The function used to compare the two values
+ * @param condition - The condition used to determine which value is returned if the two values are equal
+ * @returns
+ */
 function compareWithCondition<T>(
   a: T,
   b: T,
