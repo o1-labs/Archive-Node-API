@@ -36,6 +36,7 @@ export type BlockInfo = {
   lastVrfOutput: string;
   minWindowDensity: number;
   subWindowDensities: number[];
+  lockCheckpoint: string;
 };
 
 export type TransactionInfo = {

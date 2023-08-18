@@ -7,7 +7,7 @@ function fullChainCTE(db_client: postgres.Sql) {
   RECURSIVE pending_chain AS (
     (
       SELECT
-        id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
+        id, state_hash, parent_hash, parent_id, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities, staking_epoch_data_id
       FROM
         blocks b
       WHERE
@@ -15,7 +15,7 @@ function fullChainCTE(db_client: postgres.Sql) {
     ) 
     UNION ALL
     SELECT
-      b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash, b.last_vrf_output, b.min_window_density, b.sub_window_densities
+      b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash, b.last_vrf_output, b.min_window_density, b.sub_window_densities, b.staking_epoch_data_id
     FROM
       blocks b
     INNER JOIN pending_chain ON b.id = pending_chain.parent_id
@@ -24,21 +24,31 @@ function fullChainCTE(db_client: postgres.Sql) {
   ), 
   full_chain AS (
     SELECT
-      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height, last_vrf_output, min_window_density, sub_window_densities
+      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height, last_vrf_output, min_window_density, sub_window_densities, staking_epoch_data_id
     FROM
       (
         SELECT
-          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities, staking_epoch_data_id
         FROM
           pending_chain
         UNION ALL
         SELECT
-          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities
+          id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output, min_window_density, sub_window_densities, staking_epoch_data_id
         FROM
           blocks b
         WHERE
           chain_status = 'canonical'
       ) AS full_chain
+  )
+  `;
+}
+
+function epochData(db_client: postgres.Sql) {
+  return db_client`
+  epoch_block_data AS (
+    SELECT full_chain.*, lock_checkpoint
+    FROM epoch_data
+    INNER JOIN full_chain ON epoch_data.id = full_chain.staking_epoch_data_id
   )
   `;
 }
@@ -87,11 +97,12 @@ function blocksAccessedCTE(
       distance_from_max_block_height,
       last_vrf_output,
       min_window_density, 
-      sub_window_densities
+      sub_window_densities,
+      lock_checkpoint
   FROM
     account_identifier ai
     INNER JOIN accounts_accessed aa ON ai.requesting_zkapp_account_identifier_id = aa.account_identifier_id
-    INNER JOIN full_chain b ON aa.block_id = b.id
+    INNER JOIN epoch_block_data b ON aa.block_id = b.id
   WHERE
     1 = 1
     ${
@@ -214,6 +225,7 @@ export function getEventsQuery(
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
+  ${epochData(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},
@@ -236,6 +248,7 @@ export function getActionsQuery(
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
   ${fullChainCTE(db_client)},
+  ${epochData(db_client)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status, to, from)},
   ${emittedZkAppCommandsCTE(db_client)},

@@ -15,6 +15,7 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
     lastVrfOutput: row.last_vrf_output,
     minWindowDensity: Number(row.min_window_density),
     subWindowDensities: row.sub_window_densities.map(Number),
+    lockCheckpoint: row.lock_checkpoint,
   };
 }
 
