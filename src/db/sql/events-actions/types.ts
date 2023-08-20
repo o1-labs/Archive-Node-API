@@ -94,5 +94,7 @@ export type ArchiveNodeDatabaseRow = {
   // (Optional) Action state value 5.
   action_state_value5?: string;
 
-  lock_checkpoint: string;
+  staking_epoch_lock_checkpoint: string;
+
+  next_epoch_lock_checkpoint: string;
 };

@@ -4,9 +4,6 @@
 export type BlockFileOutput = {
   height: number;
   previous_state_hash: string;
-  curr_global_slot: number;
-  global_slot_since_genesis: number;
-  timestamp: string;
 };
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Usage: npx ts-node ./tests/consensus/run/run-consensus-precomputed.ts
+ * Usage: npx ts-node ./tests/consensus/select-consensus-precomputed.ts
  */
 
 import fs from 'fs';
@@ -9,10 +9,10 @@ import { select } from '../../src/consensus/mina-consensus';
 import type { BlockInfo } from '../../src/blockchain/types';
 import { type BlockFileOutput, type PrecomputedBlock, GetSlot } from './types';
 
-const outputDir = process.env.OUTPUT_DIR || 'ts_blocks';
+const outputDir = process.env.OUTPUT_DIR || 'precomputed_ts';
 
 function readPrecomputedBlocks() {
-  const directoryPath = path.join(process.cwd(), 'precomputed_blocks');
+  const directoryPath = path.join(process.cwd(), 'precomputed_berkeley');
   const files = fs.readdirSync(directoryPath);
 
   const blocks: BlockInfo[] = [];
@@ -21,7 +21,14 @@ function readPrecomputedBlocks() {
     const block = mapPrecomputedToBlockInfo(data.toString());
     blocks.push(block);
   }
-  blocks.sort((a, b) => a.height - b.height);
+
+  blocks.sort((a, b) => {
+    if (a.height < b.height) return -1;
+    if (a.height > b.height) return 1;
+    if (a.timestamp < b.timestamp) return -1;
+    if (a.timestamp > b.timestamp) return 1;
+    return 0;
+  });
   return blocks;
 }
 
@@ -32,7 +39,6 @@ function mapPrecomputedToBlockInfo(block: string): BlockInfo {
     height: parseInt(
       json.data.protocol_state.body.consensus_state.blockchain_length
     ),
-    stateHash: '', // not provided in PrecomputedBlock
     parentHash: json.data.protocol_state.previous_state_hash,
     ledgerHash:
       json.data.protocol_state.body.blockchain_state.staged_ledger_hash
@@ -45,7 +51,6 @@ function mapPrecomputedToBlockInfo(block: string): BlockInfo {
     globalSlotSinceGenesis: GetSlot(
       json.data.protocol_state.body.consensus_state.global_slot_since_genesis
     ),
-    distanceFromMaxBlockHeight: 0, // not provided in PrecomputedBlock
     lastVrfOutput:
       json.data.protocol_state.body.consensus_state.last_vrf_output,
     minWindowDensity: parseInt(
@@ -55,6 +60,14 @@ function mapPrecomputedToBlockInfo(block: string): BlockInfo {
       json.data.protocol_state.body.consensus_state.sub_window_densities.map(
         Number
       ), // assumes this is an array of strings that represent numbers
+    stakingLockCheckpoint:
+      json.data.protocol_state.body.consensus_state.staking_epoch_data
+        .lock_checkpoint,
+    nextEpochLockCheckpoint:
+      json.data.protocol_state.body.consensus_state.next_epoch_data
+        .lock_checkpoint,
+    stateHash: '', // not provided in PrecomputedBlock
+    distanceFromMaxBlockHeight: 0, // not provided in PrecomputedBlock
   };
 }
 
@@ -82,9 +95,6 @@ function writeBlocksOutput(blocks: BlockInfo[]) {
     const json: BlockFileOutput = {
       height: block.height,
       previous_state_hash: block.parentHash,
-      curr_global_slot: block.globalSlotSinceHardfork,
-      global_slot_since_genesis: block.globalSlotSinceGenesis,
-      timestamp: block.timestamp,
     };
 
     fs.writeFileSync(
