@@ -39,17 +39,15 @@ function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
 }
 
 /**
- * This function is used to select the best chain based on the tie breaker rules that the Mina Protocol uses.
+ * This function is used to select the best chain based on the tie breaker rules that the Mina Protocol uses. The implementation aims to be an port of the OCaml implementation.
  *
- * The tie breaker rules are as follows:
- * 1. Take the block with the highest VRF output, denoted by comparing the VRF Blake2B hashes.
- *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3004
- * 2. If the VRF outputs are equal, take the block with the highest state hash.
- *  - https://github.com/MinaProtocol/mina/blob/bff1e117ae4740fa51d12b32736c6c63d7909bd1/src/lib/consensus/proof_of_stake.ml#L3001
+ * When choosing between two chains, the following rules are used:
+ * - Determine if the two chains fork at a short range or a long range.
+ * - If the two chains fork at a short range, use short range tie breaker rules - https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus#521-short-range-fork-rule
+ * - If the two chains fork at a long range, use long range tie breaker rules. - https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus#522-long-range-fork-rule
  *
- * The tie breaker rules are also more formally documented here: https://github.com/MinaProtocol/mina/blob/36d39cd0b2e3ba6c5e687770a5c683984ca587fc/docs/specs/consensus/README.md?plain=1#L1134
+ * The tie breaker rules are also more formally documented here: https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus
  */
-
 function select<T extends { blockInfo: BlockInfo }>(
   existing: T,
   candidate: T
