@@ -34,10 +34,6 @@ export type BlockInfo = {
   globalSlotSinceGenesis: number;
   distanceFromMaxBlockHeight: number;
   lastVrfOutput: string;
-  minWindowDensity: number;
-  subWindowDensities: number[];
-  stakingLockCheckpoint: string;
-  nextEpochLockCheckpoint: string;
 };
 
 export type TransactionInfo = {

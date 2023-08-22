@@ -13,10 +13,6 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
     globalSlotSinceGenesis: Number(row.global_slot_since_genesis),
     distanceFromMaxBlockHeight: Number(row.distance_from_max_block_height),
     lastVrfOutput: row.last_vrf_output,
-    minWindowDensity: Number(row.min_window_density),
-    subWindowDensities: row.sub_window_densities.map(Number),
-    stakingLockCheckpoint: row.staking_epoch_lock_checkpoint,
-    nextEpochLockCheckpoint: row.next_epoch_lock_checkpoint,
   };
 }
 

@@ -1,6 +1,5 @@
 import { blake2bHex } from 'blakejs';
 import { type BlockInfo } from '../blockchain/types';
-import { CONFIG } from './config';
 
 export { select, getAllPredicate, filterBestTip };
 
@@ -73,17 +72,7 @@ function select<T extends { blockInfo: BlockInfo }>(
     candidateVRFIsBigger
   );
 
-  if (isShortRange(existing.blockInfo, candidate.blockInfo)) {
-    return candidateLengthIsBigger ? candidate : existing;
-  }
-
-  const candidateWindowDensityIsBigger = compareWithCondition(
-    existing.blockInfo,
-    candidate.blockInfo,
-    longForkChainQualityIsBetter,
-    candidateLengthIsBigger
-  );
-  return candidateWindowDensityIsBigger ? candidate : existing;
+  return candidateLengthIsBigger ? candidate : existing;
 }
 
 /**
@@ -134,124 +123,4 @@ function compareVRF(existing: BlockInfo, candidate: BlockInfo): number {
 
 function compareBlockChainLength(existing: BlockInfo, candidate: BlockInfo) {
   return existing.height - candidate.height;
-}
-
-function longForkChainQualityIsBetter(
-  existing: BlockInfo,
-  candidate: BlockInfo
-): number {
-  const maxSlot = Math.max(
-    existing.globalSlotSinceGenesis,
-    candidate.globalSlotSinceGenesis
-  );
-  const existingWindowDensity = getVirtualMinWindowDensity(existing, maxSlot);
-  const candidateWindowDensity = getVirtualMinWindowDensity(candidate, maxSlot);
-  return candidateWindowDensity - existingWindowDensity;
-}
-
-function getVirtualMinWindowDensity(b: BlockInfo, maxSlot: number) {
-  if (b.globalSlotSinceGenesis === maxSlot) {
-    return b.minWindowDensity;
-  } else {
-    return getMinWindowDensity(b, maxSlot);
-  }
-}
-
-function getMinWindowDensity(b: BlockInfo, maxSlot: number): number {
-  const prevGlobalSubWindow = ofGlobalSlot(b.globalSlotSinceGenesis);
-  const nextGlobalSubWindow = ofGlobalSlot(maxSlot);
-  const isSameSubWindow = prevGlobalSubWindow === nextGlobalSubWindow;
-
-  const prevSubWindowDensities = b.subWindowDensities;
-  const prevMinWindowDensity = b.minWindowDensity;
-
-  const prevRelativeSubWindow = subWindow(prevGlobalSubWindow);
-  const nextRelativeSubWindow = subWindow(nextGlobalSubWindow);
-
-  const overlappingWindow =
-    prevGlobalSubWindow + CONFIG.subWindowsPerWindow >= nextGlobalSubWindow;
-
-  const currentSubWindowDensities = prevSubWindowDensities.map((density, i) => {
-    const gtPrevSubWindow = i > prevRelativeSubWindow;
-    const ltNextSubWindow = i < nextRelativeSubWindow;
-    const withinRange =
-      prevRelativeSubWindow < nextRelativeSubWindow
-        ? gtPrevSubWindow && ltNextSubWindow
-        : gtPrevSubWindow || ltNextSubWindow;
-
-    if (isSameSubWindow) {
-      return density;
-    } else if (overlappingWindow && !withinRange) {
-      return density;
-    } else {
-      return 0;
-    }
-  });
-
-  const currentWindowDensity = currentSubWindowDensities.reduce(
-    (acc, curr) => acc + curr,
-    0
-  );
-
-  const minWindowDensity =
-    isSameSubWindow || b.globalSlotSinceHardfork < CONFIG.gracePeriodEnd
-      ? prevMinWindowDensity
-      : Math.min(currentWindowDensity, prevMinWindowDensity);
-
-  return minWindowDensity;
-}
-
-function isShortRange(existing: BlockInfo, candidate: BlockInfo) {
-  const existingEpoch = epoch(existing.globalSlotSinceGenesis);
-  const candidateEpoch = epoch(candidate.globalSlotSinceGenesis);
-
-  if (existingEpoch === candidateEpoch) {
-    return existing.stakingLockCheckpoint === candidate.stakingLockCheckpoint;
-  } else {
-    return (
-      isEpochTransitionValid(existing, candidate) ||
-      isEpochTransitionValid(candidate, existing)
-    );
-  }
-}
-
-function isEpochTransitionValid(existing: BlockInfo, candidate: BlockInfo) {
-  const existingEpoch = epoch(existing.globalSlotSinceGenesis);
-  const candidateEpoch = epoch(candidate.globalSlotSinceGenesis);
-
-  const c1NextIsFinalized = !inSeedUpdateRange(
-    slot(existing.globalSlotSinceGenesis) + 1
-  );
-
-  const lockPointMatches =
-    existing.nextEpochLockCheckpoint === candidate.stakingLockCheckpoint;
-
-  return (
-    existingEpoch + 1 === candidateEpoch &&
-    c1NextIsFinalized &&
-    lockPointMatches
-  );
-}
-
-function ofGlobalSlot(slotSinceHardfork: number): number {
-  return Math.floor(slotSinceHardfork / CONFIG.slotsPerSubWindow);
-}
-
-function slot(t: number) {
-  return t % CONFIG.slotsPerEpoch;
-}
-
-function subWindow(t: number) {
-  return t % CONFIG.subWindowsPerWindow;
-}
-
-function epoch(slot: number) {
-  return Math.floor(slot / CONFIG.slotsPerEpoch);
-}
-
-function inSeedUpdateRange(slot: number) {
-  const thirdEpoch = CONFIG.slotsPerEpoch / 3;
-  if (!(CONFIG.slotsPerEpoch === 3 * thirdEpoch))
-    throw new Error('inSeedUpdateRange: slotsPerEpoch must be 3 * thirdEpoch');
-  return slot < thirdEpoch * 2;
 }

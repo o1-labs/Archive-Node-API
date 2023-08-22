@@ -73,12 +73,6 @@ export type ArchiveNodeDatabaseRow = {
   // Output of the last VRF (Verifiable Random Function).
   last_vrf_output: string;
 
-  // Minimum window density value.
-  min_window_density: string;
-
-  // List of densities for each sub-window.
-  sub_window_densities: string[];
-
   // (Optional) Action state value 1.
   action_state_value1?: string;
 
@@ -93,8 +87,4 @@ export type ArchiveNodeDatabaseRow = {
 
   // (Optional) Action state value 5.
   action_state_value5?: string;
-
-  staking_epoch_lock_checkpoint: string;
-
-  next_epoch_lock_checkpoint: string;
 };
