@@ -18,7 +18,7 @@ import {
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from '../utils/utils';
+} from '../data-adapters/database-row-adapters';
 import { IActionsService } from './actions-service.interface';
 
 export { ActionsService };

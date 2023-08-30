@@ -53,19 +53,6 @@ function mapPrecomputedToBlockInfo(block: string): BlockInfo {
     ),
     lastVrfOutput:
       json.data.protocol_state.body.consensus_state.last_vrf_output,
-    minWindowDensity: parseInt(
-      json.data.protocol_state.body.consensus_state.min_window_density
-    ),
-    subWindowDensities:
-      json.data.protocol_state.body.consensus_state.sub_window_densities.map(
-        Number
-      ), // assumes this is an array of strings that represent numbers
-    stakingLockCheckpoint:
-      json.data.protocol_state.body.consensus_state.staking_epoch_data
-        .lock_checkpoint,
-    nextEpochLockCheckpoint:
-      json.data.protocol_state.body.consensus_state.next_epoch_data
-        .lock_checkpoint,
     stateHash: '', // not provided in PrecomputedBlock
     distanceFromMaxBlockHeight: 0, // not provided in PrecomputedBlock
   };

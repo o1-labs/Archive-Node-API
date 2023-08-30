@@ -17,7 +17,7 @@ import {
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from '../utils/utils';
+} from '../data-adapters/database-row-adapters';
 import { IEventsService } from './events-service.interface';
 
 export { EventsService };
