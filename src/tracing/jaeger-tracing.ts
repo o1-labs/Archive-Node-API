@@ -53,7 +53,7 @@ function buildProvider(exporter: SpanExporter) {
 }
 
 function getGlobalTracer() {
-  return trace.getTracer('archive-node-graphql');
+  return trace.getTracer('graphql');
 }
 
 function createTraceInfo(parentSpan: Span) {
