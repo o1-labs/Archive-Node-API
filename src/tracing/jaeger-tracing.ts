@@ -47,8 +47,8 @@ function buildProvider(exporter: SpanExporter) {
     process.env.JAEGER_SERVICE_NAME ?? 'archive';
 
   provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-  trace.setGlobalTracerProvider(provider);
   provider.register();
+  trace.setGlobalTracerProvider(provider);
   return provider;
 }
 

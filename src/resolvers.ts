@@ -9,24 +9,33 @@ export const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, context) => {
       const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
-      const parentSpan = graphQLSpan || getGlobalTracer().startSpan('graphql');
-
-      return context.db_client.getEvents(input, {
-        traceInfo: createTraceInfo(parentSpan),
-      });
+      const parentSpan =
+        graphQLSpan || getGlobalTracer().startSpan('events.graphql');
+      try {
+        const events = await context.db_client.getEvents(input, {
+          traceInfo: createTraceInfo(parentSpan),
+        });
+        return events;
+      } finally {
+        parentSpan.end();
+      }
     },
 
     actions: async (_, { input }, context) => {
       const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
-      const parentSpan = graphQLSpan || getGlobalTracer().startSpan('graphql');
-
-      return context.db_client.getActions(input, {
-        traceInfo: createTraceInfo(parentSpan),
-      });
+      const parentSpan =
+        graphQLSpan || getGlobalTracer().startSpan('actions.graphql');
+      try {
+        const actions = await context.db_client.getActions(input, {
+          traceInfo: createTraceInfo(parentSpan),
+        });
+        return actions;
+      } finally {
+        parentSpan.end();
+      }
     },
   },
 };
-
 export const schema = makeExecutableSchema({
   resolvers: [resolvers],
   typeDefs: loadSchemaSync('./schema.graphql', {
