@@ -31,7 +31,6 @@ function parseEndpoint(endpoint: string): { hostname: string; port: string } {
   const strippedEndpoint = endpoint.replace(/(^\w+:|^)\/\//, '');
   const [hostname, portSegment] = strippedEndpoint.split(':');
   const port = portSegment?.split('/')[0];
-
   return { hostname, port };
 }
 
@@ -67,12 +66,8 @@ function checkJaegerEndpointAvailability({
       );
     });
 
-    req.on('response', (res) => {
-      if (res.statusCode === 200) {
-        resolve();
-      } else {
-        reject(new Error('Jaeger endpoint returned an error.'));
-      }
+    req.on('response', () => {
+      resolve();
       req.end();
     });
 

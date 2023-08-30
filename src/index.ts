@@ -2,14 +2,16 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { buildContext } from './context';
-import { buildServer } from './server';
+import { buildServer } from './server/server';
+import { buildPlugins } from './server/plugins';
 
 const PORT = process.env.PORT || 8080;
 
 (async function main() {
   try {
     const context = await buildContext(process.env.PG_CONN);
-    const server = await buildServer(context);
+    const plugins = await buildPlugins();
+    const server = buildServer(context, plugins);
 
     server.listen(PORT, () => {
       console.info(`Server is running on port: ${PORT}`);

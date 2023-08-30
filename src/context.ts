@@ -1,4 +1,4 @@
-import { Span } from '@opentelemetry/tracing';
+import { Span } from '@opentelemetry/sdk-trace-base';
 import { ArchiveNodeAdapter } from './db/archive-node-adapter/archive-node-adapter';
 import { DatabaseAdapter } from './db/archive-node-adapter/archive-node-adapter.interface';
 

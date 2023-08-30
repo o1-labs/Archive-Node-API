@@ -3,7 +3,7 @@ import {
   BatchSpanProcessor,
   BasicTracerProvider,
   SpanExporter,
-} from '@opentelemetry/tracing';
+} from '@opentelemetry/sdk-trace-base';
 
 import {
   validateJaegerConfig,

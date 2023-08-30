@@ -1,24 +1,17 @@
-import { createYoga, LogLevel } from 'graphql-yoga';
-import { createServer } from 'http';
 import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
-
 import { inspect } from 'node:util';
 
-import { schema } from './resolvers';
-import { initJaegerProvider } from './tracing/jaeger-tracing';
-import type { GraphQLContext } from './context';
+import { initJaegerProvider } from '../tracing/jaeger-tracing';
 
-export { buildServer };
-
-const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
+export { buildPlugins };
 
 async function buildPlugins() {
-  const plugins = [];
-
+  const plugins: any[] = [];
   plugins.push(useGraphQlJit());
+
   if (process.env.ENABLE_LOGGING) {
     const provider = await initJaegerProvider();
     plugins.push(
@@ -33,8 +26,9 @@ async function buildPlugins() {
     );
   }
 
-  if (!process.env.ENABLE_INTROSPECTION)
+  if (!process.env.ENABLE_INTROSPECTION) {
     plugins.push(useDisableIntrospection());
+  }
 
   plugins.push(
     useLogger({
@@ -58,23 +52,4 @@ async function buildPlugins() {
     })
   );
   return plugins;
-}
-
-async function buildServer(context: GraphQLContext) {
-  const plugins = await buildPlugins();
-  const yoga = createYoga<GraphQLContext>({
-    schema,
-    logging: LOG_LEVEL,
-    graphqlEndpoint: '/',
-    landingPage: false,
-    healthCheckEndpoint: '/healthcheck',
-    graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
-    plugins,
-    cors: {
-      origin: process.env.CORS_ORIGIN ?? '*',
-      methods: ['GET', 'POST'],
-    },
-    context,
-  });
-  return createServer(yoga);
 }
