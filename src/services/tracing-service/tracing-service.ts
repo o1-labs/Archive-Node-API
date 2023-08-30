@@ -5,15 +5,14 @@ import type { ITracingService } from './tracing-service.interface';
 export { TracingService };
 
 class TracingService implements ITracingService {
-  private spanStack: Span[];
-  private traceInfo: TraceInfo;
+  private readonly spanStack: Span[] = [];
+  private readonly traceInfo: TraceInfo;
 
   constructor(traceInfo: TraceInfo) {
     this.traceInfo = traceInfo;
-    this.spanStack = [];
   }
 
-  startSpan(name: string) {
+  startSpan(name: string): void {
     const span = this.traceInfo.tracer.startSpan(
       name,
       undefined,
@@ -22,12 +21,14 @@ class TracingService implements ITracingService {
     this.spanStack.push(span);
   }
 
-  endSpan() {
+  endSpan(): void {
     if (this.spanStack.length === 0) {
-      throw Error('No spans to end');
+      throw new Error('No spans to end');
     }
     const span = this.spanStack.pop();
-    if (!span) return;
+    if (!span) {
+      throw new Error('Failed to retrieve the span from the stack');
+    }
     span.end();
   }
 }
