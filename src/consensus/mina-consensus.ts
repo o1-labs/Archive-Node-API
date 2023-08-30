@@ -38,14 +38,21 @@ function chainSelect<T extends { blockInfo: BlockInfo }>(blocks: T[]) {
 }
 
 /**
- * This function is used to select the best chain based on the tie breaker rules that the Mina Protocol uses. The implementation aims to be an port of the OCaml implementation.
+ * Selects the best chain based on Mina Protocol's short range tie breaker rules.
  *
- * When choosing between two chains, the following rules are used:
- * - Determine if the two chains fork at a short range or a long range.
- * - If the two chains fork at a short range, use short range tie breaker rules - https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus#521-short-range-fork-rule
- * - If the two chains fork at a long range, use long range tie breaker rules. - https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus#522-long-range-fork-rule
+ * This function mirrors the OCaml implementation and utilizes the short range rules specified
+ * here: https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus#521-short-range-fork-rule
  *
  * The tie breaker rules are also more formally documented here: https://github.com/MinaProtocol/mina/tree/develop/docs/specs/consensus
+ *
+ * When comparing two chains:
+ * 1. Compare based on state hash.
+ * 2. If equal, fallback to VRF comparisons.
+ * 3. If still equal, use the chain length as the final determinant.
+ *
+ * @param {T} existing - The current chain.
+ * @param {T} candidate - The new chain to be compared against the current chain.
+ * @returns {T} - The chain that is considered the "best" based on the aforementioned criteria.
  */
 function select<T extends { blockInfo: BlockInfo }>(
   existing: T,
