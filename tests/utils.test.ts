@@ -4,7 +4,7 @@ import {
   getElementIdFieldValues,
   removeRedundantEmittedFields,
   mapActionOrEvent,
-} from '../src/services/utils/utils';
+} from '../src/services/data-adapters/database-row-adapters';
 import { Action, Event } from '../src/blockchain/types';
 import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types';
 
