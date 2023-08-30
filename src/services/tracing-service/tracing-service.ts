@@ -1,5 +1,5 @@
 import type { Span } from '@opentelemetry/api';
-import type { TraceInfo } from '../../tracing';
+import type { TraceInfo } from '../../tracing/jaeger-tracing';
 import type { ITracingService } from './tracing-service.interface';
 
 export { TracingService };

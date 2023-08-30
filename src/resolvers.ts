@@ -3,7 +3,7 @@ import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { Resolvers } from './resolvers-types';
 import { getCurrentSpanFromGraphQLContext } from './context';
-import { createTraceInfo, getGlobalTracer } from './tracing';
+import { createTraceInfo, getGlobalTracer } from './tracing/jaeger-tracing';
 
 export const resolvers: Resolvers = {
   Query: {

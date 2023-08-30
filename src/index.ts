@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 8080;
 
 (async function main() {
   const context = await buildContext(process.env.PG_CONN);
-  const server = buildServer(context);
+  const server = await buildServer(context);
 
   ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach((signal) => {
     process.on(signal, () => server.close());

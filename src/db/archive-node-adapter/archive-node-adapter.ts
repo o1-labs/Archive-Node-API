@@ -5,7 +5,7 @@ import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
 } from '../../resolvers-types';
-import { getTraceInfoFromOptions } from '../../tracing';
+import { getTraceInfoFromOptions } from '../../tracing/jaeger-tracing';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries';
 import { EventsService } from '../../services/events-service/events-service';
 import { IEventsService } from '../../services/events-service/events-service.interface';

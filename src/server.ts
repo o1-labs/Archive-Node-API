@@ -4,70 +4,23 @@ import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
-import { request } from 'node:http';
 import { inspect } from 'node:util';
 
-import { buildProvider } from './tracing';
 import { schema } from './resolvers';
+import { initJaegerProvider } from './tracing/jaeger-tracing';
 import type { GraphQLContext } from './context';
+
+export { buildServer };
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
-function initJaegerProvider() {
-  let provider = undefined;
-  const options = {
-    endpoint: process.env.JAEGER_ENDPOINT,
-  };
-  const exporter = new JaegerExporter(options);
-  if (process.env.ENABLE_JAEGER) {
-    provider = buildProvider(exporter);
-    if (!process.env.JAEGER_ENDPOINT) {
-      throw new Error(
-        'Jaeger was enabled but no endpoint was specified. Please ensure that the Jaeger endpoint is properly configured and available.'
-      );
-    }
-    if (!process.env.JAEGER_SERVICE_NAME) {
-      throw new Error(
-        'Jaeger was enabled but no service name was specified. Please ensure that the Jaeger service name is properly configured.'
-      );
-    }
-
-    // Check if Jaeger endpoint is available.
-    const endpoint = process.env.JAEGER_ENDPOINT.replace(/(^\w+:|^)\/\//, '');
-    // eslint-disable-next-line prefer-const
-    let [hostname, port] = endpoint.split(':');
-    port = port?.split('/')[0];
-    const req = request({
-      hostname,
-      method: 'GET',
-      port,
-      path: '/',
-      timeout: 2000,
-    });
-    req.on('error', () => {
-      throw new Error(
-        'Jaeger endpoint not available. Please ensure that the Jaeger endpoint is properly configured and available.'
-      );
-    });
-    req.on('timeout', () => {
-      throw new Error(
-        'Jaeger endpoint timed out. Please ensure that the Jaeger endpoint is properly configured and available.'
-      );
-    });
-    req.end();
-    req.socket?.end?.();
-  }
-  return provider;
-}
-
-function buildPlugins() {
+async function buildPlugins() {
   const plugins = [];
 
   plugins.push(useGraphQlJit());
   if (process.env.ENABLE_LOGGING) {
-    const provider = initJaegerProvider();
+    const provider = await initJaegerProvider();
     plugins.push(
       useOpenTelemetry(
         {
@@ -107,8 +60,8 @@ function buildPlugins() {
   return plugins;
 }
 
-export function buildServer(context: GraphQLContext) {
-  const plugins = buildPlugins();
+async function buildServer(context: GraphQLContext) {
+  const plugins = await buildPlugins();
   const yoga = createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
