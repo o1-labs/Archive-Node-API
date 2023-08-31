@@ -8,7 +8,6 @@ import {
   Actions,
 } from '../../blockchain/types';
 import type { ActionFilterOptionsInput } from '../../resolvers-types';
-import type { ITracingService } from '../tracing-service/tracing-service.interface';
 import { DEFAULT_TOKEN_ID } from '../../blockchain/constants';
 import { createBlockInfo } from '../../blockchain/utils';
 import { getActionsQuery } from '../../db/sql/events-actions/queries';
@@ -20,36 +19,46 @@ import {
   sortAndFilterBlocks,
 } from '../data-adapters/database-row-adapters';
 import { IActionsService } from './actions-service.interface';
+import {
+  TracingState,
+  extractTraceStateFromOptions,
+} from '../../tracing/tracer';
 
 export { ActionsService };
 
 class ActionsService implements IActionsService {
-  constructor(
-    private client: postgres.Sql,
-    private tracingService: ITracingService
-  ) {
+  private readonly client: postgres.Sql;
+
+  constructor(client: postgres.Sql) {
     this.client = client;
-    this.tracingService = tracingService;
   }
 
-  async getActions(input: ActionFilterOptionsInput): Promise<Actions> {
-    return (await this.getActionData(input)) ?? [];
+  async getActions(
+    input: ActionFilterOptionsInput,
+    options: unknown
+  ): Promise<Actions> {
+    const tracingState = extractTraceStateFromOptions(options);
+    return (await this.getActionData(input, { tracingState })) ?? [];
   }
 
-  async getActionData(input: ActionFilterOptionsInput): Promise<Actions> {
-    this.tracingService.startSpan('actions.SQL');
+  async getActionData(
+    input: ActionFilterOptionsInput,
+    { tracingState }: { tracingState: TracingState }
+  ): Promise<Actions> {
+    const sqlSpan = tracingState.startSpan('actions.SQL');
     const rows = await this.executeActionsQuery(input);
-    this.tracingService.endSpan();
+    sqlSpan.end();
 
-    this.tracingService.startSpan('actions.processing');
+    const processingSpan = tracingState.startSpan('actions.processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
     const actionsData = this.blocksToActions(
       blocksWithTransactions,
       elementIdFieldValues
     );
-    this.tracingService.endSpan();
-    return sortAndFilterBlocks(actionsData);
+    sortAndFilterBlocks(actionsData);
+    processingSpan.end();
+    return actionsData;
   }
 
   async executeActionsQuery(input: ActionFilterOptionsInput) {

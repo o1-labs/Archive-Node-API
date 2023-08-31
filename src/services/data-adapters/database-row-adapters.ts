@@ -235,9 +235,7 @@ function getFieldValuesFromElementIds(
   return elementIdToFieldValues;
 }
 
-function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(
-  data: T[]
-): T[] {
+function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(data: T[]) {
   data.sort((a, b) => {
     if (a.blockInfo.height < b.blockInfo.height) return -1;
     if (a.blockInfo.height > b.blockInfo.height) return 1;
@@ -246,7 +244,6 @@ function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(
     return 0;
   });
   filterBestTip(data);
-  return data;
 }
 
 function findAllIndexes<T>(arr: T[], target: T): number[] {

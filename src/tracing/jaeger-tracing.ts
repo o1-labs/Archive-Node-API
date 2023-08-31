@@ -1,30 +1,22 @@
-import { context, trace, Span, Tracer, Context } from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
 import {
   BatchSpanProcessor,
   BasicTracerProvider,
   SpanExporter,
 } from '@opentelemetry/sdk-trace-base';
+import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import {
   validateJaegerConfig,
-  createJaegerExporter,
   parseEndpoint,
   checkJaegerEndpointAvailability,
 } from './jaeger-setup';
 
-export {
-  initJaegerProvider,
-  createTraceInfo,
-  getGlobalTracer,
-  getTraceInfoFromOptions,
-  TraceInfo,
-};
+export { initJaegerProvider };
 
-type TraceInfo = {
-  tracer: Tracer;
-  ctx: Context;
-  parentSpan: Span;
-};
+function createJaegerExporter(endpoint: string) {
+  return new JaegerExporter({ endpoint });
+}
 
 async function initJaegerProvider(): Promise<BasicTracerProvider | undefined> {
   const jaegerEndpoint = process.env.JAEGER_ENDPOINT;
@@ -33,7 +25,6 @@ async function initJaegerProvider(): Promise<BasicTracerProvider | undefined> {
   }
 
   validateJaegerConfig(jaegerEndpoint);
-
   const exporter = createJaegerExporter(jaegerEndpoint);
   const endpointParts = parseEndpoint(jaegerEndpoint);
 
@@ -50,21 +41,4 @@ function buildProvider(exporter: SpanExporter) {
   provider.register();
   trace.setGlobalTracerProvider(provider);
   return provider;
-}
-
-function getGlobalTracer() {
-  return trace.getTracer('graphql');
-}
-
-function createTraceInfo(parentSpan: Span) {
-  const tracer = getGlobalTracer();
-  const ctx = trace.setSpan(context.active(), parentSpan);
-  return { tracer, ctx, parentSpan } as TraceInfo;
-}
-
-function getTraceInfoFromOptions(options: unknown) {
-  if (options && typeof options === 'object' && 'traceInfo' in options) {
-    return options.traceInfo as TraceInfo;
-  }
-  throw new Error('No trace info found');
 }

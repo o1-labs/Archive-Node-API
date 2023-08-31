@@ -5,14 +5,11 @@ import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
 } from '../../resolvers-types';
-import { getTraceInfoFromOptions } from '../../tracing/jaeger-tracing';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries';
 import { EventsService } from '../../services/events-service/events-service';
 import { IEventsService } from '../../services/events-service/events-service.interface';
 import { ActionsService } from '../../services/actions-service/actions-service';
 import { IActionsService } from '../../services/actions-service/actions-service.interface';
-import { TracingService } from '../../services/tracing-service/tracing-service';
-import { ITracingService } from '../../services/tracing-service/tracing-service.interface';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
@@ -22,9 +19,8 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
    * `postgres.Sql` instance across the adapter is safe.
    */
   private client: postgres.Sql;
-  private tracingService: ITracingService | null;
-  private eventsService: IEventsService | null;
-  private actionsService: IActionsService | null;
+  private eventsService: IEventsService;
+  private actionsService: IActionsService;
 
   constructor(connectionString: string | undefined) {
     if (!connectionString)
@@ -32,44 +28,22 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
       );
     this.client = postgres(connectionString);
-    this.tracingService = null;
-    this.eventsService = null;
-    this.actionsService = null;
-  }
-
-  async initializeServices(options: unknown): Promise<void> {
-    const traceInfo = getTraceInfoFromOptions(options);
-    this.tracingService = new TracingService(traceInfo);
-    this.eventsService = new EventsService(this.client, this.tracingService);
-    this.actionsService = new ActionsService(this.client, this.tracingService);
+    this.eventsService = new EventsService(this.client);
+    this.actionsService = new ActionsService(this.client);
   }
 
   async getEvents(
     input: EventFilterOptionsInput,
     options: unknown
   ): Promise<Events> {
-    if (!this.eventsService) {
-      await this.initializeServices(options);
-    }
-    if (!this.eventsService)
-      throw new Error(
-        'Events service not initialized. Please call initializeServices() before calling getEvents().'
-      );
-    return this.eventsService.getEvents(input);
+    return this.eventsService.getEvents(input, options);
   }
 
   async getActions(
     input: ActionFilterOptionsInput,
     options: unknown
   ): Promise<Actions> {
-    if (!this.actionsService) {
-      await this.initializeServices(options);
-    }
-    if (!this.actionsService)
-      throw new Error(
-        'Actions service not initialized. Please call initializeServices() before calling getActions().'
-      );
-    return this.actionsService.getActions(input);
+    return this.actionsService.getActions(input, options);
   }
 
   async checkSQLSchema() {

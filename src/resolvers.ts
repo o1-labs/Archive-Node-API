@@ -1,42 +1,38 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
-import { Resolvers } from './resolvers-types';
-import { getCurrentSpanFromGraphQLContext } from './context';
-import { createTraceInfo, getGlobalTracer } from './tracing/jaeger-tracing';
 
-export const resolvers: Resolvers = {
+import { Resolvers } from './resolvers-types';
+import { TracingState, setSpanNameFromGraphQLContext } from './tracing/tracer';
+
+export { resolvers, schema };
+
+const resolvers: Resolvers = {
   Query: {
     events: async (_, { input }, context) => {
-      const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
-      const parentSpan =
-        graphQLSpan || getGlobalTracer().startSpan('events.graphql');
-      try {
-        const events = await context.db_client.getEvents(input, {
-          traceInfo: createTraceInfo(parentSpan),
-        });
-        return events;
-      } finally {
-        parentSpan.end();
-      }
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'events.graphql'
+      );
+
+      return context.db_client.getEvents(input, {
+        tracingState: new TracingState(graphQLSpan),
+      });
     },
 
     actions: async (_, { input }, context) => {
-      const graphQLSpan = getCurrentSpanFromGraphQLContext(context);
-      const parentSpan =
-        graphQLSpan || getGlobalTracer().startSpan('actions.graphql');
-      try {
-        const actions = await context.db_client.getActions(input, {
-          traceInfo: createTraceInfo(parentSpan),
-        });
-        return actions;
-      } finally {
-        parentSpan.end();
-      }
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'actions.graphql'
+      );
+      return context.db_client.getActions(input, {
+        tracingState: new TracingState(graphQLSpan),
+      });
     },
   },
 };
-export const schema = makeExecutableSchema({
+
+const schema = makeExecutableSchema({
   resolvers: [resolvers],
   typeDefs: loadSchemaSync('./schema.graphql', {
     loaders: [new GraphQLFileLoader()],

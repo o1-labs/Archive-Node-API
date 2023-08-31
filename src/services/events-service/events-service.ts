@@ -6,7 +6,6 @@ import {
   Events,
   Event,
 } from '../../blockchain/types';
-import type { ITracingService } from '../tracing-service/tracing-service.interface';
 import type { EventFilterOptionsInput } from '../../resolvers-types';
 import { createBlockInfo } from '../../blockchain/utils';
 import { DEFAULT_TOKEN_ID } from '../../blockchain/constants';
@@ -19,39 +18,46 @@ import {
   sortAndFilterBlocks,
 } from '../data-adapters/database-row-adapters';
 import { IEventsService } from './events-service.interface';
+import {
+  TracingState,
+  extractTraceStateFromOptions,
+} from '../../tracing/tracer';
 
 export { EventsService };
 
 class EventsService implements IEventsService {
-  constructor(
-    private client: postgres.Sql,
-    private tracingService: ITracingService
-  ) {
+  private readonly client: postgres.Sql;
+
+  constructor(client: postgres.Sql) {
     this.client = client;
   }
 
-  setTracingService(tracingService: ITracingService) {
-    this.tracingService = tracingService;
+  async getEvents(
+    input: EventFilterOptionsInput,
+    options: unknown
+  ): Promise<Events> {
+    const tracingState = extractTraceStateFromOptions(options);
+    return (await this.getEventData(input, { tracingState })) ?? [];
   }
 
-  async getEvents(input: EventFilterOptionsInput): Promise<Events> {
-    return (await this.getEventData(input)) ?? [];
-  }
-
-  async getEventData(input: EventFilterOptionsInput): Promise<Events> {
-    this.tracingService.startSpan('events.SQL');
+  async getEventData(
+    input: EventFilterOptionsInput,
+    { tracingState }: { tracingState: TracingState }
+  ): Promise<Events> {
+    const sqlSpan = tracingState.startSpan('events.SQL');
     const rows = await this.executeEventsQuery(input);
-    this.tracingService.endSpan();
+    sqlSpan.end();
 
-    this.tracingService.startSpan('events.processing');
+    const processingSpan = tracingState.startSpan('events.processing');
     const elementIdFieldValues = getElementIdFieldValues(rows);
     const blocksWithTransactions = partitionBlocks(rows);
     const eventsData = this.blocksToEvents(
       blocksWithTransactions,
       elementIdFieldValues
     );
-    this.tracingService.endSpan();
-    return sortAndFilterBlocks(eventsData);
+    sortAndFilterBlocks(eventsData);
+    processingSpan.end();
+    return eventsData;
   }
 
   private async executeEventsQuery(input: EventFilterOptionsInput) {

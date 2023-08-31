@@ -1,12 +1,6 @@
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { request } from 'node:http';
 
-export {
-  validateJaegerConfig,
-  createJaegerExporter,
-  parseEndpoint,
-  checkJaegerEndpointAvailability,
-};
+export { validateJaegerConfig, parseEndpoint, checkJaegerEndpointAvailability };
 
 function validateJaegerConfig(endpoint: string): void {
   if (!endpoint) {
@@ -20,11 +14,6 @@ function validateJaegerConfig(endpoint: string): void {
       'Jaeger was enabled but no service name was specified. Please ensure that the Jaeger service name is properly configured.'
     );
   }
-}
-
-function createJaegerExporter(endpoint: string): JaegerExporter {
-  const options = { endpoint };
-  return new JaegerExporter(options);
 }
 
 function parseEndpoint(endpoint: string): { hostname: string; port: string } {
