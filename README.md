@@ -213,18 +213,6 @@ vusers.session_length:
   p99: ......................................................................... 40
 ```
 
-## Why are multiple blocks shown when getting event/action data at most recent (highest) block of the network?
-
-When the Mina protocol decides which block to include as part of the canonical chain at the highest tip of the network, it must consider a choice of blocks submitted by different block producers. Because there are potentially other blocks to include at the best tip, forks can happen frequently. The Mina client runs a selection algorithm based on calculating each proposed block's [chain strength](https://docs.minaprotocol.com/glossary#chain-strength). The block with the highest chain strength is chosen and included in the canonical chain.
-
-The Archive Node API only has access to the Archive Node database for network-related information. This means it does not have access to the data structures the Mina client uses as part of the chain selection algorithm. For this reason, the Archive Node API cannot quickly check which block has the highest chain strength at the tip of the network.
-
-As a short-term solution, due to not knowing what block to return at the tip of the network, the Archive Node API will return _all_ blocks at the tip of the network for the time being. If all the blocks contain the same transaction data, there is a high probability that the event/action data will be persisted in the network. In the rare case where some blocks contain the event/action data, and some do not, we let the developer using this API handle this case for themselves (e.g. wait for additional blocks to gain confidence in finality). The most recent block can be identified by checking the `distanceFromMaxBlockHeight` resolver and checking that it equals `0`.
-
-A long-term solution would be porting over the selection algorithm to TypeScript and emulating the same algorithm to decide which block to return at the tip of the network. However, this is not possible now, given that the Archive Node database schema currently doesn’t store the data needed to run the selection algorithm that the Mina client has access to (mainly `last_vrf_output` and `sub_window_densities`).
-
-This issue of deciding what to return at the tip of the network only happens at the maximum block height. All blocks below the height of the network will have one block returned and will avoid this issue. The need for this data has been raised to the current maintainers of the Archive Node. Once the Archive Node includes `last_vrf_output` and `sub_window_densities` into its schema, the selection algorithm can be implemented later to solve this issue. The issue tracking this is [listed here](https://github.com/o1-labs/Archive-Node-API/issues/7)
-
 ## Setting Up Local Development Environment Using Docker Compose
 
 The provided `docker-compose.yml` file simplifies the process of setting up a local development environment. This file orchestrates the creation of a Docker network comprising of Mina daemon, Archive Node, GraphQL server, and Jaeger. Follow the steps below to get everything up and running:
