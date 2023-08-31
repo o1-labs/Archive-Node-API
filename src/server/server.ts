@@ -1,13 +1,14 @@
 import type { GraphQLContext } from '../context';
-import { createYoga, LogLevel, type Plugin } from 'graphql-yoga';
+import { createYoga, LogLevel } from 'graphql-yoga';
 import { createServer } from 'http';
 import { schema } from '../resolvers';
+import { Plugin } from '@envelop/core';
 
 export { buildServer };
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
-function buildServer(context: GraphQLContext, plugins: Plugin<object>[]) {
+function buildServer(context: GraphQLContext, plugins: Plugin[]) {
   const yoga = createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,

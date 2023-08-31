@@ -9,6 +9,7 @@ import { initJaegerProvider } from '../tracing/jaeger-tracing';
 export { buildPlugins };
 
 async function buildPlugins() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
   plugins.push(useGraphQlJit());
 
