@@ -1,12 +1,7 @@
-import type {
-  BlockInfo,
-  TransactionInfo,
-  Event,
-  Action,
-  ArchiveNodeDatabaseRow,
-} from './types';
+import type { BlockInfo, TransactionInfo, Event, Action } from './types';
+import type { ArchiveNodeDatabaseRow } from '../db/sql/events-actions/types';
 
-export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
+export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
   return {
     height: Number(row.height),
     stateHash: row.state_hash,
@@ -17,33 +12,39 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow) {
     globalSlotSinceHardfork: Number(row.global_slot_since_hard_fork),
     globalSlotSinceGenesis: Number(row.global_slot_since_genesis),
     distanceFromMaxBlockHeight: Number(row.distance_from_max_block_height),
-  } as BlockInfo;
+    lastVrfOutput: row.last_vrf_output,
+  };
 }
 
-export function createTransactionInfo(row: ArchiveNodeDatabaseRow) {
+export function createTransactionInfo(
+  row: ArchiveNodeDatabaseRow
+): TransactionInfo {
   return {
     status: row.status,
     hash: row.hash,
     memo: row.memo,
     authorizationKind: row.authorization_kind,
-  } as TransactionInfo;
+  };
 }
 
-export function createEvent(data: string[], transactionInfo: TransactionInfo) {
+export function createEvent(
+  data: string[],
+  transactionInfo: TransactionInfo
+): Event {
   return {
     data,
     transactionInfo,
-  } as Event;
+  };
 }
 
 export function createAction(
   accountUpdateId: string,
   data: string[],
   transactionInfo: TransactionInfo
-) {
+): Action {
   return {
     accountUpdateId,
     data,
     transactionInfo,
-  } as Action;
+  };
 }
