@@ -4,7 +4,7 @@ This GraphQL server is built to expose information from [Mina's Archive Node](ht
 
 ## Description
 
-The server aims to expose zkApp related information to be used by developers and SnarkyJS. Users can query for events and actions related to their zkApp. In addition, users can filter for specific events and actions by public key, tokenId, to/from block ranges, and chain status.
+The server aims to expose zkApp related information to be used by developers and o1js. Users can query for events and actions related to their zkApp. In addition, users can filter for specific events and actions by public key, tokenId, to/from block ranges, and chain status.
 
 An example query for events and actions looks like this:
 
