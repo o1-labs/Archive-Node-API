@@ -19,7 +19,8 @@
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "generate": "graphql-codegen"
+    "generate": "graphql-codegen",
+    "run-compare": "npx ts-node tests/consensus/run-compare.ts"
   },
   "keywords": [],
   "author": "",
