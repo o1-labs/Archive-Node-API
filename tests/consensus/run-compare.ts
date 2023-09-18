@@ -2,10 +2,8 @@ import pwd from 'process';
 import path from 'path';
 import fs from 'fs/promises';
 
-const TYPESCRIPT_OUTPUT_DIR_NAME =
-  process.env.TYPESCRIPT_OUTPUT_DIR_NAME || 'precomputed_ts';
-const OCAML_OUTPUT_DIR_NAME =
-  process.env.OCAML_OUTPUT_DIR_NAME || 'precomputed_ocaml';
+const TYPESCRIPT_OUTPUT_DIR_NAME = process.argv[2];
+const OCAML_OUTPUT_DIR_NAME = process.argv[3];
 
 const TYPESCRIPT_DIR = path.join(pwd.cwd(), TYPESCRIPT_OUTPUT_DIR_NAME);
 const OCAML_DIR = path.join(pwd.cwd(), OCAML_OUTPUT_DIR_NAME);

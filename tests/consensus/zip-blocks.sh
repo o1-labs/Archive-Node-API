@@ -1,47 +1,49 @@
 #!/bin/bash
-set -x
-set -eo pipefail
+set -e
+set -o pipefail
 
-# Google Cloud Storage bucket name
-bucket="gs://mina_network_block_data/"
+# Constants
+BUCKET="gs://mina_network_block_data/"
+UPLOAD_BUCKET="gs://mina-consensus-precomputed-blocks-json/"
+PREFIX="berkeley-"
+DIR="precomputed_blocks"
+START_DATE=$(date -d "2023-08-13" "+%s")000
 
-# Start date (last time Berkeley was redeployed) in Unix timestamp (milliseconds) 
-start_date=$(date -d "2023-08-13" "+%s")000
+# Initialize
+mkdir -p "$DIR"
 
-# Prefix for file names
-prefix="berkeley-"
+# Download files from bucket with given prefix and range
+download_files() {
+  for i in $(seq 2 250); do
+    gsutil -m cp "${BUCKET}${PREFIX}${i}-*" "$DIR/"
+  done
+}
 
-# Directory to download the files to
-dir="precomputed-blocks"
+# Process downloaded files
+process_files() {
+  for file in $(ls "$DIR"); do
+    local file_path="$DIR/$file"
+    echo "Processing file $file_path"
+    
+    local scheduled_time
+    scheduled_time=$(jq -r '.data.scheduled_time' "$file_path")
 
-# Create the directory if it doesn't exist
-mkdir -p $dir
+    # Remove the file if scheduled_time is not later than START_DATE
+    [[ "$scheduled_time" -le "$START_DATE" ]] && rm "$file_path"
+  done
+}
 
-# Download all files starting with the prefix and with a block height in the specified range
-for i in $(seq 2 1000)
-do
-  gsutil -m cp ${bucket}${prefix}${i}-* ${dir}/
-done
+# Archive and upload
+archive_and_upload() {
+  local current_date
+  current_date=$(date "+%Y-%m-%d")
+  local zip_name="precomputed_blocks_$current_date.zip"
 
-# Iterate over downloaded files
-for file in $(ls $dir)
-do
-  # Full path to the file
-  file_path="$dir/$file"
+  zip -r $zip_name $DIR/
+  gsutil cp $zip_name $UPLOAD_BUCKET
+}
 
-  echo "Processing file $file_path"
-
-  # Extract scheduled_time from JSON
-  scheduled_time=$(jq -r '.data.scheduled_time' "$file_path")
-
-  # Check if scheduled_time is not later than start_date
-  if [ "$scheduled_time" -le "$start_date" ]
-  then
-    # Delete the file
-    rm "$file_path"
-  fi
-done
-
-# Create a zip archive 
-current_date=$(date "+%Y-%m-%d")
-zip -r "precomputed-blocks-$current_date.zip" $dir/
+# Main execution
+download_files
+process_files
+archive_and_upload
