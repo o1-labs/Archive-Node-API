@@ -20,7 +20,8 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "generate": "graphql-codegen",
-    "run-compare": "npx ts-node tests/consensus/run-compare.ts"
+    "run-compare": "npx ts-node tests/consensus/run-compare.ts",
+    "download-precomputed": "./tests/consensus/zip-blocks.sh"
   },
   "keywords": [],
   "author": "",
