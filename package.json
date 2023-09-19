@@ -20,10 +20,7 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "generate": "graphql-codegen",
-    "run-compare": "npx ts-node tests/consensus/run-compare.ts ./tests/consensus/precomputed_ts ./tests/consensus/precomputed_ocaml",
-    "compute-consensus": "npx ts-node tests/consensus/select-consensus-precomputed.ts ./tests/consensus/precomputed_blocks ./tests/consensus/precomputed_ts",
-    "download-precomputed": "./tests/consensus/download-precomputed.sh ./tests/consensus/",
-    "upload-precomputed": "./tests/consensus/zip-blocks.sh ./tests/consensus"
+    "consensus:test": "./tests/consensus/scripts/run-consensus-apps.sh"
   },
   "keywords": [],
   "author": "",
