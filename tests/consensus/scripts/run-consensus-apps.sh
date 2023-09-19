@@ -11,7 +11,6 @@
 #   Simply execute this script. No arguments required.
 #   ./tests/consensus/scripts/run-consensus-apps.sh
 
-
 set -eo pipefail
 
 REPO_URL="git@github.com:MinaProtocol/mina.git"
