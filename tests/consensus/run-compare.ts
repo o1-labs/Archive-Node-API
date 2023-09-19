@@ -1,15 +1,9 @@
-/**
- * Usage: npx ts-node ./tests/consensus/run-compare.ts
- */
-
 import pwd from 'process';
 import path from 'path';
 import fs from 'fs/promises';
 
-const TYPESCRIPT_OUTPUT_DIR_NAME =
-  process.env.TYPESCRIPT_OUTPUT_DIR_NAME || 'precomputed_ts';
-const OCAML_OUTPUT_DIR_NAME =
-  process.env.OCAML_OUTPUT_DIR_NAME || 'precomputed_ocaml';
+const TYPESCRIPT_OUTPUT_DIR_NAME = process.argv[2];
+const OCAML_OUTPUT_DIR_NAME = process.argv[3];
 
 const TYPESCRIPT_DIR = path.join(pwd.cwd(), TYPESCRIPT_OUTPUT_DIR_NAME);
 const OCAML_DIR = path.join(pwd.cwd(), OCAML_OUTPUT_DIR_NAME);
@@ -23,7 +17,7 @@ async function compareFiles() {
     console.error('Directories do not contain the same number of files!');
     console.error(`TypeScript: ${typescriptFiles.length}`);
     console.error(`OCaml: ${ocamlFiles.length}`);
-    return;
+    process.exit(1);
   }
 
   // Iterate through each file
@@ -58,10 +52,11 @@ async function compareFiles() {
       console.error(`File contents do not match! (${tsFile}), (${ocamlFile}})`);
       console.error(`TypeScript: ${JSON.stringify(tsContentJson)}`);
       console.error(`OCaml: ${JSON.stringify(ocamlContentJson)}`);
-      return;
+      process.exit(1);
     }
   }
   console.log('🎉 All files match!');
+  process.exit(0);
 }
 
 compareFiles();

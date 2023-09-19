@@ -9,15 +9,14 @@ import { select } from '../../src/consensus/mina-consensus';
 import type { BlockInfo } from '../../src/blockchain/types';
 import { type BlockFileOutput, type PrecomputedBlock, GetSlot } from './types';
 
-const outputDir = process.env.OUTPUT_DIR || 'precomputed_ts';
+const inputDir = process.argv[2];
+const outputDir = process.argv[3];
 
 function readPrecomputedBlocks() {
-  const directoryPath = path.join(process.cwd(), 'precomputed_berkeley');
-  const files = fs.readdirSync(directoryPath);
-
+  const files = fs.readdirSync(inputDir);
   const blocks: BlockInfo[] = [];
   for (const file of files) {
-    const data = fs.readFileSync(path.join(directoryPath, file));
+    const data = fs.readFileSync(path.join(inputDir, file));
     const block = mapPrecomputedToBlockInfo(data.toString());
     blocks.push(block);
   }

@@ -18,6 +18,10 @@ build/**/*
 # Ignore development SQL dump
 data/**/*
 
+# Ignore test artifacts
+*/**/precomputed_*
+*/**/mina
+
 # Ignore coverage
 coverage/**/*
 
