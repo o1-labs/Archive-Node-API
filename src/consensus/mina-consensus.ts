@@ -24,7 +24,12 @@ function filterBestTip<T extends { blockInfo: BlockInfo }>(
   );
   if (highestTipBlocks.length > 1) {
     const selectedBlock = chainSelect(highestTipBlocks);
-    eventOrActionData.splice(0, highestTipBlocks.length + 1, selectedBlock);
+    const startIndex = eventOrActionData.length - highestTipBlocks.length;
+    eventOrActionData.splice(
+      startIndex,
+      highestTipBlocks.length,
+      selectedBlock
+    );
   }
 }
 
