@@ -237,10 +237,14 @@ function getFieldValuesFromElementIds(
 
 function sortAndFilterBlocks<T extends { blockInfo: BlockInfo }>(data: T[]) {
   data.sort((a, b) => {
-    if (a.blockInfo.height < b.blockInfo.height) return -1;
-    if (a.blockInfo.height > b.blockInfo.height) return 1;
+    // Sort by height in descending order
+    if (a.blockInfo.height > b.blockInfo.height) return -1;
+    if (a.blockInfo.height < b.blockInfo.height) return 1;
+
+    // If heights are equal, sort by timestamp (assuming ascending order)
     if (a.blockInfo.timestamp < b.blockInfo.timestamp) return -1;
     if (a.blockInfo.timestamp > b.blockInfo.timestamp) return 1;
+
     return 0;
   });
   filterBestTip(data);
