@@ -7,7 +7,7 @@ services:
     ports:
       - '6060:6060'
       - '8302:8302'
-      - '127.0.0.1:3085:3085'
+      - '3085:3085'
     restart: always
     env_file:
       - ./.env
