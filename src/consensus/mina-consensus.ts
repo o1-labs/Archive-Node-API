@@ -8,8 +8,6 @@ function getAllPredicate<T>(array: T[], predicate: (arg: T) => boolean) {
   for (let i = 0; i < array.length; i++) {
     if (predicate(array[i])) {
       data.push(array[i]);
-    } else {
-      break;
     }
   }
   return data;
