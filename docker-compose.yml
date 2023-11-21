@@ -1,19 +1,19 @@
-version: "3.3"
+version: '3.3'
 
 services:
   mina:
     image: ${MINA}
     container_name: mina
     ports:
-      - "6060:6060"
-      - "8302:8302"
-      - "127.0.0.1:3085:3085"
+      - '6060:6060'
+      - '8302:8302'
+      - '127.0.0.1:3085:3085'
     restart: always
     env_file:
       - ./.env
     volumes:
-      - "$HOME/keys:/root/keys:ro"
-      - "$HOME/.mina-config:/root/.mina-config"
+      - '$HOME/keys:/root/keys:ro'
+      - '$HOME/.mina-config:/root/.mina-config'
     command: >
       daemon
         --metrics-port 6060
@@ -36,12 +36,12 @@ services:
     networks:
       - archive
       - mina
-      
+
   postgres:
     image: ${POSTGRES}
     container_name: postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     env_file:
       - ./.env
     environment:
@@ -50,9 +50,9 @@ services:
       POSTGRES_DB: ${PGDATABASE}
       PGDATA: ${PGDATA}
     volumes:
-      - "./data/${PG_DUMP}:/data/${PG_DUMP}"
-      - "./scripts/init_docker_compose.sh:/docker-entrypoint-initdb.d/init.sh"
-      - "./db:/var/lib/postgresql/data"
+      - './data/${PG_DUMP}:/data/${PG_DUMP}'
+      - './scripts/init_docker_compose.sh:/docker-entrypoint-initdb.d/init.sh'
+      - './db:/var/lib/postgresql/data'
     command: postgres -N 1000
     networks:
       - archive
@@ -64,13 +64,13 @@ services:
       - ./.env
     restart: always
     ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "9411:9411"
-      - "${JAEGER_FRONTEND}:16686"
-      - "${JAEGER_LOG_PORT}:14268"
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '9411:9411'
+      - '${JAEGER_FRONTEND}:16686'
+      - '${JAEGER_LOG_PORT}:14268'
     networks:
       - archive
 
@@ -83,7 +83,7 @@ services:
       - ./.env
     restart: always
     ports:
-      - "8080:8080"
+      - '8080:8080'
     command: npm run start
     volumes:
       - /app/node_modules

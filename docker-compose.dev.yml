@@ -1,6 +1,28 @@
 version: '3.3'
 
 services:
+  mina:
+    image: ${MINA}
+    container_name: mina
+    ports:
+      - '6060:6060'
+      - '8302:8302'
+      - '3085:3085'
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - '$HOME/keys:/root/keys:ro'
+      - '$HOME/.mina-config:/root/.mina-config'
+    command: >
+      daemon
+        --metrics-port 6060
+        --archive-address archive:3086
+        --insecure-rest-server
+    networks:
+      - archive
+      - mina
+
   archive:
     image: ${ARCHIVE}
     container_name: archive
@@ -65,7 +87,6 @@ services:
     command: npm run dev
     volumes:
       - .:/app
-      - /app/node_modules
     networks:
       - archive
 
