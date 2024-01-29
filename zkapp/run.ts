@@ -8,9 +8,13 @@ import {
   emitMultipleFieldsEvent,
   emitAction,
   reduceAction,
+  startLightnet,
+  stopLightnet,
 } from './utils.js';
 
 (async () => {
+  await startLightnet();
+
   setNetworkConfig();
 
   const zkAppKey = PrivateKey.random();
@@ -44,4 +48,6 @@ import {
   });
 
   if (keyPairReleaseMessage) console.info(keyPairReleaseMessage);
+
+  await stopLightnet();
 })();
