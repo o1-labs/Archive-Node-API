@@ -5,23 +5,23 @@ import {
   FieldElementIdWithValueMap,
   Events,
   Event,
-} from '../../blockchain/types';
-import type { EventFilterOptionsInput } from '../../resolvers-types';
-import { createBlockInfo } from '../../blockchain/utils';
-import { DEFAULT_TOKEN_ID } from '../../blockchain/constants';
-import { getEventsQuery } from '../../db/sql/events-actions/queries';
+} from '../../blockchain/types.js';
+import type { EventFilterOptionsInput } from '../../resolvers-types.js';
+import { createBlockInfo } from '../../blockchain/utils.js';
+import { DEFAULT_TOKEN_ID } from '../../blockchain/constants.js';
+import { getEventsQuery } from '../../db/sql/events-actions/queries.js';
 import {
   partitionBlocks,
   getElementIdFieldValues,
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from '../data-adapters/database-row-adapters';
-import { IEventsService } from './events-service.interface';
+} from '../data-adapters/database-row-adapters.js';
+import { IEventsService } from './events-service.interface.js';
 import {
   TracingState,
   extractTraceStateFromOptions,
-} from '../../tracing/tracer';
+} from '../../tracing/tracer.js';
 
 export { EventsService };
 

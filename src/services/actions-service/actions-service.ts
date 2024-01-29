@@ -6,23 +6,23 @@ import {
   FieldElementIdWithValueMap,
   Action,
   Actions,
-} from '../../blockchain/types';
-import type { ActionFilterOptionsInput } from '../../resolvers-types';
-import { DEFAULT_TOKEN_ID } from '../../blockchain/constants';
-import { createBlockInfo } from '../../blockchain/utils';
-import { getActionsQuery } from '../../db/sql/events-actions/queries';
+} from '../../blockchain/types.js';
+import type { ActionFilterOptionsInput } from '../../resolvers-types.js';
+import { DEFAULT_TOKEN_ID } from '../../blockchain/constants.js';
+import { createBlockInfo } from '../../blockchain/utils.js';
+import { getActionsQuery } from '../../db/sql/events-actions/queries.js';
 import {
   partitionBlocks,
   getElementIdFieldValues,
   mapActionOrEvent,
   removeRedundantEmittedFields,
   sortAndFilterBlocks,
-} from '../data-adapters/database-row-adapters';
-import { IActionsService } from './actions-service.interface';
+} from '../data-adapters/database-row-adapters.js';
+import { IActionsService } from './actions-service.interface.js';
 import {
   TracingState,
   extractTraceStateFromOptions,
-} from '../../tracing/tracer';
+} from '../../tracing/tracer.js';
 
 export { ActionsService };
 

@@ -4,7 +4,7 @@ import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
 import { inspect } from 'node:util';
 
-import { initJaegerProvider } from '../tracing/jaeger-tracing';
+import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
 
 export { buildPlugins };
 

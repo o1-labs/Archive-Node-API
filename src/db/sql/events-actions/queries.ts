@@ -1,6 +1,6 @@
 import type postgres from 'postgres';
-import { ArchiveNodeDatabaseRow } from './types';
-import { BlockStatusFilter } from '../../../blockchain/types';
+import { ArchiveNodeDatabaseRow } from './types.js';
+import { BlockStatusFilter } from '../../../blockchain/types.js';
 
 function fullChainCTE(db_client: postgres.Sql) {
   return db_client`

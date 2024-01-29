@@ -4,14 +4,14 @@ import type {
   BlocksWithTransactionsMap,
   FieldElementIdWithValueMap,
   BlockInfo,
-} from '../../blockchain/types';
-import type { ArchiveNodeDatabaseRow } from '../../db/sql/events-actions/types';
+} from '../../blockchain/types.js';
+import type { ArchiveNodeDatabaseRow } from '../../db/sql/events-actions/types.js';
 import {
   createTransactionInfo,
   createEvent,
   createAction,
-} from '../../blockchain/utils';
-import { filterBestTip } from '../../consensus/mina-consensus';
+} from '../../blockchain/utils.js';
+import { filterBestTip } from '../../consensus/mina-consensus.js';
 
 export {
   partitionBlocks,

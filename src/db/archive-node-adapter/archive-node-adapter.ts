@@ -1,15 +1,15 @@
 import postgres from 'postgres';
-import type { Actions, Events } from '../../blockchain/types';
-import type { DatabaseAdapter } from './archive-node-adapter.interface';
+import type { Actions, Events } from '../../blockchain/types.js';
+import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
-} from '../../resolvers-types';
-import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries';
-import { EventsService } from '../../services/events-service/events-service';
-import { IEventsService } from '../../services/events-service/events-service.interface';
-import { ActionsService } from '../../services/actions-service/actions-service';
-import { IActionsService } from '../../services/actions-service/actions-service.interface';
+} from '../../resolvers-types.js';
+import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
+import { EventsService } from '../../services/events-service/events-service.js';
+import { IEventsService } from '../../services/events-service/events-service.interface.js';
+import { ActionsService } from '../../services/actions-service/actions-service.js';
+import { IActionsService } from '../../services/actions-service/actions-service.interface.js';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
