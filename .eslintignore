@@ -4,3 +4,4 @@ tests
 benchmark/*.js
 */resolvers-types.ts
 codegen.ts
+/zkapp
