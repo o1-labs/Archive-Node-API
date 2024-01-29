@@ -12,9 +12,6 @@ import {
   PublicKey,
 } from 'o1js';
 
-export const adminPrivateKey = PrivateKey.random();
-export const adminPublicKey = adminPrivateKey.toPublicKey();
-
 class TestStruct extends Struct({
   x: Field,
   y: Bool,
@@ -41,15 +38,13 @@ export class HelloWorld extends SmartContract {
     this.x.set(Field(2));
     this.y.set(Bool(true));
     this.z.set(UInt64.from(1));
-    this.account.delegate.set(adminPublicKey);
+    this.actionState.set(Reducer.initialActionState);
   }
 
-  @method update(squared: Field, admin: PrivateKey) {
+  @method update(squared: Field) {
     const x = this.x.getAndRequireEquals();
     x.square().assertEquals(squared);
     this.x.set(squared);
-    const adminPk = admin.toPublicKey();
-    this.account.delegate.requireEquals(adminPk);
   }
 
   @method emitSingleEvent() {
@@ -77,11 +72,12 @@ export class HelloWorld extends SmartContract {
   @method reduceStructAction() {
     let counter = this.counter.getAndRequireEquals();
     let actionState = this.actionState.getAndRequireEquals();
+    const pendingActions = this.reducer.getActions({
+      fromActionState: actionState,
+    });
 
     let { actionState: newActionState } = this.reducer.reduce(
-      this.reducer.getActions({
-        fromActionState: actionState,
-      }),
+      pendingActions,
       Field,
       (state: Field, action: TestStruct) => {
         return state.add(action.x);
