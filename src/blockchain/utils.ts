@@ -1,5 +1,5 @@
-import type { BlockInfo, TransactionInfo, Event, Action } from './types';
-import type { ArchiveNodeDatabaseRow } from '../db/sql/events-actions/types';
+import type { BlockInfo, TransactionInfo, Event, Action } from './types.js';
+import type { ArchiveNodeDatabaseRow } from '../db/sql/events-actions/types.js';
 
 export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
   return {

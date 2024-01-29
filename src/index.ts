@@ -1,9 +1,9 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { buildContext } from './context';
-import { buildServer } from './server/server';
-import { buildPlugins } from './server/plugins';
+import { buildContext } from './context.js';
+import { buildServer } from './server/server.js';
+import { buildPlugins } from './server/plugins.js';
 
 const PORT = process.env.PORT || 8080;
 

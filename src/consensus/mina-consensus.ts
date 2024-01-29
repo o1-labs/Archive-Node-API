@@ -1,5 +1,6 @@
-import { blake2bHex } from 'blakejs';
-import { type BlockInfo } from '../blockchain/types';
+import blakejs from 'blakejs';
+const { blake2bHex } = blakejs;
+import { type BlockInfo } from '../blockchain/types.js';
 
 export { select, getAllPredicate, filterBestTip };
 

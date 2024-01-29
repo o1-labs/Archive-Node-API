@@ -1,6 +1,6 @@
-import { BlockStatusFilter } from './blockchain/types';
 import { GraphQLResolveInfo } from 'graphql';
-import { GraphQLContext } from './context';
+import { BlockStatusFilter } from './blockchain/types.js';
+import { GraphQLContext } from './context.js';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = {
@@ -153,7 +153,7 @@ export interface SubscriptionSubscriberObject<
   TKey extends string,
   TParent,
   TContext,
-  TArgs
+  TArgs,
 > {
   subscribe: SubscriptionSubscribeFn<
     { [key in TKey]: TResult },
@@ -179,7 +179,7 @@ export type SubscriptionObject<
   TKey extends string,
   TParent,
   TContext,
-  TArgs
+  TArgs,
 > =
   | SubscriptionSubscriberObject<TResult, TKey, TParent, TContext, TArgs>
   | SubscriptionResolverObject<TResult, TParent, TContext, TArgs>;
@@ -189,7 +189,7 @@ export type SubscriptionResolver<
   TKey extends string,
   TParent = {},
   TContext = {},
-  TArgs = {}
+  TArgs = {},
 > =
   | ((
       ...args: any[]
@@ -214,7 +214,7 @@ export type DirectiveResolverFn<
   TResult = {},
   TParent = {},
   TContext = {},
-  TArgs = {}
+  TArgs = {},
 > = (
   next: NextResolverFn<TResult>,
   parent: TParent,
@@ -260,7 +260,8 @@ export type ResolversParentTypes = {
 
 export type ActionDataResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData']
+  ParentType extends
+    ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData'],
 > = {
   accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   data?: Resolver<
@@ -278,7 +279,8 @@ export type ActionDataResolvers<
 
 export type ActionOutputResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput']
+  ParentType extends
+    ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput'],
 > = {
   actionData?: Resolver<
     Maybe<Array<Maybe<ResolversTypes['ActionData']>>>,
@@ -305,7 +307,8 @@ export type ActionOutputResolvers<
 
 export type ActionStatesResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['ActionStates'] = ResolversParentTypes['ActionStates']
+  ParentType extends
+    ResolversParentTypes['ActionStates'] = ResolversParentTypes['ActionStates'],
 > = {
   actionStateFive?: Resolver<
     Maybe<ResolversTypes['String']>,
@@ -337,7 +340,8 @@ export type ActionStatesResolvers<
 
 export type BlockInfoResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['BlockInfo'] = ResolversParentTypes['BlockInfo']
+  ParentType extends
+    ResolversParentTypes['BlockInfo'] = ResolversParentTypes['BlockInfo'],
 > = {
   chainStatus?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   distanceFromMaxBlockHeight?: Resolver<
@@ -370,7 +374,8 @@ export type BlockStatusFilterResolvers = EnumResolverSignature<
 
 export type EventDataResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['EventData'] = ResolversParentTypes['EventData']
+  ParentType extends
+    ResolversParentTypes['EventData'] = ResolversParentTypes['EventData'],
 > = {
   data?: Resolver<
     Array<Maybe<ResolversTypes['String']>>,
@@ -387,7 +392,8 @@ export type EventDataResolvers<
 
 export type EventOutputResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['EventOutput'] = ResolversParentTypes['EventOutput']
+  ParentType extends
+    ResolversParentTypes['EventOutput'] = ResolversParentTypes['EventOutput'],
 > = {
   blockInfo?: Resolver<
     Maybe<ResolversTypes['BlockInfo']>,
@@ -404,7 +410,8 @@ export type EventOutputResolvers<
 
 export type QueryResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']
+  ParentType extends
+    ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
 > = {
   actions?: Resolver<
     Array<Maybe<ResolversTypes['ActionOutput']>>,
@@ -422,7 +429,8 @@ export type QueryResolvers<
 
 export type TransactionInfoResolvers<
   ContextType = GraphQLContext,
-  ParentType extends ResolversParentTypes['TransactionInfo'] = ResolversParentTypes['TransactionInfo']
+  ParentType extends
+    ResolversParentTypes['TransactionInfo'] = ResolversParentTypes['TransactionInfo'],
 > = {
   authorizationKind?: Resolver<
     ResolversTypes['String'],

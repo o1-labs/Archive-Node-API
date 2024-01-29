@@ -5,8 +5,8 @@ import {
   removeRedundantEmittedFields,
   mapActionOrEvent,
 } from '../src/services/data-adapters/database-row-adapters';
-import { Action, Event } from '../src/blockchain/types';
-import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types';
+import { Action, Event } from '../src/blockchain/types.js';
+import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types.js';
 
 describe('utils', () => {
   describe('partitionBlocks', () => {

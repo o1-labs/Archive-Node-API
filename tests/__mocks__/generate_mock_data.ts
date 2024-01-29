@@ -8,8 +8,8 @@ import fs from 'fs';
 import {
   getEventsQuery,
   getActionsQuery,
-} from '../../src/db/sql/events-actions/queries';
-import { BlockStatusFilter } from '../../src/blockchain/types';
+} from '../../src/db/sql/events-actions/queries.js';
+import { BlockStatusFilter } from '../../src/blockchain/types.js';
 
 (async function main() {
   const sql = postgres('postgres://postgres:password@localhost:5432/archive');

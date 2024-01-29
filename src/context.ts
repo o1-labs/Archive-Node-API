@@ -1,8 +1,8 @@
 import { Span } from '@opentelemetry/sdk-trace-base';
-import { ArchiveNodeAdapter } from './db/archive-node-adapter/archive-node-adapter';
-import { DatabaseAdapter } from './db/archive-node-adapter/archive-node-adapter.interface';
+import { ArchiveNodeAdapter } from './db/archive-node-adapter/archive-node-adapter.js';
+import { DatabaseAdapter } from './db/archive-node-adapter/archive-node-adapter.interface.js';
 
-export { buildContext, GraphQLContext}
+export { buildContext, GraphQLContext };
 
 interface GraphQLContext {
   db_client: DatabaseAdapter;
@@ -16,4 +16,3 @@ async function buildContext(connectionString: string | undefined) {
     db_client,
   };
 }
-

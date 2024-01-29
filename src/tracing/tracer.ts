@@ -1,6 +1,6 @@
 import { context, trace, Span, Tracer, Context } from '@opentelemetry/api';
 
-import type { GraphQLContext } from '../context';
+import type { GraphQLContext } from '../context.js';
 
 export {
   TracingState,
