@@ -169,19 +169,13 @@ async function sendTransaction(transaction: Mina.Transaction) {
 async function startLightnet() {
   try {
     console.log('Checking lightnet status...');
-    const statusOutput = (await execShellCommand(
-      'zk lightnet status'
-    )) as string;
+    const exitCode = await execShellCommand('zk lightnet status');
 
-    if (
-      statusOutput.includes(
-        'The lightweight Mina blockchain network Docker container does not exist!'
-      )
-    ) {
+    if (exitCode === 1) {
       console.log('Lightnet is not running. Starting lightnet.');
       await execShellCommand('zk lightnet start');
       console.log('Lightnet started successfully.');
-    } else if (statusOutput.includes('Blockchain network properties')) {
+    } else if (exitCode === 0) {
       console.log('Lightnet is already running.');
     } else {
       console.log('Unable to determine the status of lightnet.');
@@ -194,19 +188,13 @@ async function startLightnet() {
 async function stopLightnet() {
   try {
     console.log('Checking lightnet status...');
-    const statusOutput = (await execShellCommand(
-      'zk lightnet status'
-    )) as string;
+    const exitCode = await execShellCommand('zk lightnet status');
 
-    if (statusOutput.includes('Blockchain network properties')) {
+    if (exitCode === 0) {
       console.log('Lightnet is running. Stopping lightnet.');
       await execShellCommand('zk lightnet stop');
       console.log('Lightnet stopped successfully.');
-    } else if (
-      statusOutput.includes(
-        'The lightweight Mina blockchain network Docker container does not exist!'
-      )
-    ) {
+    } else if (exitCode === 1) {
       console.log('Lightnet is not running.');
     } else {
       console.log('Unable to determine the status of lightnet.');
@@ -217,13 +205,13 @@ async function stopLightnet() {
 }
 
 function execShellCommand(cmd: string) {
-  return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
+  return new Promise((resolve, _reject) => {
+    exec(cmd, (error, _stdout, stderr) => {
       if (error) {
         console.error(`Error: ${stderr}`);
-        reject(error);
+        resolve(error.code);
       } else {
-        resolve(stdout);
+        resolve(0);
       }
     });
   });
