@@ -6,6 +6,7 @@ import {
   PrivateKey,
   fetchAccount,
 } from 'o1js';
+import { exec } from 'child_process';
 import { HelloWorld } from './contract.js';
 
 export {
@@ -17,6 +18,8 @@ export {
   emitMultipleFieldsEvent,
   emitAction,
   reduceAction,
+  startLightnet,
+  stopLightnet,
 };
 
 const transactionFee = 100_000_000;
@@ -160,4 +163,67 @@ async function sendTransaction(transaction: Mina.Transaction) {
   }
   console.log('Waiting for transaction inclusion in a block.\n');
   await pendingTx.wait({ maxAttempts: 90 });
+}
+
+async function startLightnet() {
+  try {
+    console.log('Checking lightnet status...');
+    const statusOutput = (await execShellCommand(
+      'zk lightnet status'
+    )) as string;
+
+    if (
+      statusOutput.includes(
+        'The lightweight Mina blockchain network Docker container does not exist!'
+      )
+    ) {
+      console.log('Lightnet is not running. Starting lightnet.');
+      await execShellCommand('zk lightnet start');
+      console.log('Lightnet started successfully.');
+    } else if (statusOutput.includes('Blockchain network properties')) {
+      console.log('Lightnet is already running.');
+    } else {
+      console.log('Unable to determine the status of lightnet.');
+    }
+  } catch (error) {
+    console.error('Failed to start or check lightnet:', error);
+  }
+}
+
+async function stopLightnet() {
+  try {
+    console.log('Checking lightnet status...');
+    const statusOutput = (await execShellCommand(
+      'zk lightnet status'
+    )) as string;
+
+    if (statusOutput.includes('Blockchain network properties')) {
+      console.log('Lightnet is running. Stopping lightnet.');
+      await execShellCommand('zk lightnet stop');
+      console.log('Lightnet stopped successfully.');
+    } else if (
+      statusOutput.includes(
+        'The lightweight Mina blockchain network Docker container does not exist!'
+      )
+    ) {
+      console.log('Lightnet is not running.');
+    } else {
+      console.log('Unable to determine the status of lightnet.');
+    }
+  } catch (error) {
+    console.error('Failed to stop or check lightnet:', error);
+  }
+}
+
+function execShellCommand(cmd: string) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${stderr}`);
+        reject(error);
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
 }
