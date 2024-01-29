@@ -21,7 +21,8 @@
     "format": "prettier --write .",
     "generate": "graphql-codegen",
     "compose:prod": "docker compose up",
-    "compose:dev": "docker compose -f docker-compose.dev.yml up"
+    "compose:dev": "docker compose -f docker-compose.dev.yml up",
+    "build:zkapp": "npx tsc -p zkapp/tsconfig.test.json"
   },
   "keywords": [],
   "author": "",
