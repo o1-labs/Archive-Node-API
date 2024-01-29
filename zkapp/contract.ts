@@ -38,21 +38,18 @@ export class HelloWorld extends SmartContract {
 
   init() {
     super.init();
-    this.x.set(Field(1));
+    this.x.set(Field(2));
     this.y.set(Bool(true));
     this.z.set(UInt64.from(1));
     this.account.delegate.set(adminPublicKey);
   }
 
   @method update(squared: Field, admin: PrivateKey) {
-    const x = this.x.get();
-    this.x.assertNothing();
+    const x = this.x.getAndRequireEquals();
     x.square().assertEquals(squared);
     this.x.set(squared);
-
     const adminPk = admin.toPublicKey();
-
-    this.account.delegate.assertEquals(adminPk);
+    this.account.delegate.requireEquals(adminPk);
   }
 
   @method emitSingleEvent() {
