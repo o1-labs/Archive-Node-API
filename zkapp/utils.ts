@@ -20,6 +20,7 @@ export {
   reduceAction,
   startLightnet,
   stopLightnet,
+  Keypair,
 };
 
 const transactionFee = 100_000_000;
