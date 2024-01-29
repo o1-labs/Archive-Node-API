@@ -169,12 +169,24 @@ async function sendTransaction(transaction: Mina.Transaction) {
 async function startLightnet() {
   try {
     console.log('Checking lightnet status...');
-    const exitCode = await execShellCommand('zk lightnet status');
+    let exitCode = await execShellCommand('zk lightnet status');
 
     if (exitCode === 1) {
       console.log('Lightnet is not running. Starting lightnet.');
       await execShellCommand('zk lightnet start');
-      console.log('Lightnet started successfully.');
+
+      const startTime = Date.now();
+      const timeout = 60000; // 1 minute in milliseconds
+
+      while (Date.now() - startTime < timeout) {
+        exitCode = await execShellCommand('zk lightnet status');
+        if (exitCode === 0) {
+          console.log('Lightnet started successfully.');
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 5000)); // Poll every 5 seconds
+      }
+      throw new Error('Lightnet failed to start within 1 minute.');
     } else if (exitCode === 0) {
       console.log('Lightnet is already running.');
     } else {
