@@ -20,7 +20,7 @@
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "generate": "graphql-codegen",
+    "codegen": "graphql-codegen-esm --config codegen.ts",
     "compose:prod": "docker compose up",
     "compose:dev": "docker compose -f docker-compose.dev.yml up"
   },

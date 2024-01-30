@@ -1,5 +1,5 @@
-import { GraphQLResolveInfo } from 'graphql';
 import { BlockStatusFilter } from './blockchain/types.js';
+import { GraphQLResolveInfo } from 'graphql';
 import { GraphQLContext } from './context.js';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -12,6 +12,15 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
   [SubKey in K]: Maybe<T[SubKey]>;
 };
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 export type EnumResolverSignature<T, AllowedValues = any> = {
   [key in keyof T]?: AllowedValues;
 };
@@ -20,28 +29,28 @@ export type RequireFields<T, K extends keyof T> = Omit<T, K> & {
 };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
 };
 
 export type ActionData = {
   __typename?: 'ActionData';
-  accountUpdateId: Scalars['String'];
-  data: Array<Maybe<Scalars['String']>>;
+  accountUpdateId: Scalars['String']['output'];
+  data: Array<Maybe<Scalars['String']['output']>>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
 export type ActionFilterOptionsInput = {
-  address: Scalars['String'];
-  endActionState?: InputMaybe<Scalars['String']>;
-  from?: InputMaybe<Scalars['Int']>;
-  fromActionState?: InputMaybe<Scalars['String']>;
+  address: Scalars['String']['input'];
+  endActionState?: InputMaybe<Scalars['String']['input']>;
+  from?: InputMaybe<Scalars['Int']['input']>;
+  fromActionState?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<BlockStatusFilter>;
-  to?: InputMaybe<Scalars['Int']>;
-  tokenId?: InputMaybe<Scalars['String']>;
+  to?: InputMaybe<Scalars['Int']['input']>;
+  tokenId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ActionOutput = {
@@ -54,40 +63,40 @@ export type ActionOutput = {
 
 export type ActionStates = {
   __typename?: 'ActionStates';
-  actionStateFive?: Maybe<Scalars['String']>;
-  actionStateFour?: Maybe<Scalars['String']>;
-  actionStateOne?: Maybe<Scalars['String']>;
-  actionStateThree?: Maybe<Scalars['String']>;
-  actionStateTwo?: Maybe<Scalars['String']>;
+  actionStateFive?: Maybe<Scalars['String']['output']>;
+  actionStateFour?: Maybe<Scalars['String']['output']>;
+  actionStateOne?: Maybe<Scalars['String']['output']>;
+  actionStateThree?: Maybe<Scalars['String']['output']>;
+  actionStateTwo?: Maybe<Scalars['String']['output']>;
 };
 
 export type BlockInfo = {
   __typename?: 'BlockInfo';
-  chainStatus: Scalars['String'];
-  distanceFromMaxBlockHeight: Scalars['Int'];
-  globalSlotSinceGenesis: Scalars['Int'];
-  globalSlotSinceHardfork: Scalars['Int'];
-  height: Scalars['Int'];
-  ledgerHash: Scalars['String'];
-  parentHash: Scalars['String'];
-  stateHash: Scalars['String'];
-  timestamp: Scalars['String'];
+  chainStatus: Scalars['String']['output'];
+  distanceFromMaxBlockHeight: Scalars['Int']['output'];
+  globalSlotSinceGenesis: Scalars['Int']['output'];
+  globalSlotSinceHardfork: Scalars['Int']['output'];
+  height: Scalars['Int']['output'];
+  ledgerHash: Scalars['String']['output'];
+  parentHash: Scalars['String']['output'];
+  stateHash: Scalars['String']['output'];
+  timestamp: Scalars['String']['output'];
 };
 
 export { BlockStatusFilter };
 
 export type EventData = {
   __typename?: 'EventData';
-  data: Array<Maybe<Scalars['String']>>;
+  data: Array<Maybe<Scalars['String']['output']>>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
 export type EventFilterOptionsInput = {
-  address: Scalars['String'];
-  from?: InputMaybe<Scalars['Int']>;
+  address: Scalars['String']['input'];
+  from?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<BlockStatusFilter>;
-  to?: InputMaybe<Scalars['Int']>;
-  tokenId?: InputMaybe<Scalars['String']>;
+  to?: InputMaybe<Scalars['Int']['input']>;
+  tokenId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type EventOutput = {
@@ -112,10 +121,10 @@ export type QueryEventsArgs = {
 
 export type TransactionInfo = {
   __typename?: 'TransactionInfo';
-  authorizationKind: Scalars['String'];
-  hash: Scalars['String'];
-  memo: Scalars['String'];
-  status: Scalars['String'];
+  authorizationKind: Scalars['String']['output'];
+  hash: Scalars['String']['output'];
+  memo: Scalars['String']['output'];
+  status: Scalars['String']['output'];
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -231,13 +240,13 @@ export type ResolversTypes = {
   ActionStates: ResolverTypeWrapper<ActionStates>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
   BlockStatusFilter: BlockStatusFilter;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
-  Int: ResolverTypeWrapper<Scalars['Int']>;
+  Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   Query: ResolverTypeWrapper<{}>;
-  String: ResolverTypeWrapper<Scalars['String']>;
+  String: ResolverTypeWrapper<Scalars['String']['output']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
 };
 
@@ -248,13 +257,13 @@ export type ResolversParentTypes = {
   ActionOutput: ActionOutput;
   ActionStates: ActionStates;
   BlockInfo: BlockInfo;
-  Boolean: Scalars['Boolean'];
+  Boolean: Scalars['Boolean']['output'];
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
-  Int: Scalars['Int'];
+  Int: Scalars['Int']['output'];
   Query: {};
-  String: Scalars['String'];
+  String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
 };
 
