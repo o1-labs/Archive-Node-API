@@ -1,4 +1,5 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test } from 'node:test';
+import assert from 'node:assert';
 import {
   partitionBlocks,
   getElementIdFieldValues,
@@ -23,17 +24,17 @@ describe('utils', () => {
       const stateHash1 = result.get('state_hash_1');
       const stateHash2 = result.get('state_hash_2');
 
-      expect(stateHash1).toBeDefined();
-      expect(stateHash2).toBeDefined();
+      assert(stateHash1);
+      assert(stateHash2);
 
-      expect(stateHash1).toHaveLength(2);
-      expect(stateHash2).toHaveLength(2);
+      assert.strictEqual(stateHash1.size, 2);
+      assert.strictEqual(stateHash2.size, 2);
     });
 
     test('should return empty array if no rows', () => {
       const rows: any[] = [];
       const result = partitionBlocks(rows);
-      expect(result).toEqual(new Map());
+      assert.strictEqual(result.size, 0);
     });
   });
 
@@ -47,15 +48,15 @@ describe('utils', () => {
 
       const result = getElementIdFieldValues(rows as ArchiveNodeDatabaseRow[]);
 
-      expect(result.get('1')).toBe('field_1');
-      expect(result.get('2')).toBe('field_2');
-      expect(result.get('3')).toBe('field_3');
+      assert.equal(result.get('1'), 'field_1');
+      assert.equal(result.get('2'), 'field_2');
+      assert.equal(result.get('3'), 'field_3');
     });
 
     test('should handle empty rows', () => {
       const rows: any[] = [];
       const result = getElementIdFieldValues(rows);
-      expect(result).toEqual(new Map());
+      assert(result.size === 0);
     });
   });
 
@@ -86,7 +87,7 @@ describe('utils', () => {
       const result = removeRedundantEmittedFields(
         rows as ArchiveNodeDatabaseRow[]
       );
-      expect(result.length).toBe(2); // Since one of the rows is a duplicate
+      assert.strictEqual(result.length, 2); // Since one of the rows is a duplicate
     });
 
     test('should throw an error for a missing matching account update', () => {
@@ -99,9 +100,10 @@ describe('utils', () => {
         },
       ];
 
-      expect(() =>
+      assert.throws(() =>
         removeRedundantEmittedFields(rows as ArchiveNodeDatabaseRow[])
-      ).toThrowError(/No matching account update found/);
+      ),
+        /No matching account update found/;
     });
 
     describe('mapActionOrEvent', () => {
@@ -123,8 +125,8 @@ describe('utils', () => {
             mockElementIdFieldValues
           );
 
-          expect(result[0].data).toBeDefined();
-          expect(result[0].transactionInfo).toBeDefined();
+          assert(result[0].data);
+          assert(result[0].transactionInfo);
         });
       });
 
@@ -143,9 +145,9 @@ describe('utils', () => {
             mockElementIdFieldValues
           ) as Action[];
 
-          expect(result[0].data).toBeDefined();
-          expect(result[0].transactionInfo).toBeDefined();
-          expect(result[0].accountUpdateId).toBeDefined();
+          assert(result[0].data);
+          assert(result[0].transactionInfo);
+          assert(result[0].accountUpdateId);
         });
       });
     });
