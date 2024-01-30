@@ -4,8 +4,20 @@ import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { buildHTTPExecutor } from '@graphql-tools/executor-http';
 import { parse } from 'graphql';
-import { resolvers } from '../src/resolvers';
-import { buildContext, GraphQLContext } from '../src/context';
+import { PrivateKey, Lightnet } from 'o1js';
+import { resolvers } from '../src/resolvers.js';
+import { buildContext, GraphQLContext } from '../src/context.js';
+import {
+  deployContract,
+  emitAction,
+  emitMultipleFieldsEvent,
+  emitSingleEvent,
+  setNetworkConfig,
+  startLightnet,
+  stopLightnet,
+  Keypair,
+} from '../zkapp/utils.js';
+import { HelloWorld } from '../zkapp/contract.js';
 
 const eventsQuery = `
 query getEvents($input: EventFilterOptionsInput!) {
