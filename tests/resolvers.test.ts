@@ -86,7 +86,9 @@ describe('Query Resolvers', async () => {
   let zkApp: HelloWorld;
 
   before(async () => {
-    await startLightnet();
+    if (!process.env.GITHUB_ACTIONS) {
+      await startLightnet();
+    }
     setNetworkConfig();
 
     const schema = createSchema({
@@ -111,8 +113,10 @@ describe('Query Resolvers', async () => {
   });
 
   after(async () => {
-    await stopLightnet();
-    process.exit(0);
+    if (!process.env.GITHUB_ACTIONS) {
+      await stopLightnet();
+      process.exit(0);
+    }
   });
 
   describe('Events', async () => {
