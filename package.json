@@ -10,7 +10,8 @@
   "start": "build/src/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
+    "build:zkapp": "npx tsc -p zkapp/tsconfig.test.json",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_ENV=development ts-node-dev --exit-child --respawn src/index.ts",
     "test": "cross-env NODE_ENV=development vitest run",
