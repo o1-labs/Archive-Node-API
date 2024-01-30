@@ -1,4 +1,4 @@
-import { Lightnet, PrivateKey, Mina } from 'o1js';
+import { Lightnet, PrivateKey } from 'o1js';
 import {
   setNetworkConfig,
   fetchAccountInfo,
@@ -11,6 +11,8 @@ import {
   startLightnet,
   stopLightnet,
 } from './utils.js';
+
+// Ensure you are running a local archive node
 
 (async () => {
   await startLightnet();
