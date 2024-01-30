@@ -4,14 +4,14 @@ import {
   getElementIdFieldValues,
   removeRedundantEmittedFields,
   mapActionOrEvent,
-} from '../src/services/data-adapters/database-row-adapters';
+} from '../src/services/data-adapters/database-row-adapters.js';
 import { Action, Event } from '../src/blockchain/types.js';
 import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types.js';
 
 describe('utils', () => {
   describe('partitionBlocks', () => {
     test('should partition rows by block hash and transaction hash', () => {
-      const rows = [
+      const rows: any[] = [
         { state_hash: 'state_hash_1', hash: 'hash_1' },
         { state_hash: 'state_hash_1', hash: 'hash_2' },
         { state_hash: 'state_hash_2', hash: 'hash_3' },
@@ -31,7 +31,7 @@ describe('utils', () => {
     });
 
     test('should return empty array if no rows', () => {
-      const rows = [];
+      const rows: any[] = [];
       const result = partitionBlocks(rows);
       expect(result).toEqual(new Map());
     });
@@ -39,7 +39,7 @@ describe('utils', () => {
 
   describe('getElementIdFieldValues', () => {
     test('should map id to field for each row', () => {
-      const rows = [
+      const rows: any[] = [
         { id: 1, field: 'field_1' },
         { id: 2, field: 'field_2' },
         { id: 3, field: 'field_3' },
@@ -53,7 +53,7 @@ describe('utils', () => {
     });
 
     test('should handle empty rows', () => {
-      const rows = [];
+      const rows: any[] = [];
       const result = getElementIdFieldValues(rows);
       expect(result).toEqual(new Map());
     });
@@ -61,7 +61,7 @@ describe('utils', () => {
 
   describe('removeRedundantEmittedFields', () => {
     test('should remove duplicate rows based on unique event ID', () => {
-      const rows = [
+      const rows: any[] = [
         {
           zkapp_event_array_id: 1,
           zkapp_event_element_ids: [1, 2],
@@ -90,7 +90,7 @@ describe('utils', () => {
     });
 
     test('should throw an error for a missing matching account update', () => {
-      const rows = [
+      const rows: any[] = [
         {
           zkapp_event_array_id: 1,
           zkapp_event_element_ids: [1, 2],
@@ -111,7 +111,7 @@ describe('utils', () => {
 
       describe('when kind is "event"', () => {
         test('map rows to an array of events', () => {
-          const rows = [
+          const rows: any[] = [
             {
               element_ids: [1, 2],
             },
@@ -130,7 +130,7 @@ describe('utils', () => {
 
       describe('when kind is "action"', () => {
         test('should map rows to an array of actions', () => {
-          const rows = [
+          const rows: any[] = [
             {
               element_ids: [1, 2],
               zkapp_account_update_id: 123,
