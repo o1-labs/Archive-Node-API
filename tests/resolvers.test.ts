@@ -77,6 +77,7 @@ query getActions($input: ActionFilterOptionsInput!) {
 }
 `;
 
+// This is the default connection string provided by the lightnet postgres container
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
 describe('Query Resolvers', async () => {
