@@ -9,6 +9,17 @@ on:
 jobs:
   Run-Tests:
     runs-on: ubuntu-latest
+    services:
+      mina-local-network:
+        image: o1labs/mina-local-network:o1js-main-latest-lightnet
+        env:
+          NETWORK_TYPE: 'single-node'
+          PROOF_LEVEL: 'none'
+        ports:
+          - 3085:3085
+          - 5432:5432
+          - 8080:8080
+          - 8181:8181
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -16,8 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install zkapp-cli
-        run: npm install -g zkapp-cli
+      - name: Wait for Mina network readiness
+        uses: o1-labs/wait-for-mina-network-action@v1
+        with:
+          mina-graphql-port: 8080
+          max-attempts: 60
+          polling-interval-ms: 10000
 
       - name: Run tests
         run: npm run test
