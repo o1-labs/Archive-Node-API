@@ -14,8 +14,6 @@ import {
   emitMultipleFieldsEvent,
   emitSingleEvent,
   setNetworkConfig,
-  startLightnet,
-  stopLightnet,
   Keypair,
 } from '../zkapp/utils.js';
 import { HelloWorld } from '../zkapp/contract.js';
@@ -87,7 +85,6 @@ describe('Query Resolvers', async () => {
   let zkApp: HelloWorld;
 
   before(async () => {
-    await startLightnet();
     setNetworkConfig();
 
     const schema = createSchema({
@@ -112,7 +109,6 @@ describe('Query Resolvers', async () => {
   });
 
   after(async () => {
-    await stopLightnet();
     process.exit(0);
   });
 

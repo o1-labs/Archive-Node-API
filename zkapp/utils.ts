@@ -18,8 +18,6 @@ export {
   emitMultipleFieldsEvent,
   emitAction,
   reduceAction,
-  startLightnet,
-  stopLightnet,
   Keypair,
 };
 
@@ -164,67 +162,4 @@ async function sendTransaction(transaction: Mina.Transaction) {
   }
   console.log('Waiting for transaction inclusion in a block.\n');
   await pendingTx.wait({ maxAttempts: 90 });
-}
-
-async function startLightnet() {
-  try {
-    console.log('Checking lightnet status...');
-    let exitCode = await execShellCommand('zk lightnet status');
-
-    if (exitCode === 1) {
-      console.log('Lightnet is not running. Starting lightnet.');
-      await execShellCommand('zk lightnet start');
-
-      const startTime = Date.now();
-      const timeout = 60000; // 1 minute in milliseconds
-
-      while (Date.now() - startTime < timeout) {
-        exitCode = await execShellCommand('zk lightnet status');
-        if (exitCode === 0) {
-          console.log('Lightnet started successfully.');
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // Poll every 5 seconds
-      }
-      throw new Error('Lightnet failed to start within 1 minute.');
-    } else if (exitCode === 0) {
-      console.log('Lightnet is already running.');
-    } else {
-      console.log('Unable to determine the status of lightnet.');
-    }
-  } catch (error) {
-    console.error('Failed to start or check lightnet:', error);
-  }
-}
-
-async function stopLightnet() {
-  try {
-    console.log('Checking lightnet status...');
-    const exitCode = await execShellCommand('zk lightnet status');
-
-    if (exitCode === 0) {
-      console.log('Lightnet is running. Stopping lightnet.');
-      await execShellCommand('zk lightnet stop');
-      console.log('Lightnet stopped successfully.');
-    } else if (exitCode === 1) {
-      console.log('Lightnet is not running.');
-    } else {
-      console.log('Unable to determine the status of lightnet.');
-    }
-  } catch (error) {
-    console.error('Failed to stop or check lightnet:', error);
-  }
-}
-
-function execShellCommand(cmd: string) {
-  return new Promise((resolve, _reject) => {
-    exec(cmd, (error, _stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${stderr}`);
-        resolve(error.code);
-      } else {
-        resolve(0);
-      }
-    });
-  });
 }
