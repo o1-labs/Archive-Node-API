@@ -1,4 +1,7 @@
 import { Lightnet, PrivateKey } from 'o1js';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { writeFileSync } from 'node:fs';
 import {
   setNetworkConfig,
   fetchAccountInfo,
@@ -8,15 +11,9 @@ import {
   emitMultipleFieldsEvent,
   emitAction,
   reduceAction,
-  startLightnet,
-  stopLightnet,
-} from './utils.js';
-
-// Ensure you are running a local archive node
+} from '../zkapp/utils.js';
 
 (async () => {
-  await startLightnet();
-
   setNetworkConfig();
 
   const zkAppKey = PrivateKey.random();
@@ -51,5 +48,7 @@ import {
 
   if (keyPairReleaseMessage) console.info(keyPairReleaseMessage);
 
-  await stopLightnet();
+  const filePath = join(dirname(fileURLToPath(import.meta.url)), 'zkapp.csv');
+  writeFileSync(filePath, `address\n${zkAppKeypair.publicKey.toBase58()}\n`);
+  console.log(`Public key of zkApp keypair written into ${filePath}`);
 })();

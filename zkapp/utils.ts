@@ -6,7 +6,6 @@ import {
   PrivateKey,
   fetchAccount,
 } from 'o1js';
-import { exec } from 'child_process';
 import { HelloWorld } from './contract.js';
 
 export {
@@ -32,11 +31,20 @@ type Options = {
   numberOfEmits: number;
 };
 
-function setNetworkConfig() {
+function setNetworkConfig({
+  // Default to the network constants that lightnet uses
+  mina = 'http://localhost:8080/graphql',
+  archive = 'http://localhost:8282',
+  lightnetAccountManager = 'http://localhost:8181',
+}: {
+  mina?: string;
+  archive?: string;
+  lightnetAccountManager?: string;
+} = {}) {
   const network = Mina.Network({
-    mina: 'http://localhost:8080/graphql',
-    archive: 'http://localhost:3000', // TODO: Make this configurable
-    lightnetAccountManager: 'http://localhost:8181',
+    mina,
+    archive,
+    lightnetAccountManager,
   });
   Mina.setActiveInstance(network);
 }
