@@ -1,5 +1,5 @@
 config:
-  target: 'http://localhost:8080'
+  target: 'http://localhost:3000'
   phases:
     - duration: 180
       arrivalRate: 25
@@ -13,17 +13,14 @@ config:
       arrivalRate: 100
       rampTo: 1000
       name: 'heavy phase'
-  processor: 'processor.js'
   payload:
-    path: 'data.csv'
+    path: 'zkapp.csv'
     skipHeader: true
     fields:
       - 'address'
-      - 'tokenId'
 scenarios:
   - name: 'Get Events'
     flow:
-      - function: 'generateRandomBlockRange'
       - post:
           url: '/'
           json:
@@ -55,14 +52,10 @@ scenarios:
             variables:
               input:
                 address: '{{ address }}'
-                tokenId: '{{ tokenId }}'
-                to: '{{ to }}'
-                from: '{{ from }}'
           expect:
             - statusCode: 200
   - name: 'Get Actions'
     flow:
-      - function: 'generateRandomBlockRange'
       - post:
           url: '/'
           json:
@@ -102,8 +95,5 @@ scenarios:
             variables:
               input:
                 address: '{{ address }}'
-                tokenId: '{{ tokenId }}'
-                to: '{{ to }}'
-                from: '{{ from }}'
           expect:
             - statusCode: 200

@@ -5,9 +5,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { select } from '../../src/consensus/mina-consensus';
-import type { BlockInfo } from '../../src/blockchain/types';
-import { type BlockFileOutput, type PrecomputedBlock, GetSlot } from './types';
+import { select } from '../../src/consensus/mina-consensus.js';
+import type { BlockInfo } from '../../src/blockchain/types.js';
+import {
+  type BlockFileOutput,
+  type PrecomputedBlock,
+  GetSlot,
+} from './types.js';
 
 const outputDir = process.env.OUTPUT_DIR || 'precomputed_ts';
 

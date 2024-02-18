@@ -1,8 +1,8 @@
-import type { GraphQLContext } from '../context';
 import { createYoga, LogLevel } from 'graphql-yoga';
 import { createServer } from 'http';
-import { schema } from '../resolvers';
 import { Plugin } from '@envelop/core';
+import { schema } from '../resolvers.js';
+import type { GraphQLContext } from '../context.js';
 
 export { buildServer };
 

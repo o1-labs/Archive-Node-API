@@ -10,7 +10,7 @@ import {
   validateJaegerConfig,
   parseEndpoint,
   checkJaegerEndpointAvailability,
-} from './jaeger-setup';
+} from './jaeger-setup.js';
 
 export { initJaegerProvider };
 

@@ -9,23 +9,17 @@ on:
 jobs:
   Run-Tests:
     runs-on: ubuntu-latest
-    container: node:latest
     services:
-      postgres:
-        image: postgres:latest
+      mina-local-network:
+        image: o1labs/mina-local-network:o1js-main-latest-lightnet
         env:
-          POSTGRES_DB: archive
-          POSTGRES_PASSWORD: password
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: postgres
+          NETWORK_TYPE: 'single-node'
+          PROOF_LEVEL: 'none'
         ports:
+          - 3085:3085
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+          - 8080:8080
+          - 8181:8181
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -33,18 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download nightly Berkeley dump
-        run: bash ./scripts/download_db.sh
-
-      - name: Install PostgreSQL client
-        run: |
-          apt-get update
-          apt-get install --yes postgresql-client
-
-      - name: Create Archive Node database
-        run: psql -h postgres -U postgres archive < ./data/berkeley-archive.sql
-        env:
-          PGPASSWORD: password
+      - name: Wait for Mina network readiness
+        uses: o1-labs/wait-for-mina-network-action@v1
+        with:
+          mina-graphql-port: 8080
+          max-attempts: 60
+          polling-interval-ms: 10000
 
       - name: Run tests
         run: npm run test

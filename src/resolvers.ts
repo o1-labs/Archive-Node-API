@@ -2,8 +2,11 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 
-import { Resolvers } from './resolvers-types';
-import { TracingState, setSpanNameFromGraphQLContext } from './tracing/tracer';
+import { Resolvers } from './resolvers-types.js';
+import {
+  TracingState,
+  setSpanNameFromGraphQLContext,
+} from './tracing/tracer.js';
 
 export { resolvers, schema };
 
