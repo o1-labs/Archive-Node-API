@@ -140,7 +140,7 @@ or in development mode, run
 npm run dev
 ```
 
-This will start the server and allow you to interact with the GraphQL API at `http://localhost:3000`.
+This will start the server and allow you to interact with the GraphQL API specified with the port defined in your `.env` file or port `8080` by deafult. e.g. `http://localhost:3000`.
 
 In production, we recommend running this with a process control system [pm2](https://pm2.keymetrics.io/) or [Supervisor](http://supervisord.org/). In addition to using these tools, you could utilize the provided [Dockerfile](./Dockerfile) to build and run a container.
 
@@ -220,7 +220,9 @@ vusers.session_length:
 
 ## Setting Up Local Development Environment Using zkApp-CLI Lightnet
 
-To set up a local development environment, you can use the zkApp-CLI Lightnet. This tool allows you to run a local Mina network with zkApps enabled. The zkApp-CLI Lightnet will also start a running Postgres instance with a local Mina network and will populate the database with zkApp related data. Once you have the zkApp-CLI Lightnet running, you can run the server and interact with the GraphQL API.
+To set up a local development environment, you can use the [zkApp-CLI Lightnet](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet). This tool allows you to run a local Mina network with zkApps enabled. The zkApp-CLI Lightnet will also start a running Postgres instance with a local Mina network and will populate the database with zkApp related data. Once you have the zkApp-CLI Lightnet running, you can run the server and interact with the GraphQL API.
+
+To see how to set up the zkApp-CLI Lightnet, see the [zkApp-CLI Lightnet documentation](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet#start-a-local-network).
 
 If you wish to populate the database with zkApp related data, you can run the following commands:
 
@@ -262,6 +264,4 @@ With the prerequisites in place, start the Docker network by running the followi
 docker compose up
 ```
 
-This command pulls the necessary Docker images and launches them, setting up a local environment ideal for server development.
-
-That's it! Your local development environment is now ready for use.
+This command pulls the necessary Docker images and launches them, setting up a local environment ideal for server development. This setup offers a way to connec to a live running Mina network, specified by it's seed peers and Mina daemon build. Use this setup to test the server's functionality and performance against a live running network.
