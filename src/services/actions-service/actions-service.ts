@@ -10,7 +10,10 @@ import {
 import type { ActionFilterOptionsInput } from '../../resolvers-types.js';
 import { DEFAULT_TOKEN_ID } from '../../blockchain/constants.js';
 import { createBlockInfo } from '../../blockchain/utils.js';
-import { getActionsQuery } from '../../db/sql/events-actions/queries.js';
+import {
+  getActionsQuery,
+  checkActionState,
+} from '../../db/sql/events-actions/queries.js';
 import {
   partitionBlocks,
   getElementIdFieldValues,
@@ -23,6 +26,7 @@ import {
   TracingState,
   extractTraceStateFromOptions,
 } from '../../tracing/tracer.js';
+import { throwActionStateError } from '../../errors/error.js';
 
 export { ActionsService };
 
@@ -63,6 +67,30 @@ class ActionsService implements IActionsService {
 
   async executeActionsQuery(input: ActionFilterOptionsInput) {
     const { address, to, from, endActionState, fromActionState } = input;
+
+    // Check if action states exist.
+    if (fromActionState) {
+      const fromActionStateExists = await checkActionState(
+        this.client,
+        fromActionState
+      );
+      if (!fromActionStateExists || !fromActionStateExists.length) {
+        throwActionStateError(
+          `fromActionState ${fromActionState} does not exist`
+        );
+      }
+    }
+    if (endActionState) {
+      const endActionStateExists = await checkActionState(
+        this.client,
+        endActionState
+      );
+      if (!endActionStateExists || !endActionStateExists.length) {
+        throwActionStateError(
+          `endActionState ${endActionState} does not exist`
+        );
+      }
+    }
     let { tokenId, status } = input;
 
     tokenId ||= DEFAULT_TOKEN_ID;
