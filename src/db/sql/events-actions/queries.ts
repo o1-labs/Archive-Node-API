@@ -244,6 +244,12 @@ export function getActionsQuery(
   `;
 }
 
+export function checkActionState(db_client: postgres.Sql, actionState: string) {
+  return db_client`
+  SELECT field FROM zkapp_field WHERE field = ${actionState}
+  `;
+}
+
 export function getTables(db_client: postgres.Sql) {
   return db_client`
   SELECT tablename FROM pg_catalog.pg_tables where schemaname='public';
