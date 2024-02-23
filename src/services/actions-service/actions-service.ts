@@ -76,7 +76,13 @@ class ActionsService implements IActionsService {
       );
       if (!fromActionStateExists || !fromActionStateExists.length) {
         throw new GraphQLError(
-          `fromActionState ${fromActionState} does not exist`
+          `fromActionState ${fromActionState} does not exist`,
+          {
+            extensions: {
+              code: 'ACTION_STATE_NOT_FOUND',
+              status: 400,
+            },
+          }
         );
       }
     }
@@ -87,7 +93,13 @@ class ActionsService implements IActionsService {
       );
       if (!endActionStateExists || !endActionStateExists.length) {
         throw new GraphQLError(
-          `endActionState ${endActionState} does not exist`
+          `endActionState ${endActionState} does not exist`,
+          {
+            extensions: {
+              code: 'ACTION_STATE_NOT_FOUND',
+              status: 400,
+            },
+          }
         );
       }
     }
