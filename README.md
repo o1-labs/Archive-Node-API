@@ -101,6 +101,8 @@ Also, note that Jaeger supports distributed logging. This means that if you're r
 
 This section aims to describe all the environment variables exposed to configure runtime behaviour:
 
+- `APP_COMMAND`: The command to run the server. A sensible default is `npm run start`.
+
 - `PG_CONN`: The connection string used to connect to either a single or multiple Archive Nodes.
 
 - `ENABLE_INTROSPECTION`: Enable or disable [GraphQL introspection](https://graphql.org/learn/introspection/). GraphQL introspection is a feature of GraphQL that allows clients to inspect the capabilities of a GraphQL server. It enables clients to discover the types, fields, and other metadata available on the server and query it using this information.
@@ -132,22 +134,25 @@ npm run build
 npm run start
 ```
 
-This will start the server and allow you to interact with the GraphQL API at `http://localhost:8080`.
+or in development mode, run
+
+```sh
+npm run dev
+```
+
+This will start the server and allow you to interact with the GraphQL API specified with the port defined in your `.env` file or port `8080` by deafult. e.g. `http://localhost:3000`.
 
 In production, we recommend running this with a process control system [pm2](https://pm2.keymetrics.io/) or [Supervisor](http://supervisord.org/). In addition to using these tools, you could utilize the provided [Dockerfile](./Dockerfile) to build and run a container.
 
 ## Running tests
 
-To run the tests, you will need a running Archive Node Postgres database to connect to. You can download a nightly dump from O(1)'s public GCP bucket if you do not have an instance running. To do so, run
+To run the tests, you will need a running instance of [Lightnet](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet). Lightnet will start a running Postgres instance with a local Mina network and will populate the database with zkApp related data. To run the tests, you will have to run a zkApp script to emit events and actions to the database. To do this, ensure you have Lightnet [running on your local machine](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet#start-a-single-node-network) and then run the following commands:
 
 ```sh
-./scripts/download_db.sh
-./scripts/init_db.sh
+node --loader ts-node/esm benchmark/setup.ts
 ```
 
-`download_db.sh` will download the latest Archive Node SQL backup to your local machine. `init_db.sh` will use Docker to spin up a Postgres container and import the Archive Node SQL dump to be used. **Note**: You need Docker installed on your machine to run `init_db.sh`
-
-Once you have a running Postgres instance, run the following to execute the tests:
+This will run a script that will deploy a zkApp and emit events and actions to the database. Once the script is finished, you can run the tests with the following command:
 
 ```sh
 npm run test
@@ -155,7 +160,7 @@ npm run test
 
 ## Benchmarking
 
-To run a benchmark on the Typescript GraphQL server, you will need to have a running Postgres instance to connect to. See the [Running tests](#running-tests) section if you still need to run the setup.
+To run a benchmark on the Typescript GraphQL server, you will need to have a running Lightnet instance to connect to. See the [Running tests](#running-tests) section if you still need to run the setup.
 
 You will also need to run the server to run the benchmarks. For example, to run the server in development mode, run the following command:
 
@@ -166,10 +171,10 @@ npm run dev
 Once the server is up and running, you can run the benchmarking script by using the following command:
 
 ```sh
-npm run benchmark-report
+npm run benchmark
 ```
 
-This script will run the config defined in `benchmarking/graphql.yaml`, use the data in the `data.csv` file to fetch events/actions related to predefined addresses, and output a report in the benchmarking folder. The report will contain summarized metrics of the performance testing run against the server.
+This script will run the config defined in `benchmarking/graphql.yaml` and output a report in the benchmarking folder. The report will contain summarized metrics of the performance testing run against the server.
 
 It is important to note that the benchmarking script requires the server to run to collect performance metrics. The report generated will provide valuable insights into the server's performance and help identify any potential bottlenecks or areas for improvement. Please note that running the benchmark may consume significant resources and should be done cautiously. Ensure that the server runs in a stable environment before running the benchmarking script.
 
@@ -213,6 +218,28 @@ vusers.session_length:
   p99: ......................................................................... 40
 ```
 
+## Setting Up Local Development Environment Using zkApp-CLI Lightnet
+
+To set up a local development environment, you can use the [zkApp-CLI Lightnet](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet). This tool allows you to run a local Mina network with zkApps enabled. The zkApp-CLI Lightnet will also start a running Postgres instance with a local Mina network and will populate the database with zkApp related data. Once you have the zkApp-CLI Lightnet running, you can run the server and interact with the GraphQL API.
+
+To see how to set up the zkApp-CLI Lightnet, see the [zkApp-CLI Lightnet documentation](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet#start-a-local-network).
+
+If you wish to populate the database with zkApp related data, you can run the following commands:
+
+```sh
+node --loader ts-node/esm benchmark/setup.ts
+```
+
+This will run a script that will deploy a zkApp and emit events and actions to the database. Once the script is finished, you can run the server with the following command:
+
+```sh
+npm run dev
+```
+
+To ensure you have the correct environment variables set up, you can see a copy of the `.env.example.lightnet` file.
+
+Generally, it is recommended that you use Lightnet as your local development environment, as it will provide you with a running Mina network and a Postgres instance with zkApp related data.
+
 ## Setting Up Local Development Environment Using Docker Compose
 
 The provided `docker-compose.yml` file simplifies the process of setting up a local development environment. This file orchestrates the creation of a Docker network comprising of Mina daemon, Archive Node, GraphQL server, and Jaeger. Follow the steps below to get everything up and running:
@@ -237,6 +264,4 @@ With the prerequisites in place, start the Docker network by running the followi
 docker compose up
 ```
 
-This command pulls the necessary Docker images and launches them, setting up a local environment ideal for server development.
-
-That's it! Your local development environment is now ready for use.
+This command pulls the necessary Docker images and launches them, setting up a local environment ideal for server development. This setup offers a way to connec to a live running Mina network, specified by it's seed peers and Mina daemon build. Use this setup to test the server's functionality and performance against a live running network.

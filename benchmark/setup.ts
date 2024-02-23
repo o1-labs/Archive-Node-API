@@ -1,3 +1,5 @@
+// Usage: node --loader ts-node/esm benchmark/setup.ts
+
 import { Lightnet, PrivateKey } from 'o1js';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
