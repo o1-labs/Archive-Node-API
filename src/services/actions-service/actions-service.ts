@@ -1,6 +1,5 @@
 import type postgres from 'postgres';
 
-import { GraphQLError } from 'graphql';
 import {
   BlockStatusFilter,
   BlocksWithTransactionsMap,
@@ -27,6 +26,7 @@ import {
   TracingState,
   extractTraceStateFromOptions,
 } from '../../tracing/tracer.js';
+import { throwActionStateError } from '../../errors/error.js';
 
 export { ActionsService };
 
@@ -75,14 +75,8 @@ class ActionsService implements IActionsService {
         fromActionState
       );
       if (!fromActionStateExists || !fromActionStateExists.length) {
-        throw new GraphQLError(
-          `fromActionState ${fromActionState} does not exist`,
-          {
-            extensions: {
-              code: 'ACTION_STATE_NOT_FOUND',
-              status: 400,
-            },
-          }
+        throwActionStateError(
+          `fromActionState ${fromActionState} does not exist`
         );
       }
     }
@@ -92,14 +86,8 @@ class ActionsService implements IActionsService {
         endActionState
       );
       if (!endActionStateExists || !endActionStateExists.length) {
-        throw new GraphQLError(
-          `endActionState ${endActionState} does not exist`,
-          {
-            extensions: {
-              code: 'ACTION_STATE_NOT_FOUND',
-              status: 400,
-            },
-          }
+        throwActionStateError(
+          `endActionState ${endActionState} does not exist`
         );
       }
     }
