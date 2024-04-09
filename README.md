@@ -63,7 +63,7 @@ query getActions {
 }
 ```
 
-To see the data exposed, see the [GraphQL schema](./src/schema.ts).
+To see the data exposed, see the [GraphQL schema](./schema.graphql).
 
 The server lets operators connect to an existing Archive Node Postgres database and provides application monitoring with [Jaeger](https://github.com/jaegertracing/jaeger).
 
