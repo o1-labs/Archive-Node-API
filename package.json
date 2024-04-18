@@ -11,7 +11,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run clean && npx tsc",
-    "start": "npm run build && node build/src/index.js",
+    "start": "node build/src/index.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon src/index.ts",
     "test": "npx tsc && for testfile in $(find build/tests -type f -name '*.test.js'); do node $testfile; done",
     "clean": "rimraf ./build",
