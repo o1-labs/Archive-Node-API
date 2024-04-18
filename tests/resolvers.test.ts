@@ -99,11 +99,7 @@ describe('Query Resolvers', async () => {
       fetch: yoga.fetch,
     });
 
-    const zkAppKey = PrivateKey.random();
-    zkAppKeypair = {
-      privateKey: zkAppKey,
-      publicKey: zkAppKey.toPublicKey(),
-    };
+    zkAppKeypair = await Lightnet.acquireKeyPair();
     senderKeypair = await Lightnet.acquireKeyPair();
     zkApp = await deployContract(zkAppKeypair, senderKeypair);
   });

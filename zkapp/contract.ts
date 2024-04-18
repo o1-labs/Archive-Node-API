@@ -41,18 +41,18 @@ export class HelloWorld extends SmartContract {
     this.actionState.set(Reducer.initialActionState);
   }
 
-  @method update(squared: Field) {
+  @method async update(squared: Field) {
     const x = this.x.getAndRequireEquals();
     x.square().assertEquals(squared);
     this.x.set(squared);
   }
 
-  @method emitSingleEvent() {
+  @method async emitSingleEvent() {
     const x = this.x.getAndRequireEquals();
     this.emitEvent('singleField', x);
   }
 
-  @method emitStructEvent() {
+  @method async emitStructEvent() {
     const x = this.x.getAndRequireEquals();
     const y = this.y.getAndRequireEquals();
     const z = this.z.getAndRequireEquals();
@@ -62,14 +62,14 @@ export class HelloWorld extends SmartContract {
     );
   }
 
-  @method emitStructAction() {
+  @method async emitStructAction() {
     const x = this.x.getAndRequireEquals();
     const y = this.y.getAndRequireEquals();
     const z = this.z.getAndRequireEquals();
     this.reducer.dispatch(new TestStruct({ x, y, z, address: this.address }));
   }
 
-  @method reduceStructAction() {
+  @method async reduceStructAction() {
     let counter = this.counter.getAndRequireEquals();
     let actionState = this.actionState.getAndRequireEquals();
     const pendingActions = this.reducer.getActions({
