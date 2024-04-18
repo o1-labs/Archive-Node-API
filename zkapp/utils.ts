@@ -68,9 +68,9 @@ async function deployContract(
   console.log(`Deploying zkApp for public key ${zkAppAddress.toBase58()}.`);
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
+    async () => {
       AccountUpdate.fundNewAccount(sender);
-      zkApp.deploy({ verificationKey });
+      await zkApp.deploy({ verificationKey });
     }
   );
   transaction.sign([senderKey, zkAppKey]);
@@ -85,8 +85,8 @@ async function updateContractState(
   console.log('Trying to update deployed zkApp state.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
-      zkApp.update(Field(4));
+    async () => {
+      await zkApp.update(Field(4));
     }
   );
   await transaction.sign([senderKey]).prove();
@@ -101,9 +101,9 @@ async function emitSingleEvent(
   console.log('Emitting single field event.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
+    async () => {
       for (let i = 0; i < options?.numberOfEmits; i++) {
-        zkApp.emitSingleEvent();
+        await zkApp.emitSingleEvent();
       }
     }
   );
@@ -119,9 +119,9 @@ async function emitMultipleFieldsEvent(
   console.log('Emitting multiple fields event.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
+    async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        zkApp.emitStructEvent();
+        await zkApp.emitStructEvent();
       }
     }
   );
@@ -137,9 +137,9 @@ async function emitAction(
   console.log('Emitting action.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
+    async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        zkApp.emitStructAction();
+        await zkApp.emitStructAction();
       }
     }
   );
@@ -154,8 +154,8 @@ async function reduceAction(
   console.log('Reducing action.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
-    () => {
-      zkApp.reduceStructAction();
+    async () => {
+      await zkApp.reduceStructAction();
     }
   );
   await transaction.sign([senderKey]).prove();
@@ -164,9 +164,9 @@ async function reduceAction(
 
 async function sendTransaction(transaction: Mina.Transaction) {
   let pendingTx = await transaction.send();
-  if (pendingTx.hash() !== undefined) {
+  if (pendingTx.status === 'pending') {
     console.log(`Success! Transaction sent.
-    Txn hash: ${pendingTx.hash()}`);
+    Txn hash: ${pendingTx.hash}`);
   }
   console.log('Waiting for transaction inclusion in a block.\n');
   await pendingTx.wait({ maxAttempts: 90 });
