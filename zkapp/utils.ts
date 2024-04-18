@@ -69,7 +69,6 @@ async function deployContract(
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
-      AccountUpdate.fundNewAccount(sender);
       await zkApp.deploy({ verificationKey });
     }
   );
@@ -107,7 +106,8 @@ async function emitSingleEvent(
       }
     }
   );
-  await transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]);
+  await transaction.prove();
   await sendTransaction(transaction);
 }
 
@@ -125,7 +125,8 @@ async function emitMultipleFieldsEvent(
       }
     }
   );
-  await transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]);
+  await transaction.prove();
   await sendTransaction(transaction);
 }
 
@@ -143,7 +144,8 @@ async function emitAction(
       }
     }
   );
-  await transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]);
+  await transaction.prove();
   await sendTransaction(transaction);
 }
 
@@ -158,7 +160,8 @@ async function reduceAction(
       await zkApp.reduceStructAction();
     }
   );
-  await transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]);
+  await transaction.prove();
   await sendTransaction(transaction);
 }
 
