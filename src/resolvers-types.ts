@@ -40,7 +40,10 @@ export type ActionData = {
   __typename?: 'ActionData';
   accountUpdateId: Scalars['String']['output'];
   data: Array<Maybe<Scalars['String']['output']>>;
+  sequenceNumber: Scalars['Int']['output'];
   transactionInfo?: Maybe<TransactionInfo>;
+  zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
+  zkappEventElementIds: Array<Maybe<Scalars['Int']['output']>>;
 };
 
 export type ActionFilterOptionsInput = {
@@ -278,8 +281,19 @@ export type ActionDataResolvers<
     ParentType,
     ContextType
   >;
+  sequenceNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   transactionInfo?: Resolver<
     Maybe<ResolversTypes['TransactionInfo']>,
+    ParentType,
+    ContextType
+  >;
+  zkappAccountUpdateIds?: Resolver<
+    Array<Maybe<ResolversTypes['Int']>>,
+    ParentType,
+    ContextType
+  >;
+  zkappEventElementIds?: Resolver<
+    Array<Maybe<ResolversTypes['Int']>>,
     ParentType,
     ContextType
   >;

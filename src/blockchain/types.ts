@@ -21,6 +21,9 @@ export type Action = {
   accountUpdateId: string;
   transactionInfo: TransactionInfo;
   data: string[];
+  sequenceNumber: number;
+  zkappAccountUpdateIds: number[];
+  zkappEventElementIds: number[];
 };
 
 export type BlockInfo = {

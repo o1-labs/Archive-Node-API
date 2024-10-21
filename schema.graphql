@@ -30,6 +30,9 @@ type EventData {
 type ActionData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
+  sequenceNumber: Int!
+  zkappAccountUpdateIds: [Int]!
+  zkappEventElementIds: [Int]!
   data: [String]!
 }
 
