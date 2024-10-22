@@ -40,11 +40,17 @@ export function createEvent(
 export function createAction(
   accountUpdateId: string,
   data: string[],
-  transactionInfo: TransactionInfo
+  transactionInfo: TransactionInfo,
+  sequenceNumber: number,
+  zkappAccountUpdateIds: number[],
+  zkappEventElementIds: number[]
 ): Action {
   return {
     accountUpdateId,
     data,
     transactionInfo,
+    sequenceNumber,
+    zkappAccountUpdateIds,
+    zkappEventElementIds,
   };
 }

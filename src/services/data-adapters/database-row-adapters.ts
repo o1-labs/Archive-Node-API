@@ -210,11 +210,19 @@ function mapActionOrEvent(
       const event = createEvent(elementIdToFieldValues, transactionInfo);
       data.push(event);
     } else {
-      const { zkapp_account_update_id } = rows[i];
+      const {
+        zkapp_account_update_id,
+        zkapp_account_updates_ids,
+        sequence_number,
+        zkapp_event_element_ids,
+      } = rows[i];
       const action = createAction(
         zkapp_account_update_id.toString(),
         elementIdToFieldValues,
-        transactionInfo
+        transactionInfo,
+        sequence_number,
+        zkapp_account_updates_ids,
+        zkapp_event_element_ids
       );
       data.push(action);
     }

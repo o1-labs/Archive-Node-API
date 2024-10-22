@@ -108,7 +108,7 @@ function emittedZkAppCommandsCTE(db_client: postgres.Sql) {
     SELECT
       blocks_accessed.*,
       zkcu.id AS zkapp_account_update_id,
-      bzkc.sequence_no,
+      bzkc.sequence_no AS sequence_number,
       zkapp_fee_payer_body_id,
       zkapp_account_updates_ids,
       authorization_kind,
