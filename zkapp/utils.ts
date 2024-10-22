@@ -69,6 +69,7 @@ async function deployContract(
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
+      AccountUpdate.fundNewAccount(sender);
       await zkApp.deploy({ verificationKey });
     }
   );
@@ -144,7 +145,7 @@ async function emitAction(
       }
     }
   );
-  await transaction.sign([senderKey]);
+  transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
 }
@@ -160,12 +161,12 @@ async function reduceAction(
       await zkApp.reduceStructAction();
     }
   );
-  await transaction.sign([senderKey]);
+  transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
 }
 
-async function sendTransaction(transaction: Mina.Transaction) {
+async function sendTransaction(transaction: Mina.Transaction<any, any>) {
   let pendingTx = await transaction.send();
   if (pendingTx.status === 'pending') {
     console.log(`Success! Transaction sent.
