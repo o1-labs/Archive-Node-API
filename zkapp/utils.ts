@@ -59,7 +59,8 @@ async function fetchAccountInfo(sender: PublicKey) {
 
 async function deployContract(
   { publicKey: zkAppAddress, privateKey: zkAppKey }: Keypair,
-  { publicKey: sender, privateKey: senderKey }: Keypair
+  { publicKey: sender, privateKey: senderKey }: Keypair,
+  fundNewAccount = true
 ) {
   console.log('Compiling the smart contract.');
   const { verificationKey } = await HelloWorld.compile();
@@ -69,7 +70,9 @@ async function deployContract(
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
-      AccountUpdate.fundNewAccount(sender);
+      if (fundNewAccount) {
+        AccountUpdate.fundNewAccount(sender);
+      }
       await zkApp.deploy({ verificationKey });
     }
   );
@@ -173,5 +176,9 @@ async function sendTransaction(transaction: Mina.Transaction<any, any>) {
     Txn hash: ${pendingTx.hash}`);
   }
   console.log('Waiting for transaction inclusion in a block.\n');
-  await pendingTx.wait({ maxAttempts: 90 });
+  try {
+    await pendingTx.wait({ maxAttempts: 90 });
+  } catch (error) {
+    console.error('Transaction rejected or failed to finalize:', error);
+  }
 }
