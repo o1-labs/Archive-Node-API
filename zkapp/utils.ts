@@ -89,7 +89,7 @@ async function updateContractState(
       await zkApp.update(Field(4));
     }
   );
-  await transaction.sign([senderKey]).prove();
+  transaction.sign([senderKey]).prove();
   await sendTransaction(transaction);
 }
 
@@ -107,7 +107,7 @@ async function emitSingleEvent(
       }
     }
   );
-  await transaction.sign([senderKey]);
+  transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
 }
@@ -126,7 +126,7 @@ async function emitMultipleFieldsEvent(
       }
     }
   );
-  await transaction.sign([senderKey]);
+  transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
 }
