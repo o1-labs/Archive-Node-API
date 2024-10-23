@@ -1,7 +1,6 @@
 import {
   Bool,
   Field,
-  PrivateKey,
   SmartContract,
   State,
   Struct,
@@ -76,15 +75,16 @@ export class HelloWorld extends SmartContract {
       fromActionState: actionState,
     });
 
-    let { actionState: newActionState } = this.reducer.reduce(
+    let newCounter = this.reducer.reduce(
       pendingActions,
       Field,
       (state: Field, action: TestStruct) => {
         return state.add(action.x);
       },
-      { state: counter, actionState }
+      counter
     );
 
-    this.actionState.set(newActionState);
+    this.counter.set(newCounter);
+    this.actionState.set(pendingActions.hash);
   }
 }

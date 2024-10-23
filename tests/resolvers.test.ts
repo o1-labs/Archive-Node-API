@@ -101,7 +101,11 @@ describe('Query Resolvers', async () => {
 
     zkAppKeypair = await Lightnet.acquireKeyPair();
     senderKeypair = await Lightnet.acquireKeyPair();
-    zkApp = await deployContract(zkAppKeypair, senderKeypair);
+    zkApp = await deployContract(
+      zkAppKeypair,
+      senderKeypair,
+      /* fundNewAccount = */ false
+    );
   });
 
   after(async () => {
