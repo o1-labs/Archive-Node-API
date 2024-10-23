@@ -1,0 +1,86 @@
+import { test, before, describe, after } from 'node:test';
+import assert from 'node:assert';
+import { ActionsService } from '../../../src/services/actions-service/actions-service.js';
+import { Sql } from 'postgres';
+import { Action } from '../../../src/blockchain/types.js';
+
+describe('ActionsService', () => {
+  let actionsService: ActionsService;
+
+  before(() => {
+    const client = {
+      query: () => {},
+      CLOSE: () => {},
+      END: () => {},
+      PostgresError: class {},
+      options: {},
+    } as unknown as Sql<{}>;
+    actionsService = new ActionsService(client);
+  });
+
+  describe('sortActions', () => {
+    let actions: Action[];
+    describe('with actions with different sequence numbers', () => {
+      before(() => {
+        actions = [
+          dummyAction({ sequenceNumber: 2 }),
+          dummyAction({ sequenceNumber: 1 }),
+        ];
+      });
+      test('it sorts actions by their sequence number', () => {
+        const sortedActions = actionsService.sortActions(actions);
+        assert.strictEqual(sortedActions[0].transactionInfo.sequenceNumber, 1);
+        assert.strictEqual(sortedActions[1].transactionInfo.sequenceNumber, 2);
+      });
+    });
+    describe('with actions with the same sequence number', () => {
+      const sequenceNumber = 1;
+      describe('with actions with different account update ids', () => {
+        const zkappAccountUpdateIds = [1, 2];
+        before(() => {
+          actions = [
+            dummyAction({
+              sequenceNumber,
+              zkappAccountUpdateIds,
+              accountUpdateId: '2',
+            }),
+            dummyAction({
+              sequenceNumber,
+              zkappAccountUpdateIds,
+              accountUpdateId: '1',
+            }),
+          ];
+        });
+        test('it sorts actions by their account update index', () => {
+          const sortedActions = actionsService.sortActions(actions);
+          assert.strictEqual(sortedActions[0].accountUpdateId, '1');
+          assert.strictEqual(sortedActions[1].accountUpdateId, '2');
+        });
+      });
+    });
+  });
+});
+
+function dummyAction({
+  sequenceNumber = 1,
+  accountUpdateId = '1',
+  zkappAccountUpdateIds = [1],
+}: {
+  sequenceNumber?: number;
+  accountUpdateId?: string;
+  zkappAccountUpdateIds?: number[];
+}): Action {
+  return {
+    accountUpdateId: accountUpdateId,
+    data: ['dummy'],
+    transactionInfo: {
+      sequenceNumber,
+      zkappAccountUpdateIds,
+      zkappEventElementIds: [],
+      authorizationKind: 'dummy',
+      hash: 'dummy',
+      memo: 'dummy',
+      status: 'dummy',
+    },
+  };
+}

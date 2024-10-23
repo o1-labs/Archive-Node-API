@@ -79,8 +79,6 @@ query getActions($input: ActionFilterOptionsInput!) {
 }
 `;
 
-console.log('Running tests');
-
 // This is the default connection string provided by the lightnet postgres container
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
@@ -90,10 +88,7 @@ describe('Query Resolvers', async () => {
   let zkAppKeypair: Keypair;
   let zkApp: HelloWorld;
 
-  console.log('Describe ', 'Query Resolvers');
-
   before(async () => {
-    console.log('Before');
     try {
       setNetworkConfig();
 
