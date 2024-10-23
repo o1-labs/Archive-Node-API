@@ -57,6 +57,34 @@ describe('ActionsService', () => {
           assert.strictEqual(sortedActions[1].accountUpdateId, '2');
         });
       });
+      describe('with account update ids that are ordered in non-ascending or descending order', () => {
+        const zkappAccountUpdateIds = [1, 3, 2];
+        before(() => {
+          actions = [
+            dummyAction({
+              sequenceNumber,
+              zkappAccountUpdateIds,
+              accountUpdateId: '2',
+            }),
+            dummyAction({
+              sequenceNumber,
+              zkappAccountUpdateIds,
+              accountUpdateId: '1',
+            }),
+            dummyAction({
+              sequenceNumber,
+              zkappAccountUpdateIds,
+              accountUpdateId: '3',
+            }),
+          ];
+        });
+        test('it sorts actions by their account update index', () => {
+          const sortedActions = actionsService.sortActions(actions);
+          assert.strictEqual(sortedActions[0].accountUpdateId, '1');
+          assert.strictEqual(sortedActions[1].accountUpdateId, '3');
+          assert.strictEqual(sortedActions[2].accountUpdateId, '2');
+        });
+      });
     });
   });
 });
