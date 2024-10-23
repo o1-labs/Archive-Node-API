@@ -30,9 +30,6 @@ type EventData {
 type ActionData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
-  sequenceNumber: Int!
-  zkappAccountUpdateIds: [Int]!
-  zkappEventElementIds: [Int]!
   data: [String]!
 }
 
@@ -53,6 +50,9 @@ type TransactionInfo {
   hash: String!
   memo: String!
   authorizationKind: String!
+  sequenceNumber: Int! # TODO: Is it ok to make this required?
+  zkappAccountUpdateIds: [Int]!
+  zkappEventElementIds: [Int]!
 }
 
 type ActionStates {

@@ -5,7 +5,7 @@ import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { buildHTTPExecutor } from '@graphql-tools/executor-http';
 import { parse } from 'graphql';
-import { PrivateKey, Lightnet } from 'o1js';
+import { PrivateKey, Lightnet, Mina } from 'o1js';
 import { resolvers } from '../src/resolvers.js';
 import { buildContext, GraphQLContext } from '../src/context.js';
 import {
@@ -15,8 +15,10 @@ import {
   emitSingleEvent,
   setNetworkConfig,
   Keypair,
+  emitActionsFromMultipleSenders,
 } from '../zkapp/utils.js';
 import { HelloWorld } from '../zkapp/contract.js';
+import { Actions } from 'src/blockchain/types.js';
 
 const eventsQuery = `
 query getEvents($input: EventFilterOptionsInput!) {
@@ -69,11 +71,15 @@ query getActions($input: ActionFilterOptionsInput!) {
         status
         hash
         memo
+        sequenceNumber
+        zkappAccountUpdateIds
       }
     }
   }
 }
 `;
+
+console.log('Running tests');
 
 // This is the default connection string provided by the lightnet postgres container
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
@@ -84,28 +90,35 @@ describe('Query Resolvers', async () => {
   let zkAppKeypair: Keypair;
   let zkApp: HelloWorld;
 
+  console.log('Describe ', 'Query Resolvers');
+
   before(async () => {
-    setNetworkConfig();
+    console.log('Before');
+    try {
+      setNetworkConfig();
 
-    const schema = createSchema({
-      typeDefs: loadSchemaSync('./schema.graphql', {
-        loaders: [new GraphQLFileLoader()],
-      }),
-      resolvers,
-    });
-    const context = await buildContext(PG_CONN);
-    const yoga = createYoga<GraphQLContext>({ schema, context });
-    executor = buildHTTPExecutor({
-      fetch: yoga.fetch,
-    });
+      const schema = createSchema({
+        typeDefs: loadSchemaSync('./schema.graphql', {
+          loaders: [new GraphQLFileLoader()],
+        }),
+        resolvers,
+      });
+      const context = await buildContext(PG_CONN);
+      const yoga = createYoga<GraphQLContext>({ schema, context });
+      executor = buildHTTPExecutor({
+        fetch: yoga.fetch,
+      });
 
-    zkAppKeypair = await Lightnet.acquireKeyPair();
-    senderKeypair = await Lightnet.acquireKeyPair();
-    zkApp = await deployContract(
-      zkAppKeypair,
-      senderKeypair,
-      /* fundNewAccount = */ false
-    );
+      zkAppKeypair = await Lightnet.acquireKeyPair();
+      senderKeypair = await Lightnet.acquireKeyPair();
+      zkApp = await deployContract(
+        zkAppKeypair,
+        senderKeypair,
+        /* fundNewAccount = */ false
+      );
+    } catch (error) {
+      console.error(error);
+    }
   });
 
   after(async () => {
@@ -198,7 +211,7 @@ describe('Query Resolvers', async () => {
     });
   });
 
-  describe('Actions', async () => {
+  describe.only('Actions', async () => {
     test('Fetching actions with a valid address should not throw', async () => {
       assert.doesNotThrow(async () => {
         await executor({
@@ -252,6 +265,46 @@ describe('Query Resolvers', async () => {
       const actions = results.data.actions;
       const lastAction = actions[actions.length - 1];
       assert.strictEqual(lastAction.actionData.length, 3);
+    });
+
+    describe('Actions from different accounts', async () => {
+      const sendersCount = 5;
+      const actionsCount = 3;
+      const senders: Keypair[] = [];
+
+      before(async () => {
+        for (let i = 0; i < sendersCount; i++) {
+          senders.push(await Lightnet.acquireKeyPair());
+        }
+      });
+
+      test('Emitting actions from many accounts should be fetchable in o1js', async () => {
+        await emitActionsFromMultipleSenders(zkApp, senders, {
+          numberOfEmits: actionsCount,
+        });
+
+        await Mina.fetchActions(zkApp.address); // This line will throw if actions do not reproduce the correct action hash
+        assert(true);
+      });
+
+      test('Fetched actions have order metadata', async () => {
+        const results = await executor({
+          variables: {
+            input: {
+              address: zkApp.address,
+            },
+          },
+          document: parse(`${actionsQuery}`),
+        });
+        const actions: Actions = results.data.actions;
+        for (const block of actions) {
+          const actionData = block.actionData;
+          for (const action of actionData) {
+            assert.ok(action.transactionInfo.sequenceNumber);
+            assert(action.transactionInfo.zkappAccountUpdateIds.length > 0);
+          }
+        }
+      });
     });
   });
 });

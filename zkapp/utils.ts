@@ -5,8 +5,10 @@ import {
   Mina,
   PrivateKey,
   fetchAccount,
+  UInt64,
+  Bool,
 } from 'o1js';
-import { HelloWorld } from './contract.js';
+import { HelloWorld, TestStruct } from './contract.js';
 
 export {
   setNetworkConfig,
@@ -16,6 +18,7 @@ export {
   emitSingleEvent,
   emitMultipleFieldsEvent,
   emitAction,
+  emitActionsFromMultipleSenders,
   reduceAction,
   Keypair,
 };
@@ -144,13 +147,46 @@ async function emitAction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStructAction();
+        await zkApp.emitStaticStructAction();
       }
     }
   );
   transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
+}
+
+async function emitActionsFromMultipleSenders(
+  zkApp: HelloWorld,
+  callers: Keypair[],
+  options: Options = { numberOfEmits: 2 }
+) {
+  const txs = [];
+  for (const caller of callers) {
+    console.log('Compiling transaction for ', caller.publicKey.toBase58());
+    const randomField = Field(Math.floor(Math.random() * 100_000));
+    const randomUInt64 = UInt64.from(Math.floor(Math.random() * 100_000));
+    const testStruct = new TestStruct({
+      x: randomField,
+      y: Bool(true),
+      z: randomUInt64,
+      address: caller.publicKey,
+    });
+    let transaction = await Mina.transaction(
+      { sender: caller.publicKey, fee: transactionFee },
+      async () => {
+        for (let i = 0; i < options.numberOfEmits; i++) {
+          testStruct.x = testStruct.x.add(Field(i));
+          await zkApp.emitAction(testStruct);
+        }
+      }
+    );
+    transaction.sign([caller.privateKey]);
+    await transaction.prove();
+    txs.push(transaction);
+  }
+
+  await sendTransactions(txs);
 }
 
 async function reduceAction(
@@ -180,5 +216,20 @@ async function sendTransaction(transaction: Mina.Transaction<any, any>) {
     await pendingTx.wait({ maxAttempts: 90 });
   } catch (error) {
     console.error('Transaction rejected or failed to finalize:', error);
+  }
+}
+
+async function sendTransactions(transactions: Mina.Transaction<any, any>[]) {
+  const pendingTxs = transactions.map((tx) => tx.send());
+  console.log('Waiting for transactions to be included in a block.\n');
+
+  for (const pendingTx of pendingTxs) {
+    let tx = await pendingTx;
+    try {
+      await tx.wait({ maxAttempts: 90 });
+      console.log(`Success! Transaction sent. Txn hash: ${tx.hash}`);
+    } catch (error) {
+      console.error('Transaction rejected or failed to finalize:', error);
+    }
   }
 }

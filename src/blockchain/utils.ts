@@ -24,6 +24,9 @@ export function createTransactionInfo(
     hash: row.hash,
     memo: row.memo,
     authorizationKind: row.authorization_kind,
+    sequenceNumber: row.sequence_number,
+    zkappAccountUpdateIds: row.zkapp_account_updates_ids,
+    zkappEventElementIds: row.zkapp_event_element_ids,
   };
 }
 
@@ -40,17 +43,11 @@ export function createEvent(
 export function createAction(
   accountUpdateId: string,
   data: string[],
-  transactionInfo: TransactionInfo,
-  sequenceNumber: number,
-  zkappAccountUpdateIds: number[],
-  zkappEventElementIds: number[]
+  transactionInfo: TransactionInfo
 ): Action {
   return {
     accountUpdateId,
     data,
     transactionInfo,
-    sequenceNumber,
-    zkappAccountUpdateIds,
-    zkappEventElementIds,
   };
 }
