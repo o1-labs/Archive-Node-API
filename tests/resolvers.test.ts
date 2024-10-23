@@ -206,7 +206,7 @@ describe('Query Resolvers', async () => {
     });
   });
 
-  describe.only('Actions', async () => {
+  describe('Actions', async () => {
     test('Fetching actions with a valid address should not throw', async () => {
       assert.doesNotThrow(async () => {
         await executor({
@@ -271,13 +271,13 @@ describe('Query Resolvers', async () => {
         for (let i = 0; i < sendersCount; i++) {
           senders.push(await Lightnet.acquireKeyPair());
         }
-      });
 
-      test('Emitting actions from many accounts should be fetchable in o1js', async () => {
         await emitActionsFromMultipleSenders(zkApp, senders, {
           numberOfEmits: actionsCount,
         });
+      });
 
+      test('Emitting actions from many accounts should be fetchable in o1js', async () => {
         await Mina.fetchActions(zkApp.address); // This line will throw if actions do not reproduce the correct action hash
         assert(true);
       });
@@ -299,6 +299,41 @@ describe('Query Resolvers', async () => {
             assert(action.transactionInfo.zkappAccountUpdateIds.length > 0);
           }
         }
+      });
+
+      test('Fetched actions have correct order', async () => {
+        const results = await executor({
+          variables: {
+            input: {
+              address: zkApp.address,
+            },
+          },
+          document: parse(`${actionsQuery}`),
+        });
+        const actions: Actions = results.data.actions;
+
+        let testedAccountUpdateOrder = false;
+        for (const block of actions) {
+          const actionData = block.actionData;
+          for (let i = 1; i < actionData.length; i++) {
+            const previousAction = actionData[i - 1];
+            const currentAction = actionData[i];
+            assert.ok(
+              previousAction.transactionInfo.sequenceNumber <=
+                currentAction.transactionInfo.sequenceNumber
+            );
+            if (
+              previousAction.transactionInfo.sequenceNumber ===
+              currentAction.transactionInfo.sequenceNumber
+            ) {
+              testedAccountUpdateOrder = true;
+              assert.ok(
+                previousAction.accountUpdateId < currentAction.accountUpdateId
+              );
+            }
+          }
+        }
+        assert.ok(testedAccountUpdateOrder);
       });
     });
   });
