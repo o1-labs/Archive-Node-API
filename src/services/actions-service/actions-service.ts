@@ -143,7 +143,7 @@ class ActionsService implements IActionsService {
       }
       actions.push({
         blockInfo,
-        actionData: actionsData.flat(),
+        actionData: this.sortActions(actionsData.flat()),
         actionState: {
           /* eslint-disable */
           actionStateOne: action_state_value1!,
@@ -156,5 +156,27 @@ class ActionsService implements IActionsService {
       });
     }
     return actions;
+  }
+
+  sortActions(actions: Action[]): Action[] {
+    return actions.sort((a, b) => {
+      // Sort by sequence number
+      if (
+        a.transactionInfo.sequenceNumber !== b.transactionInfo.sequenceNumber
+      ) {
+        return (
+          a.transactionInfo.sequenceNumber - b.transactionInfo.sequenceNumber
+        );
+      }
+
+      // Sort by account update index if sequence number is the same
+      const aIndex = a.transactionInfo.zkappAccountUpdateIds.indexOf(
+        Number(a.accountUpdateId)
+      );
+      const bIndex = b.transactionInfo.zkappAccountUpdateIds.indexOf(
+        Number(b.accountUpdateId)
+      );
+      return aIndex - bIndex;
+    });
   }
 }

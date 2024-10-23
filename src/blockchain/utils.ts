@@ -24,6 +24,9 @@ export function createTransactionInfo(
     hash: row.hash,
     memo: row.memo,
     authorizationKind: row.authorization_kind,
+    sequenceNumber: row.sequence_number,
+    zkappAccountUpdateIds: row.zkapp_account_updates_ids,
+    zkappEventElementIds: row.zkapp_event_element_ids,
   };
 }
 

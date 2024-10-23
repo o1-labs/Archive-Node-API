@@ -11,7 +11,7 @@ import {
   PublicKey,
 } from 'o1js';
 
-class TestStruct extends Struct({
+export class TestStruct extends Struct({
   x: Field,
   y: Bool,
   z: UInt64,
@@ -61,11 +61,20 @@ export class HelloWorld extends SmartContract {
     );
   }
 
-  @method async emitStructAction() {
+  /**
+   * This method always emits the same action.
+   * It has limited utility in generating realistic test cases.
+   * We should use more dynamic methods to generate actions.
+   */
+  @method async emitStaticStructAction() {
     const x = this.x.getAndRequireEquals();
     const y = this.y.getAndRequireEquals();
     const z = this.z.getAndRequireEquals();
     this.reducer.dispatch(new TestStruct({ x, y, z, address: this.address }));
+  }
+
+  @method async emitAction(struct: TestStruct) {
+    this.reducer.dispatch(struct);
   }
 
   @method async reduceStructAction() {

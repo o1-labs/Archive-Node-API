@@ -50,6 +50,9 @@ type TransactionInfo {
   hash: String!
   memo: String!
   authorizationKind: String!
+  sequenceNumber: Int! # TODO: Is it ok to make this required?
+  zkappAccountUpdateIds: [Int]!
+  zkappEventElementIds: [Int]!
 }
 
 type ActionStates {

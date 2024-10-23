@@ -33,6 +33,9 @@ export type ArchiveNodeDatabaseRow = {
   // Current status of the block within the chain.
   chain_status: string;
 
+  // Sequence number of the transaction within a block
+  sequence_number: number;
+
   // Hash representing the ledger state.
   ledger_hash: string;
 

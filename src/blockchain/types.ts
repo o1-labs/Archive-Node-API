@@ -41,6 +41,9 @@ export type TransactionInfo = {
   hash: string;
   memo: string;
   authorizationKind: string;
+  sequenceNumber: number;
+  zkappAccountUpdateIds: number[];
+  zkappEventElementIds: number[];
 };
 
 export type Events = {

@@ -124,7 +124,10 @@ export type TransactionInfo = {
   authorizationKind: Scalars['String']['output'];
   hash: Scalars['String']['output'];
   memo: Scalars['String']['output'];
+  sequenceNumber: Scalars['Int']['output'];
   status: Scalars['String']['output'];
+  zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
+  zkappEventElementIds: Array<Maybe<Scalars['Int']['output']>>;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -448,7 +451,18 @@ export type TransactionInfoResolvers<
   >;
   hash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sequenceNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  zkappAccountUpdateIds?: Resolver<
+    Array<Maybe<ResolversTypes['Int']>>,
+    ParentType,
+    ContextType
+  >;
+  zkappEventElementIds?: Resolver<
+    Array<Maybe<ResolversTypes['Int']>>,
+    ParentType,
+    ContextType
+  >;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
