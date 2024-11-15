@@ -19,6 +19,7 @@ export type Event = {
 
 export type Action = {
   accountUpdateId: string;
+  eventElementId: string;
   transactionInfo: TransactionInfo;
   data: string[];
 };

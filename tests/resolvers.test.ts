@@ -5,7 +5,7 @@ import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { buildHTTPExecutor } from '@graphql-tools/executor-http';
 import { parse } from 'graphql';
-import { PrivateKey, Lightnet, Mina } from 'o1js';
+import { Lightnet, Mina } from 'o1js';
 import { resolvers } from '../src/resolvers.js';
 import { buildContext, GraphQLContext } from '../src/context.js';
 import {
@@ -201,7 +201,9 @@ describe('Query Resolvers', async () => {
         document: parse(`${eventsQuery}`),
       });
       const events = results.data.events;
+      console.log(events);
       const lastEvent = events[events.length - 1];
+      console.log(lastEvent);
       assert.strictEqual(lastEvent.eventData.length, 3);
     });
   });
@@ -295,7 +297,7 @@ describe('Query Resolvers', async () => {
         for (const block of actions) {
           const actionData = block.actionData;
           for (const action of actionData) {
-            assert.ok(action.transactionInfo.sequenceNumber);
+            assert(typeof action.transactionInfo.sequenceNumber === 'number');
             assert(action.transactionInfo.zkappAccountUpdateIds.length > 0);
           }
         }

@@ -45,6 +45,9 @@ export type ArchiveNodeDatabaseRow = {
   // Unique identifier for the zkapp account update.
   zkapp_account_update_id: number;
 
+  // Unique identifier for the event element within an account update.
+  zkapp_event_id: number;
+
   // List of identifiers inside a zkapp account update.
   zkapp_account_updates_ids: number[];
 

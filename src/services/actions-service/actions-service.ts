@@ -121,7 +121,7 @@ class ActionsService implements IActionsService {
     );
     for (let i = 0; i < blockTransactionEntries.length; i++) {
       const transactions = blockTransactionEntries[i][1];
-      const transaction = transactions.values().next().value[0];
+      const transaction = transactions.values().next().value![0];
       const blockInfo = createBlockInfo(transaction);
       const {
         action_state_value1,
@@ -169,14 +169,28 @@ class ActionsService implements IActionsService {
         );
       }
 
-      // Sort by account update index if sequence number is the same
-      const aIndex = a.transactionInfo.zkappAccountUpdateIds.indexOf(
-        Number(a.accountUpdateId)
+      // Sort by account update index within the transaction
+      const aAccountUpdateIndex =
+        a.transactionInfo.zkappAccountUpdateIds.indexOf(
+          Number(a.accountUpdateId)
+        );
+      const bAccountUpdateIndex =
+        b.transactionInfo.zkappAccountUpdateIds.indexOf(
+          Number(b.accountUpdateId)
+        );
+      if (aAccountUpdateIndex !== bAccountUpdateIndex) {
+        return aAccountUpdateIndex - bAccountUpdateIndex;
+      }
+
+      // Sort by element index within the account update
+      const aEventIndex = a.transactionInfo.zkappEventElementIds.indexOf(
+        Number(a.eventElementId)
       );
-      const bIndex = b.transactionInfo.zkappAccountUpdateIds.indexOf(
-        Number(b.accountUpdateId)
+      const bEventIndex = b.transactionInfo.zkappEventElementIds.indexOf(
+        Number(b.eventElementId)
       );
-      return aIndex - bIndex;
+
+      return aEventIndex - bEventIndex;
     });
   }
 }

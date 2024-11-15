@@ -42,11 +42,13 @@ export function createEvent(
 
 export function createAction(
   accountUpdateId: string,
+  eventElementId: string,
   data: string[],
   transactionInfo: TransactionInfo
 ): Action {
   return {
     accountUpdateId,
+    eventElementId,
     data,
     transactionInfo,
   };

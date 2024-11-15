@@ -85,6 +85,45 @@ describe('ActionsService', () => {
           assert.strictEqual(sortedActions[2].accountUpdateId, '2');
         });
       });
+      describe('with actions with the same account update id', () => {
+        const accountUpdateId = '1';
+        const zkappAccountUpdateIds = [1];
+        describe('with actions with different event element ids', () => {
+          const zkappEventElementIds = [1, 3, 2];
+          before(() => {
+            actions = [
+              dummyAction({
+                sequenceNumber,
+                accountUpdateId,
+                zkappAccountUpdateIds,
+                zkappEventElementIds,
+                eventElementId: '2',
+              }),
+              dummyAction({
+                sequenceNumber,
+                accountUpdateId,
+                zkappAccountUpdateIds,
+                zkappEventElementIds,
+                eventElementId: '1',
+              }),
+              dummyAction({
+                sequenceNumber,
+                accountUpdateId,
+                zkappAccountUpdateIds,
+                zkappEventElementIds,
+                eventElementId: '3',
+              }),
+            ];
+          });
+
+          test('it sorts actions by their event element index', () => {
+            const sortedActions = actionsService.sortActions(actions);
+            assert.strictEqual(sortedActions[0].eventElementId, '1');
+            assert.strictEqual(sortedActions[1].eventElementId, '3');
+            assert.strictEqual(sortedActions[2].eventElementId, '2');
+          });
+        });
+      });
     });
   });
 });
@@ -92,19 +131,24 @@ describe('ActionsService', () => {
 function dummyAction({
   sequenceNumber = 1,
   accountUpdateId = '1',
+  eventElementId = '1',
   zkappAccountUpdateIds = [1],
+  zkappEventElementIds = [1],
 }: {
   sequenceNumber?: number;
   accountUpdateId?: string;
+  eventElementId?: string;
   zkappAccountUpdateIds?: number[];
+  zkappEventElementIds?: number[];
 }): Action {
   return {
-    accountUpdateId: accountUpdateId,
+    accountUpdateId,
+    eventElementId,
     data: ['dummy'],
     transactionInfo: {
       sequenceNumber,
       zkappAccountUpdateIds,
-      zkappEventElementIds: [],
+      zkappEventElementIds,
       authorizationKind: 'dummy',
       hash: 'dummy',
       memo: 'dummy',

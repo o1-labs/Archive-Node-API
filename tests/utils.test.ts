@@ -136,6 +136,7 @@ describe('utils', () => {
             {
               element_ids: [1, 2],
               zkapp_account_update_id: 123,
+              zkapp_event_id: 456,
             },
           ];
 
