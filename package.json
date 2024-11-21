@@ -13,7 +13,7 @@
     "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon src/index.ts",
-    "test": "npx tsc && for testfile in $(find build/tests -type f -name '*.test.js'); do node $testfile; done",
+    "test": "./run-tests.sh",
     "clean": "rimraf ./build",
     "gen-test-mocks": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm tests/mocked_sql/generate_mock_data.ts",
     "benchmark": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm benchmark/setup.ts && npx artillery run benchmark/graphql.yaml --output benchmark/report.json",
