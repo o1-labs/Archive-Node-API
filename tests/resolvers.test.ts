@@ -355,8 +355,19 @@ describe('Query Resolvers', async () => {
           actionsResponse[actionsResponse.length - 1].actionData!;
       });
 
-      test('Emitting multiple actions should return multiple actions with the correct data', async () => {
+      test('GQL response contains multiple actions', async () => {
         assert.strictEqual(lastBlockActions.length, numberOfEmits);
+      });
+      test('The actions have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const actionData = lastBlockActions[i]!;
+          assert.deepStrictEqual(actionData.data, [
+            '2',
+            '1',
+            '1',
+            ...zkApp.address.toFields().map((f) => f.toString()),
+          ]);
+        }
       });
     });
   });
