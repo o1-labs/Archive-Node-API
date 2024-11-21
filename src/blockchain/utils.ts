@@ -27,14 +27,17 @@ export function createTransactionInfo(
     sequenceNumber: row.sequence_number,
     zkappAccountUpdateIds: row.zkapp_account_updates_ids,
     zkappEventElementIds: row.zkapp_event_element_ids,
+    zkappFieldArrayElementIds: row.zkapp_field_array_element_ids,
   };
 }
 
 export function createEvent(
+  accountUpdateId: string,
   data: string[],
   transactionInfo: TransactionInfo
 ): Event {
   return {
+    accountUpdateId,
     data,
     transactionInfo,
   };
@@ -42,13 +45,11 @@ export function createEvent(
 
 export function createAction(
   accountUpdateId: string,
-  eventElementId: string,
   data: string[],
   transactionInfo: TransactionInfo
 ): Action {
   return {
     accountUpdateId,
-    eventElementId,
     data,
     transactionInfo,
   };

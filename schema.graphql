@@ -23,6 +23,7 @@ input ActionFilterOptionsInput {
 }
 
 type EventData {
+  accountUpdateId: String!
   transactionInfo: TransactionInfo
   data: [String]!
 }
@@ -53,6 +54,7 @@ type TransactionInfo {
   sequenceNumber: Int! # TODO: Is it ok to make this required?
   zkappAccountUpdateIds: [Int]!
   zkappEventElementIds: [Int]!
+  zkappFieldArrayElementIds: [Int]!
 }
 
 type ActionStates {

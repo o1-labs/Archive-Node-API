@@ -1,6 +1,6 @@
-import { BlockStatusFilter } from './blockchain/types.js';
+import { BlockStatusFilter } from './blockchain/types';
 import { GraphQLResolveInfo } from 'graphql';
-import { GraphQLContext } from './context.js';
+import { GraphQLContext } from './context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = {
@@ -87,6 +87,7 @@ export { BlockStatusFilter };
 
 export type EventData = {
   __typename?: 'EventData';
+  accountUpdateId: Scalars['String']['output'];
   data: Array<Maybe<Scalars['String']['output']>>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
@@ -128,6 +129,7 @@ export type TransactionInfo = {
   status: Scalars['String']['output'];
   zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
   zkappEventElementIds: Array<Maybe<Scalars['Int']['output']>>;
+  zkappFieldArrayElementIds: Array<Maybe<Scalars['Int']['output']>>;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -389,6 +391,7 @@ export type EventDataResolvers<
   ParentType extends
     ResolversParentTypes['EventData'] = ResolversParentTypes['EventData'],
 > = {
+  accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   data?: Resolver<
     Array<Maybe<ResolversTypes['String']>>,
     ParentType,
@@ -459,6 +462,11 @@ export type TransactionInfoResolvers<
     ContextType
   >;
   zkappEventElementIds?: Resolver<
+    Array<Maybe<ResolversTypes['Int']>>,
+    ParentType,
+    ContextType
+  >;
+  zkappFieldArrayElementIds?: Resolver<
     Array<Maybe<ResolversTypes['Int']>>,
     ParentType,
     ContextType

@@ -8,7 +8,7 @@ import {
   UInt64,
   Bool,
 } from 'o1js';
-import { HelloWorld, TestStruct } from './contract.js';
+import { HelloWorld, TestStruct, type TestStructArray } from './contract.js';
 
 export {
   setNetworkConfig,
@@ -17,6 +17,7 @@ export {
   updateContractState,
   emitSingleEvent,
   emitMultipleFieldsEvent,
+  emitMultipleFieldsEvents,
   emitAction,
   emitActionsFromMultipleSenders,
   reduceAction,
@@ -128,7 +129,28 @@ async function emitMultipleFieldsEvent(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStructEvent();
+        await zkApp.emitStructEvent(randomStruct());
+      }
+    }
+  );
+  transaction.sign([senderKey]);
+  await transaction.prove();
+  await sendTransaction(transaction);
+}
+
+async function emitMultipleFieldsEvents(
+  zkApp: HelloWorld,
+  { publicKey: sender, privateKey: senderKey }: Keypair,
+  options: Options = { numberOfEmits: 1 }
+) {
+  console.log('Emitting multiple fields event.');
+  let transaction = await Mina.transaction(
+    { sender, fee: transactionFee },
+    async () => {
+      for (let i = 0; i < options.numberOfEmits; i++) {
+        await zkApp.emitStructsEvent({
+          structs: [randomStruct(), randomStruct(), randomStruct()],
+        });
       }
     }
   );
@@ -140,14 +162,17 @@ async function emitMultipleFieldsEvent(
 async function emitAction(
   zkApp: HelloWorld,
   { publicKey: sender, privateKey: senderKey }: Keypair,
-  options: Options = { numberOfEmits: 1 }
+  options: Options = { numberOfEmits: 1 },
+  testStructs: TestStructArray = {
+    structs: [randomStruct(), randomStruct(), randomStruct()],
+  }
 ) {
   console.log('Emitting action.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStaticStructAction();
+        await zkApp.emitAction(testStructs);
       }
     }
   );
@@ -164,20 +189,15 @@ async function emitActionsFromMultipleSenders(
   const txs = [];
   for (const caller of callers) {
     console.log('Compiling transaction for ', caller.publicKey.toBase58());
-    const randomField = Field(Math.floor(Math.random() * 100_000));
-    const randomUInt64 = UInt64.from(Math.floor(Math.random() * 100_000));
-    const testStruct = new TestStruct({
-      x: randomField,
-      y: Bool(true),
-      z: randomUInt64,
-      address: caller.publicKey,
-    });
+    const testStruct = randomStruct();
     let transaction = await Mina.transaction(
       { sender: caller.publicKey, fee: transactionFee },
       async () => {
         for (let i = 0; i < options.numberOfEmits; i++) {
           testStruct.x = testStruct.x.add(Field(i));
-          await zkApp.emitAction(testStruct);
+          await zkApp.emitAction({
+            structs: [testStruct, testStruct, testStruct],
+          });
         }
       }
     );
@@ -232,4 +252,13 @@ async function sendTransactions(transactions: Mina.Transaction<any, any>[]) {
       console.error('Transaction rejected or failed to finalize:', error);
     }
   }
+}
+
+function randomStruct() {
+  return new TestStruct({
+    x: Field(Math.floor(Math.random() * 100_000)),
+    y: Bool(true),
+    z: UInt64.from(Math.floor(Math.random() * 100_000)),
+    address: PrivateKey.random().toPublicKey(),
+  });
 }

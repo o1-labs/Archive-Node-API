@@ -45,7 +45,8 @@ export type ArchiveNodeDatabaseRow = {
   // Unique identifier for the zkapp account update.
   zkapp_account_update_id: number;
 
-  // Unique identifier for the event element within an account update.
+  // TODO: Would this be more accurately named `zkapp_event_field_array_id`?
+  // Unique identifier for the event within an account update.
   zkapp_event_id: number;
 
   // List of identifiers inside a zkapp account update.
@@ -63,8 +64,12 @@ export type ArchiveNodeDatabaseRow = {
   // The unique identifier that maps events/actions to a specific zkApp.
   zkapp_event_array_id: number;
 
+  // TODO: Would this be more accuratley named `zkapp_event_field_array_ids`?
   // List of `element_ids` that are used to construct the zkApp event.
   zkapp_event_element_ids: number[];
+
+  // List of `element_ids` that are used to construct the field array.
+  zkapp_field_array_element_ids: number[];
 
   // `element_ids` represent a list of identifiers that map to specific field values.
   // These are used to identify which field values are used in a zkApp transaction and construct the data returned to the user.

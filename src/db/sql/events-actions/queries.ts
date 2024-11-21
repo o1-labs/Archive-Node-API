@@ -136,8 +136,8 @@ function emittedEventsCTE(db_client: postgres.Sql) {
     SELECT
       *,
       zke.id AS zkapp_event_id,
-      zkf.id AS zkapp_event_element_id,
       zke.element_ids AS zkapp_event_element_ids,
+      zkfa.element_ids AS zkapp_field_array_element_ids,
       zkfa.id AS zkapp_event_array_id
     FROM
       emitted_zkapp_commands
@@ -155,6 +155,7 @@ function emittedActionsCTE(db_client: postgres.Sql) {
       *,
       zke.id AS zkapp_event_id,
       zke.element_ids AS zkapp_event_element_ids,
+      zkfa.element_ids AS zkapp_field_array_element_ids,
       zkfa.id AS zkapp_event_array_id
     FROM
       emitted_zkapp_commands

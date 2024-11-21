@@ -178,19 +178,8 @@ class ActionsService implements IActionsService {
         b.transactionInfo.zkappAccountUpdateIds.indexOf(
           Number(b.accountUpdateId)
         );
-      if (aAccountUpdateIndex !== bAccountUpdateIndex) {
-        return aAccountUpdateIndex - bAccountUpdateIndex;
-      }
 
-      // Sort by element index within the account update
-      const aEventIndex = a.transactionInfo.zkappEventElementIds.indexOf(
-        Number(a.eventElementId)
-      );
-      const bEventIndex = b.transactionInfo.zkappEventElementIds.indexOf(
-        Number(b.eventElementId)
-      );
-
-      return aEventIndex - bEventIndex;
+      return aAccountUpdateIndex - bAccountUpdateIndex;
     });
   }
 }
