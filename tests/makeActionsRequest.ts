@@ -44,7 +44,7 @@ query getActions($input: ActionFilterOptionsInput!) {
 }
 `;
 
-const schema = createSchema({
+const schema = createSchema<GraphQLContext>({
   typeDefs: loadSchemaSync('./schema.graphql', {
     loaders: [new GraphQLFileLoader()],
   }),
