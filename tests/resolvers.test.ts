@@ -376,21 +376,21 @@ describe('Query Resolvers', async () => {
         assert.strictEqual(actionFieldData.length, 15);
         assert.strictEqual(actionFieldData.slice(0, 5), [
           s1.x.toString(),
-          s1.y.toString(),
+          s1.y.toField().toString(),
           s1.z.toString(),
           s1.address.toFields()[0].toString(),
           s1.address.toFields()[1].toString(),
         ]);
         assert.strictEqual(actionFieldData.slice(5, 10), [
           s2.x.toString(),
-          s2.y.toString(),
+          s2.y.toField().toString(),
           s2.z.toString(),
           s2.address.toFields()[0].toString(),
           s2.address.toFields()[1].toString(),
         ]);
         assert.strictEqual(actionFieldData.slice(10, 15), [
           s3.x.toString(),
-          s3.y.toString(),
+          s3.y.toField().toString(),
           s3.z.toString(),
           s3.address.toFields()[0].toString(),
           s3.address.toFields()[1].toString(),
