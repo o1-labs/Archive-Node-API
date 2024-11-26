@@ -3,7 +3,11 @@ import assert from 'node:assert';
 import { createYoga, createSchema } from 'graphql-yoga';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
-import { buildHTTPExecutor } from '@graphql-tools/executor-http';
+import {
+  buildHTTPExecutor,
+  HTTPExecutorOptions,
+} from '@graphql-tools/executor-http';
+import { AsyncExecutor } from '@graphql-tools/utils';
 import { parse } from 'graphql';
 import { PrivateKey, Lightnet } from 'o1js';
 import { resolvers } from '../src/resolvers.js';
@@ -17,6 +21,35 @@ import {
   Keypair,
 } from '../zkapp/utils.js';
 import { HelloWorld } from '../zkapp/contract.js';
+import {
+  ActionData,
+  ActionOutput,
+  EventData,
+  EventOutput,
+  Maybe,
+} from 'src/resolvers-types.js';
+
+interface ExecutorResult {
+  data:
+    | {
+        events: Array<EventOutput>;
+      }
+    | {
+        actions: Array<ActionOutput>;
+      };
+}
+
+interface EventQueryResult extends ExecutorResult {
+  data: {
+    events: Array<EventOutput>;
+  };
+}
+
+interface ActionQueryResult extends ExecutorResult {
+  data: {
+    actions: Array<ActionOutput>;
+  };
+}
 
 const eventsQuery = `
 query getEvents($input: EventFilterOptionsInput!) {
@@ -79,179 +112,263 @@ query getActions($input: ActionFilterOptionsInput!) {
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
 describe('Query Resolvers', async () => {
-  let executor: any;
+  let executor: AsyncExecutor<GraphQLContext, HTTPExecutorOptions>;
   let senderKeypair: Keypair;
   let zkAppKeypair: Keypair;
   let zkApp: HelloWorld;
 
+  async function executeActionsQuery(variableInput: {
+    address: string;
+  }): Promise<ActionQueryResult> {
+    return (await executor({
+      variables: {
+        input: variableInput,
+      },
+      document: parse(`${actionsQuery}`),
+    })) as ActionQueryResult;
+  }
+
+  async function executeEventsQuery(variableInput: {
+    address: string;
+  }): Promise<EventQueryResult> {
+    return (await executor({
+      variables: {
+        input: variableInput,
+      },
+      document: parse(`${eventsQuery}`),
+    })) as EventQueryResult;
+  }
+
   before(async () => {
-    setNetworkConfig();
+    try {
+      setNetworkConfig();
 
-    const schema = createSchema({
-      typeDefs: loadSchemaSync('./schema.graphql', {
-        loaders: [new GraphQLFileLoader()],
-      }),
-      resolvers,
-    });
-    const context = await buildContext(PG_CONN);
-    const yoga = createYoga<GraphQLContext>({ schema, context });
-    executor = buildHTTPExecutor({
-      fetch: yoga.fetch,
-    });
+      const schema = createSchema<GraphQLContext>({
+        typeDefs: loadSchemaSync('./schema.graphql', {
+          loaders: [new GraphQLFileLoader()],
+        }),
+        resolvers,
+      });
+      const context = await buildContext(PG_CONN);
+      const yoga = createYoga<GraphQLContext>({ schema, context });
+      executor = buildHTTPExecutor({
+        fetch: yoga.fetch,
+      });
 
-    zkAppKeypair = await Lightnet.acquireKeyPair();
-    senderKeypair = await Lightnet.acquireKeyPair();
-    zkApp = await deployContract(
-      zkAppKeypair,
-      senderKeypair,
-      /* fundNewAccount = */ false
-    );
+      zkAppKeypair = await Lightnet.acquireKeyPair();
+      senderKeypair = await Lightnet.acquireKeyPair();
+      zkApp = await deployContract(
+        zkAppKeypair,
+        senderKeypair,
+        /* fundNewAccount = */ false
+      );
+    } catch (error) {
+      console.error(error);
+    }
   });
 
   after(async () => {
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught exception:', err);
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled rejection at:', promise, 'reason:', reason);
+      process.exit(1);
+    });
+
     process.exit(0);
   });
 
   describe('Events', async () => {
+    let eventsResponse: EventOutput[];
+    let lastBlockEvents: Maybe<EventData>[];
+    let results: EventQueryResult;
+
     test('Fetching events with a valid address but no emitted events should not throw', async () => {
       assert.doesNotThrow(async () => {
-        await executor({
-          variables: {
-            input: { address: zkAppKeypair.publicKey.toBase58() },
-          },
-          document: parse(`${eventsQuery}`),
+        await executeEventsQuery({
+          address: zkAppKeypair.publicKey.toBase58(),
         });
       });
     });
 
     test('Fetching events with a empty address should return empty list', async () => {
-      const results = await executor({
-        variables: {
-          input: {
-            address: '',
-          },
-        },
-        document: parse(`${eventsQuery}`),
+      results = await executeEventsQuery({
+        address: '',
       });
       assert.strictEqual(results.data.events.length, 0);
     });
 
-    test('Emitting an event with single field should return a single event with the correct data', async () => {
-      await emitSingleEvent(zkApp, senderKeypair);
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${eventsQuery}`),
+    describe('After emitting an event with a single field once', async () => {
+      before(async () => {
+        await emitSingleEvent(zkApp, senderKeypair);
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-
-      const events = results.data.events;
-      const lastEvent = events[events.length - 1];
-      assert.strictEqual(lastEvent.eventData.length, 1);
+      test('GQL response contains one event in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, 1);
+      });
+      test('The event has the correct data', async () => {
+        const eventData = lastBlockEvents[0]!;
+        assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
+      });
     });
 
-    test('Emitting multiple events with a single field should return multiple events with the correct data', async () => {
-      await emitSingleEvent(zkApp, senderKeypair, { numberOfEmits: 3 });
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${eventsQuery}`),
+    describe('After emitting an event with a single field multiple times', async () => {
+      let results: EventQueryResult;
+      const numberOfEmits = 3;
+      before(async () => {
+        await emitSingleEvent(zkApp, senderKeypair, { numberOfEmits });
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-      const events = results.data.events;
-      const lastEvent = events[events.length - 1];
-      assert.strictEqual(lastEvent.eventData.length, 3);
+      test('GQL response contains multiple events in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, numberOfEmits);
+      });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const eventData = lastBlockEvents[i]!;
+          assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
+        }
+      });
     });
 
-    test('Emitting an event with multiple fields should return an event with multiple values', async () => {
-      await emitMultipleFieldsEvent(zkApp, senderKeypair);
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${eventsQuery}`),
+    describe('After emitting an event with multiple fields once', async () => {
+      let results: EventQueryResult;
+      before(async () => {
+        await emitMultipleFieldsEvent(zkApp, senderKeypair);
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-      const events = results.data.events;
-      const lastEvent = events[events.length - 1];
-      assert.strictEqual(lastEvent.eventData.length, 1);
+
+      test('GQL response contains one event in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, 1);
+      });
+
+      test('The event has the correct data', async () => {
+        const eventData = lastBlockEvents[0]!;
+        // The event type is 1 and the event data is 2, 1 (Bool(true)), 1 and the zkapp address
+        assert.deepStrictEqual(eventData.data, [
+          '1',
+          '2',
+          '1',
+          '1',
+          ...zkApp.address.toFields().map((f) => f.toString()),
+        ]);
+      });
     });
 
-    test('Emitting multiple events with multiple fields should return multiple events with the correct data', async () => {
-      await emitMultipleFieldsEvent(zkApp, senderKeypair, { numberOfEmits: 3 });
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${eventsQuery}`),
+    describe('After emitting an event with multiple fields multiple times', async () => {
+      let results: EventQueryResult;
+      const numberOfEmits = 3;
+      before(async () => {
+        await emitMultipleFieldsEvent(zkApp, senderKeypair, { numberOfEmits });
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-      const events = results.data.events;
-      const lastEvent = events[events.length - 1];
-      assert.strictEqual(lastEvent.eventData.length, 3);
+      test('GQL response contains multiple events in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, numberOfEmits);
+      });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const eventData = lastBlockEvents[i]!;
+          // The event type is 1 and the event data is 2, 1 (Bool(true)), 1, and the zkapp address
+          assert.deepStrictEqual(eventData.data, [
+            '1',
+            '2',
+            '1',
+            '1',
+            ...zkApp.address.toFields().map((f) => f.toString()),
+          ]);
+        }
+      });
     });
   });
 
   describe('Actions', async () => {
+    let actionsResponse: ActionOutput[];
+    let lastBlockActions: Maybe<ActionData>[];
+    let results: ActionQueryResult;
+
     test('Fetching actions with a valid address should not throw', async () => {
       assert.doesNotThrow(async () => {
-        await executor({
-          variables: {
-            input: {
-              address: zkAppKeypair.publicKey.toBase58(),
-            },
-          },
-          document: parse(`${actionsQuery}`),
+        await executeActionsQuery({
+          address: zkAppKeypair.publicKey.toBase58(),
         });
       });
     });
 
     test('Fetching actions with a empty address should return empty list', async () => {
-      const results = await executor({
-        variables: {
-          input: {
-            address: '',
-          },
-        },
-        document: parse(`${actionsQuery}`),
+      results = await executeActionsQuery({
+        address: '',
       });
       assert.strictEqual(results.data.actions.length, 0);
     });
 
-    test('Emitting an action should return a single action with the correct data', async () => {
-      await emitAction(zkApp, senderKeypair);
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${actionsQuery}`),
+    describe('After emitting an action', async () => {
+      before(async () => {
+        await emitAction(zkApp, senderKeypair);
+        results = await executeActionsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        actionsResponse = results.data.actions;
+        lastBlockActions =
+          actionsResponse[actionsResponse.length - 1].actionData!;
       });
-      const actions = results.data.actions;
-      const lastAction = actions[actions.length - 1];
-      assert.strictEqual(lastAction.actionData.length, 1);
+      test('GQL response contains one action', async () => {
+        assert.strictEqual(lastBlockActions.length, 1);
+      });
+      test('The action has the correct data', async () => {
+        const actionData = lastBlockActions[0]!;
+        assert.deepStrictEqual(actionData.data, [
+          '2',
+          '1',
+          '1',
+          ...zkApp.address.toFields().map((f) => f.toString()),
+        ]);
+      });
     });
 
-    test('Emitting multiple actions should return multiple actions with the correct data', async () => {
-      await emitAction(zkApp, senderKeypair, { numberOfEmits: 3 });
-      const results = await executor({
-        variables: {
-          input: {
-            address: zkAppKeypair.publicKey.toBase58(),
-          },
-        },
-        document: parse(`${actionsQuery}`),
+    describe('After emitting multiple actions', async () => {
+      const numberOfEmits = 3;
+      before(async () => {
+        await emitAction(zkApp, senderKeypair, { numberOfEmits });
+        results = await executeActionsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        actionsResponse = results.data.actions;
+        lastBlockActions =
+          actionsResponse[actionsResponse.length - 1].actionData!;
       });
-      const actions = results.data.actions;
-      const lastAction = actions[actions.length - 1];
-      assert.strictEqual(lastAction.actionData.length, 3);
+
+      test('GQL response contains multiple actions', async () => {
+        assert.strictEqual(lastBlockActions.length, numberOfEmits);
+      });
+      test('The actions have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const actionData = lastBlockActions[i]!;
+          assert.deepStrictEqual(actionData.data, [
+            '2',
+            '1',
+            '1',
+            ...zkApp.address.toFields().map((f) => f.toString()),
+          ]);
+        }
+      });
     });
   });
 });

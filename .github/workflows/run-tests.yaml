@@ -20,6 +20,7 @@ jobs:
           - 5432:5432
           - 8080:8080
           - 8181:8181
+          - 8282:8282
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
