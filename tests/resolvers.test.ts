@@ -286,7 +286,7 @@ describe('Query Resolvers', async () => {
       test('the events have the correct data', async () => {
         for (let i = 0; i < numberOfEmits; i++) {
           const eventData = lastBlockEvents[i]!;
-          // The event type is 1 and the event data is 2, 1 (Bool(true)), and the zkapp address
+          // The event type is 1 and the event data is 2, 1 (Bool(true)), 1, and the zkapp address
           assert.deepStrictEqual(eventData.data, [
             '1',
             '2',
