@@ -22,6 +22,7 @@ export {
   emitActionsFromMultipleSenders,
   reduceAction,
   Keypair,
+  randomStruct,
 };
 
 const transactionFee = 100_000_000;
@@ -122,14 +123,17 @@ async function emitSingleEvent(
 async function emitMultipleFieldsEvent(
   zkApp: HelloWorld,
   { publicKey: sender, privateKey: senderKey }: Keypair,
-  options: Options = { numberOfEmits: 1 }
+  options: Options = { numberOfEmits: 1 },
+  baseStruct: TestStruct = randomStruct()
 ) {
   console.log('Emitting multiple fields event.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStructEvent(randomStruct());
+        const struct = new TestStruct(baseStruct);
+        struct.x = struct.x.add(Field(i));
+        await zkApp.emitStructEvent(struct);
       }
     }
   );
@@ -141,15 +145,24 @@ async function emitMultipleFieldsEvent(
 async function emitMultipleFieldsEvents(
   zkApp: HelloWorld,
   { publicKey: sender, privateKey: senderKey }: Keypair,
-  options: Options = { numberOfEmits: 1 }
+  options: Options = { numberOfEmits: 1 },
+  baseStruct: TestStruct = randomStruct()
 ) {
   console.log('Emitting multiple fields event.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
+        const struct = new TestStruct(baseStruct);
+        struct.x = struct.x.add(Field(i));
+        const s1 = new TestStruct(struct);
+        const s2 = new TestStruct(struct);
+        const s3 = new TestStruct(struct);
+        s1.z = s1.z.add(UInt64.from(i));
+        s2.z = s2.z.add(UInt64.from(i + 1));
+        s3.z = s3.z.add(UInt64.from(i + 2));
         await zkApp.emitStructsEvent({
-          structs: [randomStruct(), randomStruct(), randomStruct()],
+          structs: [s1, s2, s3],
         });
       }
     }

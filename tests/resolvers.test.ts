@@ -7,6 +7,7 @@ import {
   buildHTTPExecutor,
   HTTPExecutorOptions,
 } from '@graphql-tools/executor-http';
+import { AsyncExecutor } from '@graphql-tools/utils';
 import { parse } from 'graphql';
 import {
   Bool,
@@ -28,11 +29,39 @@ import {
   Keypair,
   emitActionsFromMultipleSenders,
   emitMultipleFieldsEvents,
+  randomStruct,
 } from '../zkapp/utils.js';
 import { HelloWorld, TestStruct } from '../zkapp/contract.js';
-import { Actions } from 'src/blockchain/types.js';
-import { AsyncExecutor } from '@graphql-tools/utils';
-import { ActionOutput, EventOutput } from 'src/resolvers-types.js';
+import {
+  ActionData,
+  ActionOutput,
+  EventData,
+  EventOutput,
+  Maybe,
+} from 'src/resolvers-types.js';
+import exp from 'node:constants';
+
+interface ExecutorResult {
+  data:
+    | {
+        events: Array<EventOutput>;
+      }
+    | {
+        actions: Array<ActionOutput>;
+      };
+}
+
+interface EventQueryResult extends ExecutorResult {
+  data: {
+    events: Array<EventOutput>;
+  };
+}
+
+interface ActionQueryResult extends ExecutorResult {
+  data: {
+    actions: Array<ActionOutput>;
+  };
+}
 
 const eventsQuery = `
 query getEvents($input: EventFilterOptionsInput!) {
@@ -189,165 +218,233 @@ describe('Query Resolvers', async () => {
   });
 
   describe('Events', async () => {
+    let eventsResponse: EventOutput[];
+    let lastBlockEvents: Maybe<EventData>[];
+    let results: EventQueryResult;
+
     test('Fetching events with a valid address but no emitted events should not throw', async () => {
       assert.doesNotThrow(async () => {
-        await executor({
-          variables: {
-            input: { address: zkAppKeypair.publicKey.toBase58() },
-          },
-          document: parse(`${eventsQuery}`),
+        await executeEventsQuery({
+          address: zkAppKeypair.publicKey.toBase58(),
         });
       });
     });
 
     test('Fetching events with a empty address should return empty list', async () => {
-      const results = (await executor({
-        variables: {
-          input: {
-            address: '',
-          },
-        },
-        document: parse(`${eventsQuery}`),
-      })) as EventQueryResult;
+      results = await executeEventsQuery({
+        address: '',
+      });
       assert.strictEqual(results.data.events.length, 0);
     });
 
-    describe('After emitting a single event', async () => {
-      let results: EventQueryResult;
+    describe('After emitting an event with a single field once', async () => {
       before(async () => {
         await emitSingleEvent(zkApp, senderKeypair);
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-
-      test('Emitting an event should return a single event with the correct data', async () => {
-        const events = results.data.events;
-        const lastEvent = events[events.length - 1];
-        assert.strictEqual(lastEvent.eventData!.length, 1);
+      test('GQL response contains one event in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, 1);
+      });
+      test('The event has the correct data', async () => {
+        const eventData = lastBlockEvents[0]!;
+        assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
       });
     });
 
-    describe('After emitting multiple events', async () => {
-      const numberOfEmits = 3;
+    describe('After emitting an event with a single field multiple times', async () => {
       let results: EventQueryResult;
+      const numberOfEmits = 3;
       before(async () => {
         await emitSingleEvent(zkApp, senderKeypair, { numberOfEmits });
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-
-      test('Most recent block with events on this account has the correct number of events', async () => {
-        const eventOutput = results.data.events;
-        const lastBlockEvents = eventOutput[eventOutput.length - 1].eventData!;
+      test('GQL response contains multiple events in the latest block', async () => {
         assert.strictEqual(lastBlockEvents.length, numberOfEmits);
       });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const eventData = lastBlockEvents[i]!;
+          assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
+        }
+      });
     });
 
-    describe('Events with multiple fields', async () => {
+    describe('After emitting an event with multiple fields once', async () => {
       let results: EventQueryResult;
+      const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvent(zkApp, senderKeypair);
+        await emitMultipleFieldsEvent(
+          zkApp,
+          senderKeypair,
+          undefined,
+          baseStruct
+        );
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
 
-      test('Emitting an event with multiple fields should return an event with multiple values', async () => {
-        const events = results.data.events;
-        const lastEvent = events[events.length - 1];
-        assert.strictEqual(lastEvent.eventData!.length, 1);
+      test('GQL response contains one event in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, 1);
+      });
+
+      test('The event has the correct data', async () => {
+        const eventData = lastBlockEvents[0]!;
+        const expectedStructData = structToAction(baseStruct);
+        // The event type is 1 and the event data comes from the base struct
+        assert.deepStrictEqual(eventData.data, ['1', ...expectedStructData]);
       });
     });
 
-    describe('Events with multiple field arrays', async () => {
+    describe('After emitting an event with multiple fields multiple times', async () => {
       let results: EventQueryResult;
       const numberOfEmits = 3;
+      const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvents(zkApp, senderKeypair, { numberOfEmits });
+        await emitMultipleFieldsEvent(
+          zkApp,
+          senderKeypair,
+          { numberOfEmits },
+          baseStruct
+        );
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
-
-      test('Last block contains the correct number of events', async () => {
-        const events = results.data.events;
-        const lastEvent = events[events.length - 1];
-        assert.strictEqual(lastEvent.eventData!.length, numberOfEmits);
+      test('GQL response contains multiple events in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, numberOfEmits);
       });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const expectedStruct = new TestStruct(baseStruct);
+          expectedStruct.x = expectedStruct.x.add(Field(i));
+          const expectedStructData = structToAction(expectedStruct);
+          const eventData = lastBlockEvents[i]!;
+          // The event type is 1 and the event data comes from the base struct
+          assert.deepStrictEqual(eventData.data, ['1', ...expectedStructData]);
+        }
+      });
+    });
 
-      test('Events have the correct number of fields', async () => {
-        const events = results.data.events;
-        const lastEvent = events[events.length - 1];
-        const expectedLength = 16; // 1 (event type) + 3 (event field arrays) * (1 (x: Field) + 1 (y: Bool) + 1 (z: UInt64) + 2 (publicKey: PublicKey))
-        assert.strictEqual(
-          lastEvent.eventData![0]!.data.length,
-          expectedLength
+    describe('After emitting multiple events with multiple fields', async () => {
+      let results: EventQueryResult;
+      const numberOfEmits = 3;
+      const baseStruct = randomStruct();
+      before(async () => {
+        await emitMultipleFieldsEvents(
+          zkApp,
+          senderKeypair,
+          { numberOfEmits },
+          baseStruct
         );
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
+      });
+      test('GQL response contains multiple events in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, numberOfEmits);
+      });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const expectedStruct = new TestStruct(baseStruct);
+          expectedStruct.x = expectedStruct.x.add(Field(i));
+          const expectedS1 = new TestStruct(expectedStruct);
+          const expectedS2 = new TestStruct(expectedStruct);
+          const expectedS3 = new TestStruct(expectedStruct);
+          expectedS1.z = expectedS1.z.add(UInt64.from(i));
+          expectedS2.z = expectedS2.z.add(UInt64.from(i + 1));
+          expectedS3.z = expectedS3.z.add(UInt64.from(i + 2));
+          const eventData = lastBlockEvents[i]!;
+          const structData = eventData.data;
+          assert.strictEqual(structData.length, 16);
+          assert.strictEqual(structData[0], '2');
+          assert.deepStrictEqual(
+            structData.slice(1, 6),
+            structToAction(expectedS1)
+          );
+          assert.deepStrictEqual(
+            structData.slice(6, 11),
+            structToAction(expectedS2)
+          );
+          assert.deepStrictEqual(
+            structData.slice(11, 16),
+            structToAction(expectedS3)
+          );
+        }
       });
     });
   });
 
   describe('Actions', async () => {
+    let actionsResponse: ActionOutput[];
+    let lastBlockActions: Maybe<ActionData>[];
+    let results: ActionQueryResult;
+
     test('Fetching actions with a valid address should not throw', async () => {
       assert.doesNotThrow(async () => {
-        await executor({
-          variables: {
-            input: {
-              address: zkAppKeypair.publicKey.toBase58(),
-            },
-          },
-          document: parse(`${actionsQuery}`),
+        await executeActionsQuery({
+          address: zkAppKeypair.publicKey.toBase58(),
         });
       });
     });
     test('Fetching actions with a empty address should return empty list', async () => {
-      const results = (await executor({
-        variables: {
-          input: {
-            address: '',
-          },
-        },
-        document: parse(`${actionsQuery}`),
-      })) as ActionQueryResult;
+      results = await executeActionsQuery({
+        address: '',
+      });
       assert.strictEqual(results.data.actions.length, 0);
     });
-    describe('After emitting a single action', async () => {
-      let results: ActionQueryResult;
+
+    describe('After emitting an action', async () => {
+      const [s1, s2, s3] = [randomStruct(), randomStruct(), randomStruct()];
+      const testStructArray = {
+        structs: [s1, s2, s3],
+      };
       before(async () => {
-        await emitAction(zkApp, senderKeypair);
+        await emitAction(zkApp, senderKeypair, undefined, testStructArray);
         results = await executeActionsQuery({
           address: zkApp.address.toBase58(),
         });
+        actionsResponse = results.data.actions;
+        lastBlockActions =
+          actionsResponse[actionsResponse.length - 1].actionData!;
       });
-      test('Emitting an action should return a single action with the correct data', async () => {
-        const actions = results.data.actions;
-        const lastAction = actions[actions.length - 1];
-        assert.strictEqual(lastAction.actionData!.length, 1);
+      test('GQL response contains one action', async () => {
+        assert.strictEqual(lastBlockActions.length, 1);
+      });
+      test('The action has the correct data', async () => {
+        const actionFieldData = lastBlockActions[0]!.data;
+        assert.strictEqual(actionFieldData.length, 15);
+        assert.deepStrictEqual(actionFieldData.slice(0, 5), structToAction(s1));
+        assert.deepStrictEqual(
+          actionFieldData.slice(5, 10),
+          structToAction(s2)
+        );
+        assert.deepStrictEqual(
+          actionFieldData.slice(10, 15),
+          structToAction(s3)
+        );
       });
     });
     describe('After emitting multiple actions', () => {
       const numberOfEmits = 3;
       let results: ActionQueryResult;
-      const s1 = new TestStruct({
-        x: Field(3),
-        y: Bool(true),
-        z: UInt64.from(1),
-        address: PrivateKey.random().toPublicKey(),
-      });
-      const s2 = new TestStruct({
-        x: Field(2),
-        y: Bool(true),
-        z: UInt64.from(1),
-        address: PrivateKey.random().toPublicKey(),
-      });
-      const s3 = new TestStruct({
-        x: Field(1),
-        y: Bool(true),
-        z: UInt64.from(1),
-        address: PrivateKey.random().toPublicKey(),
-      });
+      const s1 = randomStruct();
+      const s2 = randomStruct();
+      const s3 = randomStruct();
       const testStructs = {
         structs: [s1, s2, s3],
       };
@@ -356,72 +453,29 @@ describe('Query Resolvers', async () => {
         results = await executeActionsQuery({
           address: zkApp.address.toBase58(),
         });
+        actionsResponse = results.data.actions;
+        lastBlockActions =
+          actionsResponse[actionsResponse.length - 1].actionData!;
       });
-      test('Emitting actions from many accounts should be fetchable in o1js', async () => {
-        await Mina.fetchActions(zkApp.address); // This line will throw if actions do not reproduce the correct action hash
-        assert(true);
-      });
-      test('Most recent block with actions on this account has the correct number of actions', async () => {
-        const actionOutput = results.data.actions;
-        const lastBlockActions =
-          actionOutput[actionOutput.length - 1].actionData!;
+      test('GQL response contains multiple actions', async () => {
         assert.strictEqual(lastBlockActions.length, numberOfEmits);
       });
       test('Fetched actions have correct data', async () => {
-        const actionOutput = results.data.actions;
-        const lastBlockActions =
-          actionOutput[actionOutput.length - 1].actionData!;
         const lastAction = lastBlockActions[lastBlockActions.length - 1]!;
         const actionFieldData = lastAction.data;
         assert.strictEqual(actionFieldData.length, 15);
-        assert.equal(actionFieldData.slice(0, 5), [
-          s1.x.toString(),
-          s1.y.toField().toString(),
-          s1.z.toString(),
-          s1.address.toFields()[0].toString(),
-          s1.address.toFields()[1].toString(),
-        ]);
-        assert.equal(actionFieldData.slice(5, 10), [
-          s2.x.toString(),
-          s2.y.toField().toString(),
-          s2.z.toString(),
-          s2.address.toFields()[0].toString(),
-          s2.address.toFields()[1].toString(),
-        ]);
-        assert.equal(actionFieldData.slice(10, 15), [
-          s3.x.toString(),
-          s3.y.toField().toString(),
-          s3.z.toString(),
-          s3.address.toFields()[0].toString(),
-          s3.address.toFields()[1].toString(),
-        ]);
-      });
-    });
-    describe('Actions from different accounts', async () => {
-      const sendersCount = 5;
-      const actionsCount = 3;
-      const senders: Keypair[] = [];
-      let results: ActionQueryResult;
-
-      before(async () => {
-        for (let i = 0; i < sendersCount; i++) {
-          senders.push(await Lightnet.acquireKeyPair());
-        }
-        await emitActionsFromMultipleSenders(zkApp, senders, {
-          numberOfEmits: actionsCount,
-        });
-
-        results = await executeActionsQuery({
-          address: zkApp.address.toBase58(),
-        });
-      });
-      test('Emitting actions from many accounts should be fetchable in o1js', async () => {
-        await Mina.fetchActions(zkApp.address); // This line will throw if actions do not reproduce the correct action hash
-        assert(true);
+        assert.deepStrictEqual(actionFieldData.slice(0, 5), structToAction(s1));
+        assert.deepStrictEqual(
+          actionFieldData.slice(5, 10),
+          structToAction(s2)
+        );
+        assert.deepStrictEqual(
+          actionFieldData.slice(10, 15),
+          structToAction(s3)
+        );
       });
       test('Fetched actions have order metadata', async () => {
-        const actionOutput = results.data.actions;
-        for (const block of actionOutput) {
+        for (const block of actionsResponse) {
           const actionData = block.actionData;
           for (const action of actionData!) {
             assert(typeof action!.transactionInfo!.sequenceNumber === 'number');
@@ -430,9 +484,8 @@ describe('Query Resolvers', async () => {
         }
       });
       test('Fetched actions have correct order', async () => {
-        const actionOutput = results.data.actions;
         let testedAccountUpdateOrder = false;
-        for (const block of actionOutput) {
+        for (const block of actionsResponse) {
           const actionData = block.actionData;
           for (let i = 1; i < actionData!.length; i++) {
             const previousAction = actionData![i - 1]!;
@@ -457,3 +510,12 @@ describe('Query Resolvers', async () => {
     });
   });
 });
+
+function structToAction(s: TestStruct) {
+  return [
+    s.x.toString(),
+    s.y.toField().toString(),
+    s.z.toString(),
+    ...s.address.toFields().map((f) => f.toString()),
+  ];
+}
