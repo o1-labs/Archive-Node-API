@@ -13,6 +13,7 @@ export enum BlockStatusFilter {
 }
 
 export type Event = {
+  accountUpdateId: string;
   transactionInfo: TransactionInfo;
   data: string[];
 };
@@ -41,6 +42,10 @@ export type TransactionInfo = {
   hash: string;
   memo: string;
   authorizationKind: string;
+  sequenceNumber: number;
+  zkappAccountUpdateIds: number[];
+  zkappEventElementIds: number[];
+  zkappFieldArrayElementIds: number[];
 };
 
 export type Events = {

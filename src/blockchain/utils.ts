@@ -24,14 +24,20 @@ export function createTransactionInfo(
     hash: row.hash,
     memo: row.memo,
     authorizationKind: row.authorization_kind,
+    sequenceNumber: row.sequence_number,
+    zkappAccountUpdateIds: row.zkapp_account_updates_ids,
+    zkappEventElementIds: row.zkapp_event_element_ids,
+    zkappFieldArrayElementIds: row.zkapp_field_array_element_ids,
   };
 }
 
 export function createEvent(
+  accountUpdateId: string,
   data: string[],
   transactionInfo: TransactionInfo
 ): Event {
   return {
+    accountUpdateId,
     data,
     transactionInfo,
   };

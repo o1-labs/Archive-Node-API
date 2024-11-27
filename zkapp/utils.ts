@@ -5,8 +5,10 @@ import {
   Mina,
   PrivateKey,
   fetchAccount,
+  UInt64,
+  Bool,
 } from 'o1js';
-import { HelloWorld } from './contract.js';
+import { HelloWorld, TestStruct, type TestStructArray } from './contract.js';
 
 export {
   setNetworkConfig,
@@ -15,9 +17,12 @@ export {
   updateContractState,
   emitSingleEvent,
   emitMultipleFieldsEvent,
+  emitMultipleFieldsEvents,
   emitAction,
+  emitActionsFromMultipleSenders,
   reduceAction,
   Keypair,
+  randomStruct,
 };
 
 const transactionFee = 100_000_000;
@@ -118,14 +123,47 @@ async function emitSingleEvent(
 async function emitMultipleFieldsEvent(
   zkApp: HelloWorld,
   { publicKey: sender, privateKey: senderKey }: Keypair,
-  options: Options = { numberOfEmits: 1 }
+  options: Options = { numberOfEmits: 1 },
+  baseStruct: TestStruct = randomStruct()
 ) {
   console.log('Emitting multiple fields event.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStructEvent();
+        const struct = new TestStruct(baseStruct);
+        struct.x = struct.x.add(Field(i));
+        await zkApp.emitStructEvent(struct);
+      }
+    }
+  );
+  transaction.sign([senderKey]);
+  await transaction.prove();
+  await sendTransaction(transaction);
+}
+
+async function emitMultipleFieldsEvents(
+  zkApp: HelloWorld,
+  { publicKey: sender, privateKey: senderKey }: Keypair,
+  options: Options = { numberOfEmits: 1 },
+  baseStruct: TestStruct = randomStruct()
+) {
+  console.log('Emitting multiple fields event.');
+  let transaction = await Mina.transaction(
+    { sender, fee: transactionFee },
+    async () => {
+      for (let i = 0; i < options.numberOfEmits; i++) {
+        const struct = new TestStruct(baseStruct);
+        struct.x = struct.x.add(Field(i));
+        const s1 = new TestStruct(struct);
+        const s2 = new TestStruct(struct);
+        const s3 = new TestStruct(struct);
+        s1.z = s1.z.add(UInt64.from(i));
+        s2.z = s2.z.add(UInt64.from(i + 1));
+        s3.z = s3.z.add(UInt64.from(i + 2));
+        await zkApp.emitStructsEvent({
+          structs: [s1, s2, s3],
+        });
       }
     }
   );
@@ -137,20 +175,51 @@ async function emitMultipleFieldsEvent(
 async function emitAction(
   zkApp: HelloWorld,
   { publicKey: sender, privateKey: senderKey }: Keypair,
-  options: Options = { numberOfEmits: 1 }
+  options: Options = { numberOfEmits: 1 },
+  testStructs: TestStructArray = {
+    structs: [randomStruct(), randomStruct(), randomStruct()],
+  }
 ) {
   console.log('Emitting action.');
   let transaction = await Mina.transaction(
     { sender, fee: transactionFee },
     async () => {
       for (let i = 0; i < options.numberOfEmits; i++) {
-        await zkApp.emitStructAction();
+        await zkApp.emitAction(testStructs);
       }
     }
   );
   transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
+}
+
+async function emitActionsFromMultipleSenders(
+  zkApp: HelloWorld,
+  callers: Keypair[],
+  options: Options = { numberOfEmits: 2 }
+) {
+  const txs = [];
+  for (const caller of callers) {
+    console.log('Compiling transaction for ', caller.publicKey.toBase58());
+    const testStruct = randomStruct();
+    let transaction = await Mina.transaction(
+      { sender: caller.publicKey, fee: transactionFee },
+      async () => {
+        for (let i = 0; i < options.numberOfEmits; i++) {
+          testStruct.x = testStruct.x.add(Field(i));
+          await zkApp.emitAction({
+            structs: [testStruct, testStruct, testStruct],
+          });
+        }
+      }
+    );
+    transaction.sign([caller.privateKey]);
+    await transaction.prove();
+    txs.push(transaction);
+  }
+
+  await sendTransactions(txs);
 }
 
 async function reduceAction(
@@ -181,4 +250,28 @@ async function sendTransaction(transaction: Mina.Transaction<any, any>) {
   } catch (error) {
     console.error('Transaction rejected or failed to finalize:', error);
   }
+}
+
+async function sendTransactions(transactions: Mina.Transaction<any, any>[]) {
+  const pendingTxs = transactions.map((tx) => tx.send());
+  console.log('Waiting for transactions to be included in a block.\n');
+
+  for (const pendingTx of pendingTxs) {
+    let tx = await pendingTx;
+    try {
+      await tx.wait({ maxAttempts: 90 });
+      console.log(`Success! Transaction sent. Txn hash: ${tx.hash}`);
+    } catch (error) {
+      console.error('Transaction rejected or failed to finalize:', error);
+    }
+  }
+}
+
+function randomStruct() {
+  return new TestStruct({
+    x: Field(Math.floor(Math.random() * 100_000)),
+    y: Bool(true),
+    z: UInt64.from(Math.floor(Math.random() * 100_000)),
+    address: PrivateKey.random().toPublicKey(),
+  });
 }

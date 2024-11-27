@@ -115,6 +115,7 @@ describe('utils', () => {
         test('map rows to an array of events', () => {
           const rows: any[] = [
             {
+              zkapp_account_update_id: '1',
               element_ids: [1, 2],
             },
           ];
@@ -136,6 +137,7 @@ describe('utils', () => {
             {
               element_ids: [1, 2],
               zkapp_account_update_id: 123,
+              zkapp_event_id: 456,
             },
           ];
 

@@ -199,7 +199,7 @@ function mapActionOrEvent(
 ) {
   const data: (Event | Action)[] = [];
   for (let i = 0; i < rows.length; i++) {
-    const { element_ids } = rows[i];
+    const { zkapp_account_update_id, element_ids } = rows[i];
     const transactionInfo = createTransactionInfo(rows[i]);
     const elementIdToFieldValues = getFieldValuesFromElementIds(
       element_ids,
@@ -207,7 +207,11 @@ function mapActionOrEvent(
     );
 
     if (kind === 'event') {
-      const event = createEvent(elementIdToFieldValues, transactionInfo);
+      const event = createEvent(
+        zkapp_account_update_id.toString(),
+        elementIdToFieldValues,
+        transactionInfo
+      );
       data.push(event);
     } else {
       const { zkapp_account_update_id } = rows[i];
