@@ -51,6 +51,7 @@ class ActionsService implements IActionsService {
   ): Promise<Actions> {
     const sqlSpan = tracingState.startSpan('actions.SQL');
     const rows = await this.executeActionsQuery(input);
+
     sqlSpan.end();
 
     const processingSpan = tracingState.startSpan('actions.processing');

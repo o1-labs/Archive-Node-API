@@ -45,10 +45,6 @@ export type ArchiveNodeDatabaseRow = {
   // Unique identifier for the zkapp account update.
   zkapp_account_update_id: number;
 
-  // TODO: Would this be more accurately named `zkapp_event_field_array_id`?
-  // Unique identifier for the event within an account update.
-  zkapp_event_id: number;
-
   // List of identifiers inside a zkapp account update.
   zkapp_account_updates_ids: number[];
 
@@ -61,25 +57,32 @@ export type ArchiveNodeDatabaseRow = {
   // Unique hash identifier.
   hash: string;
 
-  // The unique identifier that maps events/actions to a specific zkApp.
-  zkapp_event_array_id: number;
+  // id of a single event in an account update
+  account_update_event_id: number;
 
-  // TODO: Would this be more accuratley named `zkapp_event_field_array_ids`?
-  // List of `element_ids` that are used to construct the zkApp event.
-  zkapp_event_element_ids: number[];
+  // id of an array of events per account update
+  // account_update_events_id points to an array of account_update_event_id
+  account_update_events_id: number;
+
+  // List of ids of the field arrays used to construct the event array
+  // each account_update_event may have many event elements
+  event_element_ids: number[];
+
+  // id of an array of field elements
+  // each event_element_id in event_element_ids is an event_field_elements_id
+  event_field_elements_id: number;
 
   // List of `element_ids` that are used to construct the field array.
-  zkapp_field_array_element_ids: number[];
-
-  // `element_ids` represent a list of identifiers that map to specific field values.
-  // These are used to identify which field values are used in a zkApp transaction and construct the data returned to the user.
-  element_ids: number[];
+  // Each event_field_elements_id points to an array of event_field_element_ids
+  event_field_element_ids: number[];
 
   // Unique id for a `field` value. Each field value in the Archive Node has it's own unique id.
-  id: number;
+  // Each element_id in event_field_element_ids is a field_id
+  field_id: number;
 
   // Field value information.
-  field: string;
+  // Each field_id points to a single field_value
+  field_value: string;
 
   // Output of the last VRF (Verifiable Random Function).
   last_vrf_output: string;
