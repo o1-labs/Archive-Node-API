@@ -348,17 +348,6 @@ export function getEventsQuery(
   `;
 }
 
-async function logQuery(strings: TemplateStringsArray, ...values: any[]) {
-  const resolvedValues = await Promise.all(values);
-
-  let query = '';
-  strings.forEach((string, i) => {
-    query += string + (values[i] !== undefined ? values[i] : '');
-  });
-  console.log('Interpolated Query:', query);
-  return query;
-}
-
 export function getActionsQuery(
   db_client: postgres.Sql,
   address: string,

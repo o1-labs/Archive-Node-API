@@ -222,38 +222,38 @@ describe('Query Resolvers', async () => {
     let lastBlockEvents: Maybe<EventData>[];
     let results: EventQueryResult;
 
-    // test('Fetching events with a valid address but no emitted events should not throw', async () => {
-    //   assert.doesNotThrow(async () => {
-    //     await executeEventsQuery({
-    //       address: zkAppKeypair.publicKey.toBase58(),
-    //     });
-    //   });
-    // });
+    test('Fetching events with a valid address but no emitted events should not throw', async () => {
+      assert.doesNotThrow(async () => {
+        await executeEventsQuery({
+          address: zkAppKeypair.publicKey.toBase58(),
+        });
+      });
+    });
 
-    // test('Fetching events with a empty address should return empty list', async () => {
-    //   results = await executeEventsQuery({
-    //     address: '',
-    //   });
-    //   assert.strictEqual(results.data.events.length, 0);
-    // });
+    test('Fetching events with a empty address should return empty list', async () => {
+      results = await executeEventsQuery({
+        address: '',
+      });
+      assert.strictEqual(results.data.events.length, 0);
+    });
 
-    // describe('After emitting an event with a single field once', async () => {
-    //   before(async () => {
-    //     await emitSingleEvent(zkApp, senderKeypair);
-    //     results = await executeEventsQuery({
-    //       address: zkApp.address.toBase58(),
-    //     });
-    //     eventsResponse = results.data.events;
-    //     lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
-    //   });
-    //   test('GQL response contains one event in the latest block', async () => {
-    //     assert.strictEqual(lastBlockEvents.length, 1);
-    //   });
-    //   test('The event has the correct data', async () => {
-    //     const eventData = lastBlockEvents[0]!;
-    //     assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
-    //   });
-    // });
+    describe('After emitting an event with a single field once', async () => {
+      before(async () => {
+        await emitSingleEvent(zkApp, senderKeypair);
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
+      });
+      test('GQL response contains one event in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, 1);
+      });
+      test('The event has the correct data', async () => {
+        const eventData = lastBlockEvents[0]!;
+        assert.deepStrictEqual(eventData.data, ['0', '2']); // event type enum = 0 and event data = 2
+      });
+    });
 
     describe('After emitting an event with a single field multiple times', async () => {
       let results: EventQueryResult;

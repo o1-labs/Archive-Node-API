@@ -123,8 +123,8 @@ function removeRedundantEmittedFields(
   for (let i = 0; i < archiveNodeRow.length; i++) {
     const currentRow = archiveNodeRow[i];
     const {
-      event_field_elements_id, // The unique id for the event/action emitted
-      event_field_element_ids, // The list of field ids that make up the event/action
+      event_field_elements_id, // The unique id for the field array in the current row
+      event_element_ids, // The list of element ids in the event (list of event_field_elements_id)
       zkapp_account_update_id, // The unique id for the account update that emitted the event/action
       zkapp_account_updates_ids, // List of all account update ids inside the transaction
     } = currentRow;
@@ -140,7 +140,7 @@ function removeRedundantEmittedFields(
       // Since multiple events/actions can be emitted in a single account update, we want to put back the event/action
       // in the correct place. To do this, we need to know the index of the event array id in the list of event array ids (these stored in order by the Archive Node)
       const emittedEventOrActionIndexes = findAllIndexes(
-        event_field_element_ids,
+        event_element_ids,
         event_field_elements_id
       );
 
