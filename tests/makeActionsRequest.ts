@@ -7,7 +7,7 @@ import { resolvers } from '../src/resolvers.js';
 import { buildContext, GraphQLContext } from '../src/context.js';
 
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
-const zkappAccount = 'B62qrndmDoSMeRr4nyLi4JoRgKoJgXtToo3rRfoWTiUpDpb8nvxc8C5';
+const zkappAccount = 'B62qqup6vjav292SNLvSS419ZSDj6Q8aBnyuxtmpfkm3ogZ5si7yZSG.';
 
 const actionsQuery = `
 query getActions($input: ActionFilterOptionsInput!) {

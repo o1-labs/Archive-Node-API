@@ -60,10 +60,6 @@ export type ArchiveNodeDatabaseRow = {
   // id of a single event in an account update
   account_update_event_id: number;
 
-  // id of an array of events per account update
-  // account_update_events_id points to an array of account_update_event_id
-  account_update_events_id: number;
-
   // List of ids of the field arrays used to construct the event array
   // each account_update_event may have many event elements
   event_element_ids: number[];

@@ -123,7 +123,7 @@ function removeRedundantEmittedFields(
   for (let i = 0; i < archiveNodeRow.length; i++) {
     const currentRow = archiveNodeRow[i];
     const {
-      account_update_event_id, // The unique id for the event/action emitted
+      event_field_elements_id, // The unique id for the event/action emitted
       event_field_element_ids, // The list of field ids that make up the event/action
       zkapp_account_update_id, // The unique id for the account update that emitted the event/action
       zkapp_account_updates_ids, // List of all account update ids inside the transaction
@@ -133,7 +133,7 @@ function removeRedundantEmittedFields(
     // This is used to check if we have already seen this event/action before.
     const uniqueEventId = createUniqueEventId(
       zkapp_account_update_id,
-      account_update_event_id
+      event_field_elements_id
     );
 
     if (!seenEventOrActionIds.has(uniqueEventId)) {
@@ -141,7 +141,7 @@ function removeRedundantEmittedFields(
       // in the correct place. To do this, we need to know the index of the event array id in the list of event array ids (these stored in order by the Archive Node)
       const emittedEventOrActionIndexes = findAllIndexes(
         event_field_element_ids,
-        account_update_event_id
+        event_field_elements_id
       );
 
       // Since multiple account updates can be emitted in a single transaction, we need to know the index of the account update id in the list of account update ids
@@ -152,7 +152,7 @@ function removeRedundantEmittedFields(
 
       if (accountUpdateIndexes.length === 0) {
         throw new Error(
-          `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${account_update_event_id}).`
+          `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${event_field_elements_id}).`
         );
       }
 

@@ -12,7 +12,7 @@ import { ArchiveNodeDatabaseRow } from '../src/db/sql/events-actions/types.js';
 describe('utils', () => {
   describe('partitionBlocks', () => {
     test('should partition rows by block hash and transaction hash', () => {
-      const rows: any[] = [
+      const rows: Partial<ArchiveNodeDatabaseRow>[] = [
         { state_hash: 'state_hash_1', hash: 'hash_1' },
         { state_hash: 'state_hash_1', hash: 'hash_2' },
         { state_hash: 'state_hash_2', hash: 'hash_3' },
@@ -32,7 +32,7 @@ describe('utils', () => {
     });
 
     test('should return empty array if no rows', () => {
-      const rows: any[] = [];
+      const rows: ArchiveNodeDatabaseRow[] = [];
       const result = partitionBlocks(rows);
       assert.strictEqual(result.size, 0);
     });
@@ -40,10 +40,10 @@ describe('utils', () => {
 
   describe('getElementIdFieldValues', () => {
     test('should map id to field for each row', () => {
-      const rows: any[] = [
-        { id: 1, field: 'field_1' },
-        { id: 2, field: 'field_2' },
-        { id: 3, field: 'field_3' },
+      const rows: Partial<ArchiveNodeDatabaseRow>[] = [
+        { field_id: 1, field_value: 'field_1' },
+        { field_id: 2, field_value: 'field_2' },
+        { field_id: 3, field_value: 'field_3' },
       ];
 
       const result = getElementIdFieldValues(rows as ArchiveNodeDatabaseRow[]);
@@ -54,7 +54,7 @@ describe('utils', () => {
     });
 
     test('should handle empty rows', () => {
-      const rows: any[] = [];
+      const rows: ArchiveNodeDatabaseRow[] = [];
       const result = getElementIdFieldValues(rows);
       assert(result.size === 0);
     });
@@ -62,23 +62,23 @@ describe('utils', () => {
 
   describe('removeRedundantEmittedFields', () => {
     test('should remove duplicate rows based on unique event ID', () => {
-      const rows: any[] = [
+      const rows: Partial<ArchiveNodeDatabaseRow>[] = [
         {
-          zkapp_event_array_id: 1,
-          zkapp_event_element_ids: [1, 2],
+          event_field_elements_id: 1,
+          event_field_element_ids: [1, 2],
           zkapp_account_update_id: 10,
           zkapp_account_updates_ids: [10, 12],
         },
         {
           // Duplicate row (refers to the same event/action)
-          zkapp_event_array_id: 1,
-          zkapp_event_element_ids: [1, 2],
+          event_field_elements_id: 1,
+          event_field_element_ids: [1, 2],
           zkapp_account_update_id: 10,
           zkapp_account_updates_ids: [10, 12],
         },
         {
-          zkapp_event_array_id: 2,
-          zkapp_event_element_ids: [1, 2],
+          event_field_elements_id: 2,
+          event_field_element_ids: [1, 2],
           zkapp_account_update_id: 12,
           zkapp_account_updates_ids: [10, 12],
         },
@@ -91,10 +91,10 @@ describe('utils', () => {
     });
 
     test('should throw an error for a missing matching account update', () => {
-      const rows: any[] = [
+      const rows: Partial<ArchiveNodeDatabaseRow>[] = [
         {
-          zkapp_event_array_id: 1,
-          zkapp_event_element_ids: [1, 2],
+          event_field_elements_id: 1,
+          event_field_element_ids: [1, 2],
           zkapp_account_update_id: 99, // No matching account update id in the list
           zkapp_account_updates_ids: [10, 11],
         },
@@ -113,10 +113,10 @@ describe('utils', () => {
 
       describe('when kind is "event"', () => {
         test('map rows to an array of events', () => {
-          const rows: any[] = [
+          const rows: Partial<ArchiveNodeDatabaseRow>[] = [
             {
-              zkapp_account_update_id: '1',
-              element_ids: [1, 2],
+              zkapp_account_update_id: 1,
+              event_field_element_ids: [1, 2],
             },
           ];
 
@@ -133,11 +133,11 @@ describe('utils', () => {
 
       describe('when kind is "action"', () => {
         test('should map rows to an array of actions', () => {
-          const rows: any[] = [
+          const rows: Partial<ArchiveNodeDatabaseRow>[] = [
             {
-              element_ids: [1, 2],
+              event_field_element_ids: [1, 2],
               zkapp_account_update_id: 123,
-              zkapp_event_id: 456,
+              account_update_event_id: 456,
             },
           ];
 
