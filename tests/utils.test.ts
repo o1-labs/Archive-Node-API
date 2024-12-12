@@ -65,20 +65,20 @@ describe('utils', () => {
       const rows: Partial<ArchiveNodeDatabaseRow>[] = [
         {
           event_field_elements_id: 1,
-          event_field_element_ids: [1, 2],
+          event_element_ids: [1, 2],
           zkapp_account_update_id: 10,
           zkapp_account_updates_ids: [10, 12],
         },
         {
           // Duplicate row (refers to the same event/action)
           event_field_elements_id: 1,
-          event_field_element_ids: [1, 2],
+          event_element_ids: [1, 2],
           zkapp_account_update_id: 10,
           zkapp_account_updates_ids: [10, 12],
         },
         {
           event_field_elements_id: 2,
-          event_field_element_ids: [1, 2],
+          event_element_ids: [1, 2],
           zkapp_account_update_id: 12,
           zkapp_account_updates_ids: [10, 12],
         },
