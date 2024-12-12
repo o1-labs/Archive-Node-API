@@ -1,8 +1,6 @@
 // Namespaces are used here as an alias to the simple number and number[] types in order to model
 // the relationships between the different types of data in the system.
 
-import { AccountUpdate } from 'o1js';
-
 /**
  * A Field is the smallest unit of raw data in an Event
  */
