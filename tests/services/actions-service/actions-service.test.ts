@@ -93,13 +93,11 @@ function dummyAction({
   sequenceNumber = 1,
   accountUpdateId = '1',
   zkappAccountUpdateIds = [1],
-  zkappEventElementIds = [1],
 }: {
   sequenceNumber?: number;
   accountUpdateId?: string;
   eventElementId?: string;
   zkappAccountUpdateIds?: number[];
-  zkappEventElementIds?: number[];
 }): Action {
   return {
     accountUpdateId,
@@ -107,8 +105,6 @@ function dummyAction({
     transactionInfo: {
       sequenceNumber,
       zkappAccountUpdateIds,
-      zkappEventElementIds,
-      zkappFieldArrayElementIds: [1], // dummy
       authorizationKind: 'dummy',
       hash: 'dummy',
       memo: 'dummy',
