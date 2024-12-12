@@ -128,8 +128,6 @@ export type TransactionInfo = {
   sequenceNumber: Scalars['Int']['output'];
   status: Scalars['String']['output'];
   zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
-  zkappEventElementIds: Array<Maybe<Scalars['Int']['output']>>;
-  zkappFieldArrayElementIds: Array<Maybe<Scalars['Int']['output']>>;
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -457,16 +455,6 @@ export type TransactionInfoResolvers<
   sequenceNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   zkappAccountUpdateIds?: Resolver<
-    Array<Maybe<ResolversTypes['Int']>>,
-    ParentType,
-    ContextType
-  >;
-  zkappEventElementIds?: Resolver<
-    Array<Maybe<ResolversTypes['Int']>>,
-    ParentType,
-    ContextType
-  >;
-  zkappFieldArrayElementIds?: Resolver<
     Array<Maybe<ResolversTypes['Int']>>,
     ParentType,
     ContextType

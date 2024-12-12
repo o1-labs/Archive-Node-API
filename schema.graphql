@@ -53,8 +53,6 @@ type TransactionInfo {
   authorizationKind: String!
   sequenceNumber: Int! # TODO: Is it ok to make this required?
   zkappAccountUpdateIds: [Int]!
-  zkappEventElementIds: [Int]!
-  zkappFieldArrayElementIds: [Int]!
 }
 
 type ActionStates {

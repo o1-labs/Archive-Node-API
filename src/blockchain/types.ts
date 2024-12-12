@@ -44,8 +44,6 @@ export type TransactionInfo = {
   authorizationKind: string;
   sequenceNumber: number;
   zkappAccountUpdateIds: number[];
-  zkappEventElementIds: number[];
-  zkappFieldArrayElementIds: number[];
 };
 
 export type Events = {
