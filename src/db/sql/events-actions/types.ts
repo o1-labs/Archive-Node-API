@@ -50,18 +50,6 @@ namespace Event {
   export type EventFieldArrayIds = EventFieldArray.Id[];
 }
 
-namespace AccountUpdate {
-  /**
-   * The id of the AccountUpdate in the archive node postres DB
-   */
-  export type Id = number;
-
-  /**
-   * An array of {@link Event.Id}
-   */
-  export type EventIds = Event.Id[];
-}
-
 /**
  * Represents a complete row from the Archive Node database.
  * This structure gathers information related to blocks, transactions, events, and associated zkApp updates.
@@ -136,12 +124,12 @@ export type ArchiveNodeDatabaseRow = {
   /**
    * Unique identifier for the zkApp account update.
    */
-  zkapp_account_update_id: AccountUpdate.Id;
+  zkapp_account_update_id: number;
 
   /**
-   * List of Event IDs associated with the zkApp account update.
+   * List of Account Update IDs associated with the transaction
    */
-  zkapp_account_updates_ids: AccountUpdate.EventIds;
+  zkapp_account_updates_ids: number[];
 
   /**
    * Status of the transaction.
