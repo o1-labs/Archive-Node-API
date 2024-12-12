@@ -51,6 +51,7 @@ class ActionsService implements IActionsService {
   ): Promise<Actions> {
     const sqlSpan = tracingState.startSpan('actions.SQL');
     const rows = await this.executeActionsQuery(input);
+
     sqlSpan.end();
 
     const processingSpan = tracingState.startSpan('actions.processing');
@@ -121,7 +122,7 @@ class ActionsService implements IActionsService {
     );
     for (let i = 0; i < blockTransactionEntries.length; i++) {
       const transactions = blockTransactionEntries[i][1];
-      const transaction = transactions.values().next().value[0];
+      const transaction = transactions.values().next().value![0];
       const blockInfo = createBlockInfo(transaction);
       const {
         action_state_value1,
@@ -143,7 +144,7 @@ class ActionsService implements IActionsService {
       }
       actions.push({
         blockInfo,
-        actionData: actionsData.flat(),
+        actionData: this.sortActions(actionsData.flat()),
         actionState: {
           /* eslint-disable */
           actionStateOne: action_state_value1!,
@@ -156,5 +157,30 @@ class ActionsService implements IActionsService {
       });
     }
     return actions;
+  }
+
+  sortActions(actions: Action[]): Action[] {
+    return actions.sort((a, b) => {
+      // Sort by sequence number
+      if (
+        a.transactionInfo.sequenceNumber !== b.transactionInfo.sequenceNumber
+      ) {
+        return (
+          a.transactionInfo.sequenceNumber - b.transactionInfo.sequenceNumber
+        );
+      }
+
+      // Sort by account update index within the transaction
+      const aAccountUpdateIndex =
+        a.transactionInfo.zkappAccountUpdateIds.indexOf(
+          Number(a.accountUpdateId)
+        );
+      const bAccountUpdateIndex =
+        b.transactionInfo.zkappAccountUpdateIds.indexOf(
+          Number(b.accountUpdateId)
+        );
+
+      return aAccountUpdateIndex - bAccountUpdateIndex;
+    });
   }
 }
