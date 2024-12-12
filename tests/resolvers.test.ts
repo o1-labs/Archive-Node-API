@@ -39,7 +39,6 @@ import {
   EventOutput,
   Maybe,
 } from 'src/resolvers-types.js';
-import exp from 'node:constants';
 
 interface ExecutorResult {
   data:
