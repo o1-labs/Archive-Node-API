@@ -72,8 +72,8 @@ function partitionBlocks(rows: ArchiveNodeDatabaseRow[]) {
 function getElementIdFieldValues(rows: ArchiveNodeDatabaseRow[]) {
   const elementIdValues: FieldElementIdWithValueMap = new Map();
   for (let i = 0; i < rows.length; i++) {
-    const { id, field } = rows[i];
-    elementIdValues.set(id.toString(), field);
+    const { field_id, field_value } = rows[i];
+    elementIdValues.set(field_id.toString(), field_value);
   }
   return elementIdValues;
 }
@@ -123,8 +123,8 @@ function removeRedundantEmittedFields(
   for (let i = 0; i < archiveNodeRow.length; i++) {
     const currentRow = archiveNodeRow[i];
     const {
-      zkapp_event_array_id, // The unique id for the event/action emitted
-      zkapp_event_element_ids, // The list of field ids that make up the event/action
+      event_field_elements_id, // The unique id for the field array in the current row
+      event_element_ids, // The list of element ids in the event (list of event_field_elements_id)
       zkapp_account_update_id, // The unique id for the account update that emitted the event/action
       zkapp_account_updates_ids, // List of all account update ids inside the transaction
     } = currentRow;
@@ -133,15 +133,15 @@ function removeRedundantEmittedFields(
     // This is used to check if we have already seen this event/action before.
     const uniqueEventId = createUniqueEventId(
       zkapp_account_update_id,
-      zkapp_event_array_id
+      event_field_elements_id
     );
 
     if (!seenEventOrActionIds.has(uniqueEventId)) {
       // Since multiple events/actions can be emitted in a single account update, we want to put back the event/action
       // in the correct place. To do this, we need to know the index of the event array id in the list of event array ids (these stored in order by the Archive Node)
       const emittedEventOrActionIndexes = findAllIndexes(
-        zkapp_event_element_ids,
-        zkapp_event_array_id
+        event_element_ids,
+        event_field_elements_id
       );
 
       // Since multiple account updates can be emitted in a single transaction, we need to know the index of the account update id in the list of account update ids
@@ -152,7 +152,7 @@ function removeRedundantEmittedFields(
 
       if (accountUpdateIndexes.length === 0) {
         throw new Error(
-          `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${zkapp_event_array_id}).`
+          `No matching account update found for the given account update ID (${zkapp_account_update_id}) and event array ID (${event_field_elements_id}).`
         );
       }
 
@@ -199,15 +199,19 @@ function mapActionOrEvent(
 ) {
   const data: (Event | Action)[] = [];
   for (let i = 0; i < rows.length; i++) {
-    const { element_ids } = rows[i];
+    const { zkapp_account_update_id, event_field_element_ids } = rows[i];
     const transactionInfo = createTransactionInfo(rows[i]);
     const elementIdToFieldValues = getFieldValuesFromElementIds(
-      element_ids,
+      event_field_element_ids,
       elementIdFieldValues
     );
 
     if (kind === 'event') {
-      const event = createEvent(elementIdToFieldValues, transactionInfo);
+      const event = createEvent(
+        zkapp_account_update_id.toString(),
+        elementIdToFieldValues,
+        transactionInfo
+      );
       data.push(event);
     } else {
       const { zkapp_account_update_id } = rows[i];

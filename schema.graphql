@@ -23,6 +23,7 @@ input ActionFilterOptionsInput {
 }
 
 type EventData {
+  accountUpdateId: String!
   transactionInfo: TransactionInfo
   data: [String]!
 }
@@ -50,6 +51,8 @@ type TransactionInfo {
   hash: String!
   memo: String!
   authorizationKind: String!
+  sequenceNumber: Int! # TODO: Is it ok to make this required?
+  zkappAccountUpdateIds: [Int]!
 }
 
 type ActionStates {

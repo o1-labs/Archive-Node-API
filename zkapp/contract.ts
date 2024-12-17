@@ -9,21 +9,27 @@ import {
   state,
   Reducer,
   PublicKey,
+  Provable,
 } from 'o1js';
 
-class TestStruct extends Struct({
+export class TestStruct extends Struct({
   x: Field,
   y: Bool,
   z: UInt64,
   address: PublicKey,
 }) {}
 
+export class TestStructArray extends Struct({
+  structs: Provable.Array(TestStruct, 3),
+}) {}
+
 export class HelloWorld extends SmartContract {
-  reducer = Reducer({ actionType: TestStruct });
+  reducer = Reducer({ actionType: TestStructArray });
 
   events = {
     singleField: Field,
     struct: TestStruct,
+    structs: TestStructArray,
   };
 
   @state(Field) x = State<Field>();
@@ -51,21 +57,29 @@ export class HelloWorld extends SmartContract {
     this.emitEvent('singleField', x);
   }
 
-  @method async emitStructEvent() {
-    const x = this.x.getAndRequireEquals();
-    const y = this.y.getAndRequireEquals();
-    const z = this.z.getAndRequireEquals();
-    this.emitEvent(
-      'struct',
-      new TestStruct({ x, y, z, address: this.address })
-    );
+  @method async emitStructEvent(struct: TestStruct) {
+    this.emitEvent('struct', struct);
   }
 
-  @method async emitStructAction() {
+  @method async emitStructsEvent(structs: TestStructArray) {
+    this.emitEvent('structs', structs);
+  }
+
+  /**
+   * This method always emits the same action.
+   * It has limited utility in generating realistic test cases.
+   * We should use more dynamic methods to generate actions.
+   */
+  @method async emitStaticStructAction() {
     const x = this.x.getAndRequireEquals();
     const y = this.y.getAndRequireEquals();
     const z = this.z.getAndRequireEquals();
-    this.reducer.dispatch(new TestStruct({ x, y, z, address: this.address }));
+    const struct = new TestStruct({ x, y, z, address: this.address });
+    this.reducer.dispatch({ structs: [struct, struct, struct] });
+  }
+
+  @method async emitAction(structs: TestStructArray) {
+    this.reducer.dispatch(structs);
   }
 
   @method async reduceStructAction() {
@@ -78,8 +92,8 @@ export class HelloWorld extends SmartContract {
     let newCounter = this.reducer.reduce(
       pendingActions,
       Field,
-      (state: Field, action: TestStruct) => {
-        return state.add(action.x);
+      (state: Field, action: TestStructArray) => {
+        return state.add(action.structs[0].x);
       },
       counter
     );

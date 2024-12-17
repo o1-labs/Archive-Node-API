@@ -9,7 +9,15 @@ import {
 } from '@graphql-tools/executor-http';
 import { AsyncExecutor } from '@graphql-tools/utils';
 import { parse } from 'graphql';
-import { PrivateKey, Lightnet } from 'o1js';
+import {
+  Bool,
+  Field,
+  Lightnet,
+  Mina,
+  Poseidon,
+  PrivateKey,
+  UInt64,
+} from 'o1js';
 import { resolvers } from '../src/resolvers.js';
 import { buildContext, GraphQLContext } from '../src/context.js';
 import {
@@ -19,8 +27,11 @@ import {
   emitSingleEvent,
   setNetworkConfig,
   Keypair,
+  emitActionsFromMultipleSenders,
+  emitMultipleFieldsEvents,
+  randomStruct,
 } from '../zkapp/utils.js';
-import { HelloWorld } from '../zkapp/contract.js';
+import { HelloWorld, TestStruct } from '../zkapp/contract.js';
 import {
   ActionData,
   ActionOutput,
@@ -102,6 +113,8 @@ query getActions($input: ActionFilterOptionsInput!) {
         status
         hash
         memo
+        sequenceNumber
+        zkappAccountUpdateIds
       }
     }
   }
@@ -110,6 +123,28 @@ query getActions($input: ActionFilterOptionsInput!) {
 
 // This is the default connection string provided by the lightnet postgres container
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
+
+interface ExecutorResult {
+  data:
+    | {
+        events: Array<EventOutput>;
+      }
+    | {
+        actions: Array<ActionOutput>;
+      };
+}
+
+interface EventQueryResult extends ExecutorResult {
+  data: {
+    events: Array<EventOutput>;
+  };
+}
+
+interface ActionQueryResult extends ExecutorResult {
+  data: {
+    actions: Array<ActionOutput>;
+  };
+}
 
 describe('Query Resolvers', async () => {
   let executor: AsyncExecutor<GraphQLContext, HTTPExecutorOptions>;
@@ -167,7 +202,7 @@ describe('Query Resolvers', async () => {
     }
   });
 
-  after(async () => {
+  after(() => {
     process.on('uncaughtException', (err) => {
       console.error('Uncaught exception:', err);
       process.exit(1);
@@ -243,8 +278,14 @@ describe('Query Resolvers', async () => {
 
     describe('After emitting an event with multiple fields once', async () => {
       let results: EventQueryResult;
+      const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvent(zkApp, senderKeypair);
+        await emitMultipleFieldsEvent(
+          zkApp,
+          senderKeypair,
+          undefined,
+          baseStruct
+        );
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
@@ -258,22 +299,23 @@ describe('Query Resolvers', async () => {
 
       test('The event has the correct data', async () => {
         const eventData = lastBlockEvents[0]!;
-        // The event type is 1 and the event data is 2, 1 (Bool(true)), 1 and the zkapp address
-        assert.deepStrictEqual(eventData.data, [
-          '1',
-          '2',
-          '1',
-          '1',
-          ...zkApp.address.toFields().map((f) => f.toString()),
-        ]);
+        const expectedStructData = structToAction(baseStruct);
+        // The event type is 1 and the event data comes from the base struct
+        assert.deepStrictEqual(eventData.data, ['1', ...expectedStructData]);
       });
     });
 
     describe('After emitting an event with multiple fields multiple times', async () => {
       let results: EventQueryResult;
       const numberOfEmits = 3;
+      const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvent(zkApp, senderKeypair, { numberOfEmits });
+        await emitMultipleFieldsEvent(
+          zkApp,
+          senderKeypair,
+          { numberOfEmits },
+          baseStruct
+        );
         results = await executeEventsQuery({
           address: zkApp.address.toBase58(),
         });
@@ -285,15 +327,62 @@ describe('Query Resolvers', async () => {
       });
       test('the events have the correct data', async () => {
         for (let i = 0; i < numberOfEmits; i++) {
+          const expectedStruct = new TestStruct(baseStruct);
+          expectedStruct.x = expectedStruct.x.add(Field(i));
+          const expectedStructData = structToAction(expectedStruct);
           const eventData = lastBlockEvents[i]!;
-          // The event type is 1 and the event data is 2, 1 (Bool(true)), 1, and the zkapp address
-          assert.deepStrictEqual(eventData.data, [
-            '1',
-            '2',
-            '1',
-            '1',
-            ...zkApp.address.toFields().map((f) => f.toString()),
-          ]);
+          // The event type is 1 and the event data comes from the base struct
+          assert.deepStrictEqual(eventData.data, ['1', ...expectedStructData]);
+        }
+      });
+    });
+
+    describe('After emitting multiple events with multiple fields', async () => {
+      let results: EventQueryResult;
+      const numberOfEmits = 3;
+      const baseStruct = randomStruct();
+      before(async () => {
+        await emitMultipleFieldsEvents(
+          zkApp,
+          senderKeypair,
+          { numberOfEmits },
+          baseStruct
+        );
+        results = await executeEventsQuery({
+          address: zkApp.address.toBase58(),
+        });
+        eventsResponse = results.data.events;
+        lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
+      });
+      test('GQL response contains multiple events in the latest block', async () => {
+        assert.strictEqual(lastBlockEvents.length, numberOfEmits);
+      });
+      test('the events have the correct data', async () => {
+        for (let i = 0; i < numberOfEmits; i++) {
+          const expectedStruct = new TestStruct(baseStruct);
+          expectedStruct.x = expectedStruct.x.add(Field(i));
+          const expectedS1 = new TestStruct(expectedStruct);
+          const expectedS2 = new TestStruct(expectedStruct);
+          const expectedS3 = new TestStruct(expectedStruct);
+          expectedS1.z = expectedS1.z.add(UInt64.from(i));
+          expectedS2.z = expectedS2.z.add(UInt64.from(i + 1));
+          expectedS3.z = expectedS3.z.add(UInt64.from(i + 2));
+          const eventData = lastBlockEvents[i]!;
+          const structData = eventData.data;
+          assert.strictEqual(structData.length, 16);
+          assert.strictEqual(structData[0], '2');
+          assert.deepStrictEqual(
+            structData.slice(1, 6),
+            structToAction(expectedS1)
+          );
+          assert.deepStrictEqual(
+            structData.slice(6, 11),
+            structToAction(expectedS2)
+          );
+          assert.deepStrictEqual(
+            structData.slice(11, 16),
+            structToAction(expectedS3)
+          );
         }
       });
     });
@@ -311,7 +400,6 @@ describe('Query Resolvers', async () => {
         });
       });
     });
-
     test('Fetching actions with a empty address should return empty list', async () => {
       results = await executeActionsQuery({
         address: '',
@@ -320,8 +408,12 @@ describe('Query Resolvers', async () => {
     });
 
     describe('After emitting an action', async () => {
+      const [s1, s2, s3] = [randomStruct(), randomStruct(), randomStruct()];
+      const testStructArray = {
+        structs: [s1, s2, s3],
+      };
       before(async () => {
-        await emitAction(zkApp, senderKeypair);
+        await emitAction(zkApp, senderKeypair, undefined, testStructArray);
         results = await executeActionsQuery({
           address: zkApp.address.toBase58(),
         });
@@ -333,20 +425,30 @@ describe('Query Resolvers', async () => {
         assert.strictEqual(lastBlockActions.length, 1);
       });
       test('The action has the correct data', async () => {
-        const actionData = lastBlockActions[0]!;
-        assert.deepStrictEqual(actionData.data, [
-          '2',
-          '1',
-          '1',
-          ...zkApp.address.toFields().map((f) => f.toString()),
-        ]);
+        const actionFieldData = lastBlockActions[0]!.data;
+        assert.strictEqual(actionFieldData.length, 15);
+        assert.deepStrictEqual(actionFieldData.slice(0, 5), structToAction(s1));
+        assert.deepStrictEqual(
+          actionFieldData.slice(5, 10),
+          structToAction(s2)
+        );
+        assert.deepStrictEqual(
+          actionFieldData.slice(10, 15),
+          structToAction(s3)
+        );
       });
     });
-
-    describe('After emitting multiple actions', async () => {
+    describe('After emitting multiple actions', () => {
       const numberOfEmits = 3;
+      let results: ActionQueryResult;
+      const s1 = randomStruct();
+      const s2 = randomStruct();
+      const s3 = randomStruct();
+      const testStructs = {
+        structs: [s1, s2, s3],
+      };
       before(async () => {
-        await emitAction(zkApp, senderKeypair, { numberOfEmits });
+        await emitAction(zkApp, senderKeypair, { numberOfEmits }, testStructs);
         results = await executeActionsQuery({
           address: zkApp.address.toBase58(),
         });
@@ -354,21 +456,65 @@ describe('Query Resolvers', async () => {
         lastBlockActions =
           actionsResponse[actionsResponse.length - 1].actionData!;
       });
-
       test('GQL response contains multiple actions', async () => {
         assert.strictEqual(lastBlockActions.length, numberOfEmits);
       });
-      test('The actions have the correct data', async () => {
-        for (let i = 0; i < numberOfEmits; i++) {
-          const actionData = lastBlockActions[i]!;
-          assert.deepStrictEqual(actionData.data, [
-            '2',
-            '1',
-            '1',
-            ...zkApp.address.toFields().map((f) => f.toString()),
-          ]);
+      test('Fetched actions have correct data', async () => {
+        const lastAction = lastBlockActions[lastBlockActions.length - 1]!;
+        const actionFieldData = lastAction.data;
+        assert.strictEqual(actionFieldData.length, 15);
+        assert.deepStrictEqual(actionFieldData.slice(0, 5), structToAction(s1));
+        assert.deepStrictEqual(
+          actionFieldData.slice(5, 10),
+          structToAction(s2)
+        );
+        assert.deepStrictEqual(
+          actionFieldData.slice(10, 15),
+          structToAction(s3)
+        );
+      });
+      test('Fetched actions have order metadata', async () => {
+        for (const block of actionsResponse) {
+          const actionData = block.actionData;
+          for (const action of actionData!) {
+            assert(typeof action!.transactionInfo!.sequenceNumber === 'number');
+            assert(action!.transactionInfo!.zkappAccountUpdateIds.length > 0);
+          }
         }
+      });
+      test('Fetched actions have correct order', async () => {
+        let testedAccountUpdateOrder = false;
+        for (const block of actionsResponse) {
+          const actionData = block.actionData;
+          for (let i = 1; i < actionData!.length; i++) {
+            const previousAction = actionData![i - 1]!;
+            const currentAction = actionData![i]!;
+            assert.ok(
+              previousAction.transactionInfo!.sequenceNumber <=
+                currentAction.transactionInfo!.sequenceNumber
+            );
+            if (
+              previousAction.transactionInfo!.sequenceNumber ===
+              currentAction.transactionInfo!.sequenceNumber
+            ) {
+              testedAccountUpdateOrder = true;
+              assert.ok(
+                previousAction.accountUpdateId < currentAction.accountUpdateId
+              );
+            }
+          }
+        }
+        assert.ok(testedAccountUpdateOrder);
       });
     });
   });
 });
+
+function structToAction(s: TestStruct) {
+  return [
+    s.x.toString(),
+    s.y.toField().toString(),
+    s.z.toString(),
+    ...s.address.toFields().map((f) => f.toString()),
+  ];
+}
