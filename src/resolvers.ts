@@ -32,6 +32,16 @@ const resolvers: Resolvers = {
         tracingState: new TracingState(graphQLSpan),
       });
     },
+
+    block: async (_, {}, context) => {
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'block.graphql'
+      );
+      return context.db_client.getMaxBlockHeightInfo({
+        tracingState: new TracingState(graphQLSpan),
+      });
+    },
   },
 };
 

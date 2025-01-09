@@ -24,6 +24,11 @@ export type Action = {
   data: string[];
 };
 
+export type MaxBlockHeightInfo = {
+  canonicalMaxBlockHeight: number;
+  pendingMaxBlockHeight: number;
+};
+
 export type BlockInfo = {
   height: number;
   stateHash: string;

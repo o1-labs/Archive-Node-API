@@ -46,6 +46,11 @@ type BlockInfo {
   distanceFromMaxBlockHeight: Int!
 }
 
+type MaxBlockHeightInfo {
+  canonicalMaxBlockHeight: Int!
+  pendingMaxBlockHeight: Int!
+}
+
 type TransactionInfo {
   status: String!
   hash: String!
@@ -78,4 +83,5 @@ type ActionOutput {
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  maxBlockHeightInfo: MaxBlockHeightInfo!
 }

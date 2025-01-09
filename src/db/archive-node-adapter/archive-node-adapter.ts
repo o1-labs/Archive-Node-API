@@ -1,5 +1,9 @@
 import postgres from 'postgres';
-import type { Actions, Events } from '../../blockchain/types.js';
+import type {
+  Actions,
+  Events,
+  MaxBlockHeightInfo,
+} from '../../blockchain/types.js';
 import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
   ActionFilterOptionsInput,
@@ -10,6 +14,8 @@ import { EventsService } from '../../services/events-service/events-service.js';
 import { IEventsService } from '../../services/events-service/events-service.interface.js';
 import { ActionsService } from '../../services/actions-service/actions-service.js';
 import { IActionsService } from '../../services/actions-service/actions-service.interface.js';
+import { BlockService } from '../../services/blocks-service/block-service.js';
+import { IBlockService } from '../../services/blocks-service/block-service.interface.js';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
@@ -21,6 +27,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private client: postgres.Sql;
   private eventsService: IEventsService;
   private actionsService: IActionsService;
+  private blockService: IBlockService;
 
   constructor(connectionString: string | undefined) {
     if (!connectionString)
@@ -30,6 +37,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.client = postgres(connectionString);
     this.eventsService = new EventsService(this.client);
     this.actionsService = new ActionsService(this.client);
+    this.blockService = new BlockService(this.client);
   }
 
   async getEvents(
@@ -44,6 +52,10 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     options: unknown
   ): Promise<Actions> {
     return this.actionsService.getActions(input, options);
+  }
+
+  async getMaxBlockHeightInfo(options: unknown): Promise<MaxBlockHeightInfo> {
+    return this.blockService.maxBlockHeightInfo(options);
   }
 
   async checkSQLSchema() {

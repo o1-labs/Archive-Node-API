@@ -371,6 +371,24 @@ export function getActionsQuery(
   `;
 }
 
+export function getBlockQuery(db_client: postgres.Sql) {
+  return db_client`
+  WITH max_height AS (
+    SELECT MAX(height) AS max_height
+    FROM blocks
+  )
+  SELECT *
+  FROM blocks
+  WHERE height = (SELECT max_height FROM max_height)
+  AND chain_status = 'canonical'
+  UNION
+  SELECT *
+  FROM blocks
+  WHERE height = (SELECT max_height FROM max_height)
+  AND chain_status = 'pending'
+  `;
+}
+
 export function checkActionState(db_client: postgres.Sql, actionState: string) {
   return db_client`
   SELECT field FROM zkapp_field WHERE field = ${actionState}

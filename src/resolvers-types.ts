@@ -83,6 +83,12 @@ export type BlockInfo = {
   timestamp: Scalars['String']['output'];
 };
 
+export type MaxBlockHeightInfo = {
+  __typename?: 'MaxBlockHeightInfo';
+  canonicalMaxBlockHeight: Scalars['Int']['output'];
+  pendingMaxBlockHeight: Scalars['Int']['output'];
+};
+
 export { BlockStatusFilter };
 
 export type EventData = {
@@ -110,6 +116,7 @@ export type Query = {
   __typename?: 'Query';
   actions: Array<Maybe<ActionOutput>>;
   events: Array<Maybe<EventOutput>>;
+  block: Maybe<MaxBlockHeightInfo>;
 };
 
 export type QueryActionsArgs = {
@@ -242,6 +249,7 @@ export type ResolversTypes = {
   ActionOutput: ResolverTypeWrapper<ActionOutput>;
   ActionStates: ResolverTypeWrapper<ActionStates>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
+  MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   BlockStatusFilter: BlockStatusFilter;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   EventData: ResolverTypeWrapper<EventData>;
@@ -437,6 +445,11 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryEventsArgs, 'input'>
+  >;
+  block?: Resolver<
+    Maybe<ResolversTypes['MaxBlockHeightInfo']>,
+    ParentType,
+    ContextType
   >;
 };
 

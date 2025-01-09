@@ -97,7 +97,7 @@ async function updateContractState(
       await zkApp.update(Field(4));
     }
   );
-  transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]).prove();
   await sendTransaction(transaction);
 }
 
