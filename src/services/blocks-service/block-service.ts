@@ -34,10 +34,10 @@ class BlockService implements IBlockService {
     const processingSpan = tracingState.startSpan('block.processing');
     const blockData = {
       canonicalMaxBlockHeight: Number(
-        rows.filter((row) => row.chain_status === 'canonical')[0]
+        rows.filter((row) => row.chain_status === 'canonical')[0].height
       ),
       pendingMaxBlockHeight: Number(
-        rows.filter((row) => row.chain_status === 'pending')[0]
+        rows.filter((row) => row.chain_status === 'pending')[0].height
       ),
     };
     processingSpan.end();

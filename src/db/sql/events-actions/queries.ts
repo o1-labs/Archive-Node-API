@@ -373,19 +373,19 @@ export function getActionsQuery(
 
 export function getBlockQuery(db_client: postgres.Sql) {
   return db_client`
-  WITH max_height AS (
-    SELECT MAX(height) AS max_height
+WITH max_heights AS (
+    SELECT 
+        chain_status,
+        MAX(height) AS max_height
     FROM blocks
-  )
-  SELECT *
-  FROM blocks
-  WHERE height = (SELECT max_height FROM max_height)
-  AND chain_status = 'canonical'
-  UNION
-  SELECT *
-  FROM blocks
-  WHERE height = (SELECT max_height FROM max_height)
-  AND chain_status = 'pending'
+    WHERE chain_status IN ('canonical', 'pending')
+    GROUP BY chain_status
+)
+SELECT b.*
+FROM blocks b
+JOIN max_heights mh
+  ON b.chain_status = mh.chain_status
+  AND b.height = mh.max_height;
   `;
 }
 

@@ -83,5 +83,5 @@ type ActionOutput {
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
-  maxBlockHeightInfo: MaxBlockHeightInfo!
+  block: MaxBlockHeightInfo!
 }
