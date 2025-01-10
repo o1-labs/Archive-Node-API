@@ -37,6 +37,7 @@ import {
   ActionOutput,
   EventData,
   EventOutput,
+  MaxBlockHeightInfo,
   Maybe,
 } from 'src/resolvers-types.js';
 
@@ -47,6 +48,9 @@ interface ExecutorResult {
       }
     | {
         actions: Array<ActionOutput>;
+      }
+    | {
+        block: MaxBlockHeightInfo;
       };
 }
 
@@ -59,6 +63,12 @@ interface EventQueryResult extends ExecutorResult {
 interface ActionQueryResult extends ExecutorResult {
   data: {
     actions: Array<ActionOutput>;
+  };
+}
+
+interface BlockQueryResult extends ExecutorResult {
+  data: {
+    block: MaxBlockHeightInfo;
   };
 }
 
@@ -121,6 +131,15 @@ query getActions($input: ActionFilterOptionsInput!) {
 }
 `;
 
+const blockQuery = `
+query maxBlockHeightInfo {
+  block {
+    canonicalMaxBlockHeight
+    pendingMaxBlockHeight
+    }
+}
+`;
+
 // This is the default connection string provided by the lightnet postgres container
 const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
@@ -131,6 +150,9 @@ interface ExecutorResult {
       }
     | {
         actions: Array<ActionOutput>;
+      }
+    | {
+        block: MaxBlockHeightInfo;
       };
 }
 
@@ -143,6 +165,12 @@ interface EventQueryResult extends ExecutorResult {
 interface ActionQueryResult extends ExecutorResult {
   data: {
     actions: Array<ActionOutput>;
+  };
+}
+
+interface BlockQueryResult extends ExecutorResult {
+  data: {
+    block: MaxBlockHeightInfo;
   };
 }
 
@@ -172,6 +200,12 @@ describe('Query Resolvers', async () => {
       },
       document: parse(`${eventsQuery}`),
     })) as EventQueryResult;
+  }
+
+  async function executeBlockQuery(): Promise<BlockQueryResult> {
+    return (await executor({
+      document: parse(`${blockQuery}`),
+    })) as BlockQueryResult;
   }
 
   before(async () => {
@@ -214,6 +248,25 @@ describe('Query Resolvers', async () => {
     });
 
     process.exit(0);
+  });
+
+  describe("Block", async () => {
+    let blockResponse: MaxBlockHeightInfo;
+    let results: BlockQueryResult;
+
+    test("Fetching the max block height should not throw", async () => {
+      assert.doesNotThrow(async () => {
+        await executeBlockQuery();
+      });
+    });
+
+    test("Fetching the max block height should return the max block height", async () => {
+      results = await executeBlockQuery();
+      blockResponse = results.data.block;
+      assert.ok(blockResponse.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.pendingMaxBlockHeight > 0);
+    });
+    
   });
 
   describe('Events', async () => {
@@ -508,7 +561,10 @@ describe('Query Resolvers', async () => {
       });
     });
   });
+
+
 });
+
 
 function structToAction(s: TestStruct) {
   return [
