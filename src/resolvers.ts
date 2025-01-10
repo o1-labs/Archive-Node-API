@@ -33,7 +33,7 @@ const resolvers: Resolvers = {
       });
     },
 
-    block: async (_, {}, context) => {
+    block: async (_, __, context) => {
       const graphQLSpan = setSpanNameFromGraphQLContext(
         context,
         'block.graphql'
