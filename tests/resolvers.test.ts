@@ -250,25 +250,6 @@ describe('Query Resolvers', async () => {
     process.exit(0);
   });
 
-  describe("Block", async () => {
-    let blockResponse: MaxBlockHeightInfo;
-    let results: BlockQueryResult;
-
-    test("Fetching the max block height should not throw", async () => {
-      assert.doesNotThrow(async () => {
-        await executeBlockQuery();
-      });
-    });
-
-    test("Fetching the max block height should return the max block height", async () => {
-      results = await executeBlockQuery();
-      blockResponse = results.data.block;
-      assert.ok(blockResponse.canonicalMaxBlockHeight > 0);
-      assert.ok(blockResponse.pendingMaxBlockHeight > 0);
-    });
-    
-  });
-
   describe('Events', async () => {
     let eventsResponse: EventOutput[];
     let lastBlockEvents: Maybe<EventData>[];
@@ -562,6 +543,24 @@ describe('Query Resolvers', async () => {
     });
   });
 
+  describe("Block", async () => {
+    let blockResponse: MaxBlockHeightInfo;
+    let results: BlockQueryResult;
+
+    test("Fetching the max block height should not throw", async () => {
+      assert.doesNotThrow(async () => {
+        await executeBlockQuery();
+      });
+    });
+
+    test("Fetching the max block height should return the max block height", async () => {
+      results = await executeBlockQuery();
+      blockResponse = results.data.block;
+      assert.ok(blockResponse.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.pendingMaxBlockHeight > 0);
+    });
+    
+  });
 
 });
 
