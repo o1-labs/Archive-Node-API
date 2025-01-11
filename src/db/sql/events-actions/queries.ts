@@ -371,7 +371,7 @@ export function getActionsQuery(
   `;
 }
 
-export function getBlockQuery(db_client: postgres.Sql) {
+export function getNetworkStateQuery(db_client: postgres.Sql) {
   return db_client`
 WITH max_heights AS (
     SELECT 

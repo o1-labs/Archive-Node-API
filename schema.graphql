@@ -80,8 +80,12 @@ type ActionOutput {
   actionState: ActionStates!
 }
 
+type NetworkStateOutput {
+  maxBlockHeight: MaxBlockHeightInfo
+}
+
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
-  block: MaxBlockHeightInfo!
+  networkState: NetworkStateOutput!
 }

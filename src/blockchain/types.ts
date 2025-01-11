@@ -24,6 +24,10 @@ export type Action = {
   data: string[];
 };
 
+export type NetworkState = {
+  maxBlockHeight: MaxBlockHeightInfo;
+};
+
 export type MaxBlockHeightInfo = {
   canonicalMaxBlockHeight: number;
   pendingMaxBlockHeight: number;

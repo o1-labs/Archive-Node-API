@@ -2,7 +2,7 @@ import type { EventFilterOptionsInput } from '../../resolvers-types.js';
 import type {
   Actions,
   Events,
-  MaxBlockHeightInfo,
+  NetworkState,
 } from '../../blockchain/types.js';
 
 export interface DatabaseAdapter {
@@ -11,5 +11,5 @@ export interface DatabaseAdapter {
     input: EventFilterOptionsInput,
     options?: unknown
   ): Promise<Actions>;
-  getMaxBlockHeightInfo(options?: unknown): Promise<MaxBlockHeightInfo>;
+  getNetworkState(options?: unknown): Promise<NetworkState>;
 }

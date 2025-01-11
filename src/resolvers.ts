@@ -33,12 +33,12 @@ const resolvers: Resolvers = {
       });
     },
 
-    block: async (_, __, context) => {
+    networkState: async (_, __, context) => {
       const graphQLSpan = setSpanNameFromGraphQLContext(
         context,
-        'block.graphql'
+        'networkState.graphql'
       );
-      return context.db_client.getMaxBlockHeightInfo({
+      return context.db_client.getNetworkState({
         tracingState: new TracingState(graphQLSpan),
       });
     },
