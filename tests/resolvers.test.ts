@@ -265,20 +265,33 @@ describe('Query Resolvers', async () => {
       fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
     });
 
-    test("Fetching the max block height should return the max block height", async () => {
-      blockResponse = results.data.networkState;
-      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
-      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
-    });
-
     test("Fetching the max block height should not throw", async () => {
       assert.doesNotThrow(async () => {
         await executeNetworkStateQuery();
       });
     });
 
+    test("Fetching the max block height should return the max block height", async () => {
+      blockResponse = results.data.networkState;
+      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > blockResponse.maxBlockHeight.canonicalMaxBlockHeight);
+    });
+
     test("Fetched max block height from archive node should match with the one from mina node", async () => {
-      assert.strictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+      assert.deepStrictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+    });
+    
+    describe("Advance a block", async () => {
+      before(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 25000)); // wait for new lightnet block
+        results = await executeNetworkStateQuery();
+        blockResponse = results.data.networkState;
+        fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
+      });
+      test("Fetched max block height from archive node should match the one from mina node after one block", () => {
+        assert.deepStrictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+      });
     });
 
   });
