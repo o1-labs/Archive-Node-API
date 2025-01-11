@@ -254,6 +254,35 @@ describe('Query Resolvers', async () => {
     process.exit(0);
   });
 
+  describe("NetworkState", async () => {
+    let blockResponse: NetworkStateOutput;
+    let results: NetworkQueryResult;
+    let fetchedBlockchainLength: number;
+
+    before(async () => {
+      results = await executeNetworkStateQuery();
+      blockResponse = results.data.networkState;
+      fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
+    });
+
+    test("Fetching the max block height should return the max block height", async () => {
+      blockResponse = results.data.networkState;
+      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
+    });
+
+    test("Fetching the max block height should not throw", async () => {
+      assert.doesNotThrow(async () => {
+        await executeNetworkStateQuery();
+      });
+    });
+
+    test("Fetched max block height from archive node should match with the one from mina node", async () => {
+      assert.strictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+    });
+
+  });
+
   describe('Events', async () => {
     let eventsResponse: EventOutput[];
     let lastBlockEvents: Maybe<EventData>[];
@@ -544,49 +573,6 @@ describe('Query Resolvers', async () => {
         }
         assert.ok(testedAccountUpdateOrder);
       });
-    });
-  });
-
-  describe("NetworkState", () => {
-    let blockResponse: NetworkStateOutput;
-    let results: NetworkQueryResult;
-
-    before(async () => {
-      results = await executeNetworkStateQuery();
-      blockResponse = results.data.networkState;
-    });
-
-    test("Fetching the max block height should return the max block height", async () => {
-      results = await executeNetworkStateQuery();
-      blockResponse = results.data.networkState;
-      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
-      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
-    });
-
-    test("Fetching the max block height should not throw", async () => {
-      assert.doesNotThrow(async () => {
-        await executeNetworkStateQuery();
-      });
-    });
-
-    describe("Fetch max block height from mina node", () => {
-      let blockResponse: NetworkStateOutput;
-      let results: NetworkQueryResult;
-      let fetchedBlockchainLength: number;
-
-      before(async () => {
-        results = await executeNetworkStateQuery();
-        blockResponse = results.data.networkState;
-        fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
-      });
-
-      test("Fetched max block height from archive node should match with the one from mina node", () => {
-        console.log("fetchedBlockchainLength:", fetchedBlockchainLength);
-        console.log("blockResponse.maxBlockHeight.pendingMaxBlockHeight:", blockResponse.maxBlockHeight.pendingMaxBlockHeight);
-        console.log(fetchedBlockchainLength == blockResponse.maxBlockHeight.pendingMaxBlockHeight);
-        assert.strictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
-      });
-
     });
   });
 
