@@ -29,6 +29,7 @@ import {
   Keypair,
   emitActionsFromMultipleSenders,
   emitMultipleFieldsEvents,
+  fetchNetworkState,
   randomStruct,
 } from '../zkapp/utils.js';
 import { HelloWorld, TestStruct } from '../zkapp/contract.js';
@@ -37,21 +38,22 @@ import {
   ActionOutput,
   EventData,
   EventOutput,
+  NetworkStateOutput,
   MaxBlockHeightInfo,
   Maybe,
 } from 'src/resolvers-types.js';
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        block: MaxBlockHeightInfo;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -66,9 +68,9 @@ interface ActionQueryResult extends ExecutorResult {
   };
 }
 
-interface BlockQueryResult extends ExecutorResult {
+interface NetworkQueryResult extends ExecutorResult {
   data: {
-    block: MaxBlockHeightInfo;
+    networkState: NetworkStateOutput;
   };
 }
 
@@ -131,12 +133,14 @@ query getActions($input: ActionFilterOptionsInput!) {
 }
 `;
 
-const blockQuery = `
+const networkQuery = `
 query maxBlockHeightInfo {
-  block {
-    canonicalMaxBlockHeight
-    pendingMaxBlockHeight
+  networkState {
+    maxBlockHeight {
+      canonicalMaxBlockHeight
+      pendingMaxBlockHeight
     }
+  }
 }
 `;
 
@@ -145,15 +149,15 @@ const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        block: MaxBlockHeightInfo;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -168,9 +172,9 @@ interface ActionQueryResult extends ExecutorResult {
   };
 }
 
-interface BlockQueryResult extends ExecutorResult {
+interface NetworkQueryResult extends ExecutorResult {
   data: {
-    block: MaxBlockHeightInfo;
+    networkState: NetworkStateOutput;
   };
 }
 
@@ -202,10 +206,10 @@ describe('Query Resolvers', async () => {
     })) as EventQueryResult;
   }
 
-  async function executeBlockQuery(): Promise<BlockQueryResult> {
+  async function executeNetworkStateQuery(): Promise<NetworkQueryResult> {
     return (await executor({
-      document: parse(`${blockQuery}`),
-    })) as BlockQueryResult;
+      document: parse(`${networkQuery}`),
+    })) as NetworkQueryResult;
   }
 
   before(async () => {
@@ -543,23 +547,47 @@ describe('Query Resolvers', async () => {
     });
   });
 
-  describe("Block", async () => {
-    let blockResponse: MaxBlockHeightInfo;
-    let results: BlockQueryResult;
+  describe("NetworkState", () => {
+    let blockResponse: NetworkStateOutput;
+    let results: NetworkQueryResult;
 
-    test("Fetching the max block height should not throw", async () => {
-      assert.doesNotThrow(async () => {
-        await executeBlockQuery();
-      });
+    before(async () => {
+      results = await executeNetworkStateQuery();
+      blockResponse = results.data.networkState;
     });
 
     test("Fetching the max block height should return the max block height", async () => {
-      results = await executeBlockQuery();
-      blockResponse = results.data.block;
-      assert.ok(blockResponse.canonicalMaxBlockHeight > 0);
-      assert.ok(blockResponse.pendingMaxBlockHeight > 0);
+      results = await executeNetworkStateQuery();
+      blockResponse = results.data.networkState;
+      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
     });
-    
+
+    test("Fetching the max block height should not throw", async () => {
+      assert.doesNotThrow(async () => {
+        await executeNetworkStateQuery();
+      });
+    });
+
+    describe("Fetch max block height from mina node", () => {
+      let blockResponse: NetworkStateOutput;
+      let results: NetworkQueryResult;
+      let fetchedBlockchainLength: number;
+
+      before(async () => {
+        results = await executeNetworkStateQuery();
+        blockResponse = results.data.networkState;
+        fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
+      });
+
+      test("Fetched max block height from archive node should match with the one from mina node", () => {
+        console.log("fetchedBlockchainLength:", fetchedBlockchainLength);
+        console.log("blockResponse.maxBlockHeight.pendingMaxBlockHeight:", blockResponse.maxBlockHeight.pendingMaxBlockHeight);
+        console.log(fetchedBlockchainLength == blockResponse.maxBlockHeight.pendingMaxBlockHeight);
+        assert.strictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+      });
+
+    });
   });
 
 });
