@@ -1,5 +1,5 @@
 import type postgres from 'postgres';
-import { MaxBlockHeightInfo, NetworkState } from '../../blockchain/types.js';
+import { NetworkState } from '../../blockchain/types.js';
 import { getNetworkStateQuery } from '../../db/sql/events-actions/queries.js';
 
 import { INetworkService } from './network-service.interface.js';
