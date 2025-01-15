@@ -46,6 +46,11 @@ type BlockInfo {
   distanceFromMaxBlockHeight: Int!
 }
 
+type MaxBlockHeightInfo {
+  canonicalMaxBlockHeight: Int!
+  pendingMaxBlockHeight: Int!
+}
+
 type TransactionInfo {
   status: String!
   hash: String!
@@ -75,7 +80,12 @@ type ActionOutput {
   actionState: ActionStates!
 }
 
+type NetworkStateOutput {
+  maxBlockHeight: MaxBlockHeightInfo
+}
+
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  networkState: NetworkStateOutput!
 }

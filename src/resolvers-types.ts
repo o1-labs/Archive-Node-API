@@ -83,6 +83,17 @@ export type BlockInfo = {
   timestamp: Scalars['String']['output'];
 };
 
+export type NetworkStateOutput = {
+  __typename?: 'NetworkStateOutput';
+  maxBlockHeight: MaxBlockHeightInfo
+};
+
+export type MaxBlockHeightInfo = {
+  __typename?: 'MaxBlockHeightInfo';
+  canonicalMaxBlockHeight: Scalars['Int']['output'];
+  pendingMaxBlockHeight: Scalars['Int']['output'];
+};
+
 export { BlockStatusFilter };
 
 export type EventData = {
@@ -110,6 +121,7 @@ export type Query = {
   __typename?: 'Query';
   actions: Array<Maybe<ActionOutput>>;
   events: Array<Maybe<EventOutput>>;
+  networkState: Maybe<NetworkStateOutput>;
 };
 
 export type QueryActionsArgs = {
@@ -242,6 +254,8 @@ export type ResolversTypes = {
   ActionOutput: ResolverTypeWrapper<ActionOutput>;
   ActionStates: ResolverTypeWrapper<ActionStates>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
+  NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
+  MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   BlockStatusFilter: BlockStatusFilter;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   EventData: ResolverTypeWrapper<EventData>;
@@ -437,6 +451,11 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryEventsArgs, 'input'>
+  >;
+  networkState?: Resolver<
+    Maybe<ResolversTypes['NetworkStateOutput']>,
+    ParentType,
+    ContextType
   >;
 };
 

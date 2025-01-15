@@ -7,6 +7,7 @@ import {
   fetchAccount,
   UInt64,
   Bool,
+  UInt32,
 } from 'o1js';
 import { HelloWorld, TestStruct, type TestStructArray } from './contract.js';
 
@@ -21,6 +22,7 @@ export {
   emitAction,
   emitActionsFromMultipleSenders,
   reduceAction,
+  fetchNetworkState,
   Keypair,
   randomStruct,
 };
@@ -97,7 +99,7 @@ async function updateContractState(
       await zkApp.update(Field(4));
     }
   );
-  transaction.sign([senderKey]).prove();
+  await transaction.sign([senderKey]).prove();
   await sendTransaction(transaction);
 }
 
@@ -236,6 +238,24 @@ async function reduceAction(
   transaction.sign([senderKey]);
   await transaction.prove();
   await sendTransaction(transaction);
+}
+
+async function fetchNetworkState(
+  zkApp: HelloWorld,
+  { publicKey: sender, privateKey: senderKey }: Keypair
+): Promise<number> {
+  console.log('Fetching network state.');
+  let blockchainLength: UInt32 = UInt32.zero;
+  let transaction = await Mina.transaction(
+    { sender, fee: transactionFee },
+    async () => {
+       blockchainLength = Mina.getNetworkState().blockchainLength;
+    }
+  );
+  transaction.sign([senderKey]);
+  await transaction.prove();
+  await sendTransaction(transaction);
+  return Number(blockchainLength.toString());
 }
 
 async function sendTransaction(transaction: Mina.Transaction<any, any>) {

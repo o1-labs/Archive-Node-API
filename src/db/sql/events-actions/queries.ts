@@ -371,6 +371,24 @@ export function getActionsQuery(
   `;
 }
 
+export function getNetworkStateQuery(db_client: postgres.Sql) {
+  return db_client`
+WITH max_heights AS (
+    SELECT 
+        chain_status,
+        MAX(height) AS max_height
+    FROM blocks
+    WHERE chain_status IN ('canonical', 'pending')
+    GROUP BY chain_status
+)
+SELECT b.*
+FROM blocks b
+JOIN max_heights mh
+  ON b.chain_status = mh.chain_status
+  AND b.height = mh.max_height;
+  `;
+}
+
 export function checkActionState(db_client: postgres.Sql, actionState: string) {
   return db_client`
   SELECT field FROM zkapp_field WHERE field = ${actionState}
