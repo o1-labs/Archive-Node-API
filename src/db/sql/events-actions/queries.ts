@@ -31,7 +31,7 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
           : db_client`AND b.height >= (
             SELECT MAX(b2.height)
             FROM blocks b2
-            WHERE b2.chain_status = 'canonical'
+            WHERE b2.chain_status <> 'canonical'
         ) - 10000`
       }
   ), 
