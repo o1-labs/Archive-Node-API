@@ -2,7 +2,7 @@ import type postgres from 'postgres';
 import { ArchiveNodeDatabaseRow } from './types.js';
 import { BlockStatusFilter } from '../../../blockchain/types.js';
 
-function fullChainCTE(db_client: postgres.Sql) {
+function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
   return db_client`
   RECURSIVE pending_chain AS (
     (
@@ -18,9 +18,12 @@ function fullChainCTE(db_client: postgres.Sql) {
       b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash, b.last_vrf_output
     FROM
       blocks b
-    INNER JOIN pending_chain ON b.id = pending_chain.parent_id
-    AND pending_chain.id <> pending_chain.parent_id
-    AND pending_chain.chain_status <> 'canonical'
+      INNER JOIN pending_chain ON b.id = pending_chain.parent_id
+      AND pending_chain.id <> pending_chain.parent_id
+      AND pending_chain.chain_status <> 'canonical'
+      WHERE 1=1
+        ${to ? db_client`AND b.height <= ${to}` : db_client``}
+        ${from ? db_client`AND b.height >= ${from}` : db_client``}
   ), 
   full_chain AS (
     SELECT
@@ -38,6 +41,8 @@ function fullChainCTE(db_client: postgres.Sql) {
           blocks b
         WHERE
           chain_status = 'canonical'
+          ${to ? db_client`AND b.height <= ${to}` : db_client``}
+          ${from ? db_client`AND b.height >= ${from}` : db_client``}
       ) AS full_chain
   )
   `;
@@ -61,12 +66,7 @@ function accountIdentifierCTE(
   )`;
 }
 
-function blocksAccessedCTE(
-  db_client: postgres.Sql,
-  status: BlockStatusFilter,
-  to?: string,
-  from?: string
-) {
+function blocksAccessedCTE(db_client: postgres.Sql, status: BlockStatusFilter) {
   return db_client`
   blocks_accessed AS
   (
@@ -97,8 +97,6 @@ function blocksAccessedCTE(
         ? db_client``
         : db_client`AND chain_status = ${status.toLowerCase()}`
     }
-    ${to ? db_client`AND b.height <= ${to}` : db_client``}
-    ${from ? db_client`AND b.height >= ${from}` : db_client``}
   )`;
 }
 
@@ -308,9 +306,9 @@ export function getEventsQuery(
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
-  ${fullChainCTE(db_client)},
+  ${fullChainCTE(db_client, to, from)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
-  ${blocksAccessedCTE(db_client, status, to, from)},
+  ${blocksAccessedCTE(db_client, status)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedEventsCTE(db_client)}
   SELECT
@@ -360,9 +358,9 @@ export function getActionsQuery(
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
-  ${fullChainCTE(db_client)},
+  ${fullChainCTE(db_client, from, to)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
-  ${blocksAccessedCTE(db_client, status, to, from)},
+  ${blocksAccessedCTE(db_client, status)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedActionsCTE(db_client)},
   ${emittedActionStateCTE(db_client, fromActionState, endActionState)}
