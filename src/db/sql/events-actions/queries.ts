@@ -326,7 +326,7 @@ export function getEventsQuery(
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
   WITH 
-  ${fullChainCTE(db_client, to, from)},
+  ${fullChainCTE(db_client, from, to)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status)},
   ${emittedZkAppCommandsCTE(db_client)},
