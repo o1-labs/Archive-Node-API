@@ -2,7 +2,17 @@ import type postgres from 'postgres';
 import { ArchiveNodeDatabaseRow } from './types.js';
 import { BlockStatusFilter } from '../../../blockchain/types.js';
 
+const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
+
 function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
+  let toAsNum = to ? Number(to) : undefined;
+  let fromAsNum = from ? Number(from) : undefined;
+  if (fromAsNum) {
+    const maxRange = fromAsNum + BLOCK_RANGE_SIZE;
+    toAsNum = toAsNum ? Math.min(toAsNum, maxRange) : maxRange;
+  } else if (toAsNum) {
+    fromAsNum = toAsNum - BLOCK_RANGE_SIZE;
+  }
   return db_client`
   RECURSIVE pending_chain AS (
     (
@@ -22,18 +32,6 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
       AND pending_chain.id <> pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
       WHERE 1=1
-      ${to ? db_client`AND b.height <= ${to}` : db_client``}
-      ${
-        from
-          ? db_client`AND b.height >= ${from}`
-          : to
-          ? db_client`AND b.height >= ${Number(to) - 10000}`
-          : db_client`AND b.height >= (
-            SELECT MAX(b2.height)
-            FROM blocks b2
-            WHERE b2.chain_status <> 'canonical'
-        ) - 10000`
-      }
   ), 
   full_chain AS (
     SELECT
@@ -51,17 +49,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
           blocks b
         WHERE
           chain_status = 'canonical'
-          ${to ? db_client`AND b.height <= ${to}` : db_client``}
           ${
-            from
-              ? db_client`AND b.height >= ${from}`
-              : to
-              ? db_client`AND b.height >= ${Number(to) - 10000}`
+            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+            fromAsNum
+              ? db_client`AND b.height >= ${fromAsNum} AND b.height >= ${toAsNum!}`
               : db_client`AND b.height >= (
                 SELECT MAX(b2.height)
                 FROM blocks b2
-                WHERE b2.chain_status = 'canonical'
-            ) - 10000`
+            ) - ${BLOCK_RANGE_SIZE}`
           }
       ) AS full_chain
   )
