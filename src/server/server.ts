@@ -3,6 +3,9 @@ import { createServer } from 'http';
 import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export { BLOCK_RANGE_SIZE, buildServer };
 

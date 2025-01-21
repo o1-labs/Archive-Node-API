@@ -30,10 +30,7 @@ import {
   throwActionStateError,
   throwBlockRangeError,
 } from '../../errors/error.js';
-import dotenv from 'dotenv';
 import { BLOCK_RANGE_SIZE } from '../../server/server.js';
-
-dotenv.config();
 
 export { ActionsService };
 
