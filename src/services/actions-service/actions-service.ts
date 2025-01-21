@@ -26,7 +26,14 @@ import {
   TracingState,
   extractTraceStateFromOptions,
 } from '../../tracing/tracer.js';
-import { throwActionStateError } from '../../errors/error.js';
+import {
+  throwActionStateError,
+  throwBlockRangeError,
+} from '../../errors/error.js';
+import dotenv from 'dotenv';
+import { BLOCK_RANGE_SIZE } from '../../server/server.js';
+
+dotenv.config();
 
 export { ActionsService };
 
@@ -97,7 +104,12 @@ class ActionsService implements IActionsService {
     tokenId ||= DEFAULT_TOKEN_ID;
     status ||= BlockStatusFilter.all;
     if (to && from && to < from) {
-      throw new Error('to must be greater than from');
+      throwBlockRangeError('to must be greater than from');
+    }
+    if (to && from && to - from > BLOCK_RANGE_SIZE) {
+      throwBlockRangeError(
+        `The block range is too large. The maximum range is ${BLOCK_RANGE_SIZE}`
+      );
     }
 
     return getActionsQuery(

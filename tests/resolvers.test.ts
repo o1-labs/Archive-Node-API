@@ -45,15 +45,15 @@ import {
 
 interface ExecutorResult {
   data:
-  | {
-    events: Array<EventOutput>;
-  }
-  | {
-    actions: Array<ActionOutput>;
-  }
-  | {
-    networkState: NetworkStateOutput;
-  };
+    | {
+        events: Array<EventOutput>;
+      }
+    | {
+        actions: Array<ActionOutput>;
+      }
+    | {
+        networkState: NetworkStateOutput;
+      };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -149,15 +149,15 @@ const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
 interface ExecutorResult {
   data:
-  | {
-    events: Array<EventOutput>;
-  }
-  | {
-    actions: Array<ActionOutput>;
-  }
-  | {
-    networkState: NetworkStateOutput;
-  };
+    | {
+        events: Array<EventOutput>;
+      }
+    | {
+        actions: Array<ActionOutput>;
+      }
+    | {
+        networkState: NetworkStateOutput;
+      };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -186,6 +186,8 @@ describe('Query Resolvers', async () => {
 
   async function executeActionsQuery(variableInput: {
     address: string;
+    from?: string;
+    to?: string;
   }): Promise<ActionQueryResult> {
     return (await executor({
       variables: {
@@ -197,6 +199,8 @@ describe('Query Resolvers', async () => {
 
   async function executeEventsQuery(variableInput: {
     address: string;
+    from?: string;
+    to?: string;
   }): Promise<EventQueryResult> {
     return (await executor({
       variables: {
@@ -254,7 +258,7 @@ describe('Query Resolvers', async () => {
     process.exit(0);
   });
 
-  describe("NetworkState", async () => {
+  describe('NetworkState', async () => {
     let blockResponse: NetworkStateOutput;
     let results: NetworkQueryResult;
     let fetchedBlockchainLength: number;
@@ -265,35 +269,43 @@ describe('Query Resolvers', async () => {
       fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
     });
 
-    test("Fetching the max block height should not throw", async () => {
+    test('Fetching the max block height should not throw', async () => {
       assert.doesNotThrow(async () => {
         await executeNetworkStateQuery();
       });
     });
 
-    test("Fetching the max block height should return the max block height", async () => {
+    test('Fetching the max block height should return the max block height', async () => {
       blockResponse = results.data.networkState;
       assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
       assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
-      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > blockResponse.maxBlockHeight.canonicalMaxBlockHeight);
+      assert.ok(
+        blockResponse.maxBlockHeight.pendingMaxBlockHeight >
+          blockResponse.maxBlockHeight.canonicalMaxBlockHeight
+      );
     });
 
-    test("Fetched max block height from archive node should match with the one from mina node", async () => {
-      assert.deepStrictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+    test('Fetched max block height from archive node should match with the one from mina node', async () => {
+      assert.deepStrictEqual(
+        blockResponse.maxBlockHeight.pendingMaxBlockHeight,
+        fetchedBlockchainLength
+      );
     });
-    
-    describe("Advance a block", async () => {
+
+    describe('Advance a block', async () => {
       before(async () => {
         await new Promise((resolve) => setTimeout(resolve, 25000)); // wait for new lightnet block
         results = await executeNetworkStateQuery();
         blockResponse = results.data.networkState;
         fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
       });
-      test("Fetched max block height from archive node should match the one from mina node after one block", () => {
-        assert.deepStrictEqual(blockResponse.maxBlockHeight.pendingMaxBlockHeight, fetchedBlockchainLength);
+      test('Fetched max block height from archive node should match the one from mina node after one block', () => {
+        assert.deepStrictEqual(
+          blockResponse.maxBlockHeight.pendingMaxBlockHeight,
+          fetchedBlockchainLength
+        );
       });
     });
-
   });
 
   describe('Events', async () => {
@@ -314,6 +326,44 @@ describe('Query Resolvers', async () => {
         address: '',
       });
       assert.strictEqual(results.data.events.length, 0);
+    });
+
+    test('Fetching events with from block greater than to block should throw', async () => {
+      assert.rejects(
+        async () => {
+          await executeEventsQuery({
+            address: zkApp.address.toBase58(),
+            from: '100',
+            to: '10',
+          });
+        },
+        (err: Error) => {
+          assert.strictEqual(err.message, 'to must be greater than from');
+          return true;
+        }
+      );
+    });
+
+    test('Fetching events with to block more than BLOCK_RANGE_SIZE greater than from should throw', async () => {
+      const resetValue = process.env.BLOCK_RANGE_SIZE;
+      process.env.BLOCK_RANGE_SIZE = '10';
+      assert.rejects(
+        async () => {
+          await executeEventsQuery({
+            address: zkApp.address.toBase58(),
+            from: '100',
+            to: '111',
+          });
+        },
+        (err: Error) => {
+          assert.strictEqual(
+            err.message,
+            'The block range is too large. The maximum range is 10'
+          );
+          return true;
+        }
+      );
+      process.env.BLOCK_RANGE_SIZE = resetValue;
     });
 
     describe('After emitting an event with a single field once', async () => {
@@ -487,6 +537,44 @@ describe('Query Resolvers', async () => {
       assert.strictEqual(results.data.actions.length, 0);
     });
 
+    test('Fetching actions with from block greater than to block should throw', async () => {
+      assert.rejects(
+        async () => {
+          await executeActionsQuery({
+            address: zkApp.address.toBase58(),
+            from: '100',
+            to: '10',
+          });
+        },
+        (err: Error) => {
+          assert.strictEqual(err.message, 'to must be greater than from');
+          return true;
+        }
+      );
+    });
+
+    test('Fetching actions with to block more than BLOCK_RANGE_SIZE greater than from should throw', async () => {
+      const resetValue = process.env.BLOCK_RANGE_SIZE;
+      process.env.BLOCK_RANGE_SIZE = '10';
+      assert.rejects(
+        async () => {
+          await executeActionsQuery({
+            address: zkApp.address.toBase58(),
+            from: '100',
+            to: '111',
+          });
+        },
+        (err: Error) => {
+          assert.strictEqual(
+            err.message,
+            'The block range is too large. The maximum range is 10'
+          );
+          return true;
+        }
+      );
+      process.env.BLOCK_RANGE_SIZE = resetValue;
+    });
+
     describe('After emitting an action', async () => {
       const [s1, s2, s3] = [randomStruct(), randomStruct(), randomStruct()];
       const testStructArray = {
@@ -588,9 +676,7 @@ describe('Query Resolvers', async () => {
       });
     });
   });
-
 });
-
 
 function structToAction(s: TestStruct) {
   return [

@@ -1,8 +1,7 @@
 import type postgres from 'postgres';
 import { ArchiveNodeDatabaseRow } from './types.js';
 import { BlockStatusFilter } from '../../../blockchain/types.js';
-
-const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
+import { BLOCK_RANGE_SIZE } from '../../../server/server.js';
 
 function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
   let toAsNum = to ? Number(to) : undefined;
@@ -53,7 +52,7 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
             // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
             // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
             fromAsNum
-              ? db_client`AND b.height >= ${fromAsNum} AND b.height >= ${toAsNum!}`
+              ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
               : db_client`AND b.height >= (
                 SELECT MAX(b2.height)
                 FROM blocks b2
