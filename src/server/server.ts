@@ -3,10 +3,14 @@ import { createServer } from 'http';
 import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
+import dotenv from 'dotenv';
 
-export { buildServer };
+dotenv.config();
+
+export { BLOCK_RANGE_SIZE, buildServer };
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
+const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
 
 function buildServer(context: GraphQLContext, plugins: Plugin[]) {
   const yoga = createYoga<GraphQLContext>({
