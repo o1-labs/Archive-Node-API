@@ -12,8 +12,6 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
   } else if (toAsNum) {
     fromAsNum = toAsNum - BLOCK_RANGE_SIZE;
   }
-  console.log('fromAsNum', fromAsNum);
-  console.log('toAsNum', toAsNum);
   return db_client`
   RECURSIVE pending_chain AS (
     (
