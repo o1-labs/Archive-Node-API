@@ -31,6 +31,16 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
       AND pending_chain.id <> pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
       WHERE 1=1
+      ${
+        // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+        // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+        fromAsNum
+          ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
+          : db_client`AND b.height >= (
+            SELECT MAX(b2.height)
+            FROM blocks b2
+        ) - ${BLOCK_RANGE_SIZE}`
+      }
   ), 
   full_chain AS (
     SELECT
