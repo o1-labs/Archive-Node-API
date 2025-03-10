@@ -30,17 +30,6 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
       INNER JOIN pending_chain ON b.id = pending_chain.parent_id
       AND pending_chain.id <> pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
-      WHERE 1=1
-      ${
-        // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
-        // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
-        fromAsNum
-          ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
-          : db_client`AND b.height >= (
-            SELECT MAX(b2.height)
-            FROM blocks b2
-        ) - ${BLOCK_RANGE_SIZE}`
-      }
   ), 
   full_chain AS (
     SELECT
@@ -51,6 +40,17 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
           id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output
         FROM
           pending_chain
+        WHERE 1=1
+          ${
+            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+            fromAsNum
+              ? db_client`AND height >= ${fromAsNum} AND height < ${toAsNum!}`
+              : db_client`AND height >= (
+                SELECT MAX(height)
+                FROM pending_chain
+            ) - ${BLOCK_RANGE_SIZE}`
+          }
         UNION ALL
         SELECT
           id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output
