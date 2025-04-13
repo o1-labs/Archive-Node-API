@@ -1,26 +1,52 @@
-# This script is used to download a nightly Berkeley database dump used for debugging purposes.
 #!/usr/bin/env bash
-set -x
-set -eo pipefail
+set -eo pipefail  
 
-PG_DUMP="berkeley-archive.sql"
+# default to 'mainnet'
+NETWORK="${1:-mainnet}"
+
+# Validate the network input
+if [[ "$NETWORK" != "mainnet" && "$NETWORK" != "devnet" ]]; then
+  echo "Usage: $0 [mainnet|devnet]"
+  exit 1
+fi
+
+# Define output paths and base URL
 DATA_DIR="data"
-CURRENT_DATE=$(date '+%Y-%m-%d')
+PG_DUMP="${NETWORK}-archive.sql"
+BASE_URL="https://storage.googleapis.com/mina-archive-dumps"
 
-# Create the data directory if it doesn't exist
-mkdir -p ${DATA_DIR}
+# Create the data directory and change into it
+mkdir -p "$DATA_DIR"
+cd "$DATA_DIR"
 
-# Change to the data directory
-cd ${DATA_DIR}
+# get date as YYYY-MM-DD
+get_date() {
+  # macOS
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    date -v -"$1"d '+%Y-%m-%d'    
+  # linux
+  else
+    date -d "-$1 days" '+%Y-%m-%d'
+  fi
+}
 
-# Download the archive file
-curl -LJO https://storage.googleapis.com/mina-archive-dumps/berkeley-archive-dump-${CURRENT_DATE}_0000.sql.tar.gz
+# look for most recent db dump up to 10 days old
+for i in $(seq 0 9); do
+  DATE=$(get_date "$i")
+  FILE="${NETWORK}-archive-dump-${DATE}_0000.sql.tar.gz"
+  URL="${BASE_URL}/${FILE}"
 
-# Extract the database dump
-tar -xf berkeley-archive-dump-${CURRENT_DATE}_0000.sql.tar.gz
+  echo "Attempting to download archive node DB dump from: $URL"
 
-# Rename the extracted database dump
-mv berkeley-archive-dump-${CURRENT_DATE}_0000.sql berkeley-archive.sql
+  # abort download if the file is an XML error page
+  if curl -sf -O "$URL" && ! grep -q "<Error>" "$FILE"; then
+    tar -xf "$FILE"
+    mv "${FILE%.tar.gz}" "$PG_DUMP"
+    rm "$FILE"
+    echo "Downloaded and extracted to $DATA_DIR/$PG_DUMP"
+    exit 0
+  fi
+done
 
-# Remove the original archive file
-rm berkeley-archive-dump-${CURRENT_DATE}_0000.sql.tar.gz
+echo "No valid dump found for network=$NETWORK in the last 10 days"
+exit 1
