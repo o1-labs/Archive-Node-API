@@ -82,16 +82,17 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
 If you're actively developing or debugging the GraphQL API, you can run just the required infrastructure services through docker and then run the api with npm. 
 
 1. Update your .env file to connect to the services exposed by docker
-    ```shell
-    PG_CONN=postgres://postgres:password@localhost:5432/archive
-    JAEGER_ENDPOINT=http://localhost:14268/api/traces
-    ```
+```shell
+PG_CONN=postgres://postgres:password@localhost:5432/archive
+JAEGER_ENDPOINT=http://localhost:14268/api/traces
+```
 2. Start Postgres and Jaeger
-    ```shell
-    docker-compose up postgres jaeger
-    ```
+```shell
+docker-compose up postgres jaeger
+```
 3. Start the API server 
-    ```shell
-    npm run start
-    ```
+
+```shell
+npm run start
+```
 Once running, the GraphQL UI will be available at http://localhost:8080.
