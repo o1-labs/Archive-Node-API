@@ -49,12 +49,6 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
     ```bash
     ./scripts/download_db.sh
     ```
-
-2. To use the devnet dump, update the `.env` file
-    ```env
-    PG_DUMP="devnet-archive.sql"
-    ```
-
 ---
 
 ### 3. Start the API with Docker Compose

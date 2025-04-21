@@ -12,12 +12,21 @@ fi
 
 # Define output paths and base URL
 DATA_DIR="data"
-PG_DUMP="${NETWORK}-archive.sql"
+DB_DIR="db"
+PG_DUMP="archive.sql"
 BASE_URL="https://storage.googleapis.com/mina-archive-dumps"
 
-# Create the data directory and change into it
+# Stop docker containers 
+docker-compose stop postgres
+
+# clear db and data directories
+rm -rf "$DB_DIR"
+rm -rf "$DATA_DIR"
+mkdir -p "$DB_DIR"
+mkdir -p "$DATA_DIR"
 mkdir -p "$DATA_DIR"
 cd "$DATA_DIR"
+
 
 # get date as YYYY-MM-DD
 get_date() {
@@ -29,6 +38,7 @@ get_date() {
     date -d "-$1 days" '+%Y-%m-%d'
   fi
 }
+
 
 # look for most recent db dump up to 10 days old
 for i in $(seq 0 9); do
