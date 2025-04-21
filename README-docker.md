@@ -26,7 +26,7 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
 1. Clone the repository:
     ```bash
     git clone https://github.com/o1-labs/archive-node-api
-    cd archive-node-api
+    cd Archive-Node-API
     ```
 
 2. Install the required dependencies and build the project:
@@ -44,12 +44,13 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
 
 ### 2. Download the Database Snapshot
 
-1. Run the script to download the database snapshot. This downloads the latest `mainnet` dump by default, or you can specify `devnet` as `./scripts/download_db.sh devnet`
+1. Run the script to download the database snapshot. 
+    - This downloads the latest `mainnet` dump by default, or you can specify `devnet` as `./scripts/download_db.sh devnet`
     ```bash
     ./scripts/download_db.sh
     ```
 
-2. For the devnet dump, update the `.env` file
+2. To use the devnet dump, update the `.env` file
     ```env
     PG_DUMP="devnet-archive.sql"
     ```
@@ -63,11 +64,8 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
     docker-compose up
     ```
 
-2. Once the containers are running, the GraphQL UI will be available at:
-    ```
-    http://localhost:8080
-    ```
-
+2. Once the containers are running, the GraphQL UI will be available at `http://localhost:8080`
+    - Initializing postgres can take a while!
 ---
 
 ### 4. Verify the Setup
@@ -84,5 +82,5 @@ Instead of syncing a full archive node, you can download a snapshot of the Postg
     }
     ```
 
-2. Compare the resulting block height with what you see on [MinaScan](https://minascan.io) for the corresponding network (e.g., mainnet or devnet).
+2. Compare the resulting block height with what you see on [MinaScan](https://minascan.io/mainnet/home) for the corresponding network (e.g., mainnet or devnet).
 
