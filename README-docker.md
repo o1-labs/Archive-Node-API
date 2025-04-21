@@ -1,6 +1,6 @@
 # Mina Archive Node GraphQL API
 
-This project is a GraphQL API and web UI for viewing the contents of a Mina archive node database.
+This project is a GraphQL API and web UI for querying actions and events from the Mina archive node database.
 
 It provides a UI to view on-chain data such as blocks, events, and zkApp actions without needing to run a full Mina archive node.
 
