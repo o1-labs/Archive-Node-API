@@ -2,7 +2,6 @@
 
 This project is a GraphQL API and web UI for querying actions and events from the Mina archive node database.
 
-It provides a UI to view on-chain data such as blocks, events, and zkApp actions without needing to run a full Mina archive node.
 
 You can either:
 - Connect to a live archive node's Postgres DB to serve live, updating chain data
