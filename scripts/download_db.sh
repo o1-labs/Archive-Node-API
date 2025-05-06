@@ -63,7 +63,7 @@ for i in $(seq 0 2); do
   echo "Attempting to download archive node DB dump from: $URL"
 
   # abort download if the file is an XML error page
-  if curl -sf -O "$URL" && ! grep -q "<Error>" "$FILE"; then
+  if curl -# -O "$URL" && ! grep -q "<Error>" "$FILE"; then
     tar -xf "$FILE"
     mv "${FILE%.tar.gz}" "$PG_DUMP"
     rm "$FILE"
@@ -81,7 +81,7 @@ for i in $(seq 0 2); do
   echo "Attempting to download archive node DB dump from: $URL"
 
   # abort download if the file is an XML error page
-  if curl -sf -O "$URL" && ! grep -q "<Error>" "$FILE"; then
+  if curl -# -O "$URL" && ! grep -q "<Error>" "$FILE"; then
     tar -xf "$FILE"
     mv "${FILE%.tar.gz}" "$PG_DUMP"
     rm "$FILE"
