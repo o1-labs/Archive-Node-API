@@ -90,5 +90,5 @@ for i in $(seq 0 2); do
   fi
 done
 
-echo "No valid dump found for network=$NETWORK in the last 10 days"
+echo "No valid dump found for network=$NETWORK in the last 3 days"
 exit 1
