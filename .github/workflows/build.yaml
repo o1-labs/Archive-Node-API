@@ -49,6 +49,7 @@ jobs:
         id: determine_tags
         run: |
           TAGS="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${{ github.sha }}"
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.7.0
