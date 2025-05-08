@@ -1,16 +1,14 @@
 import { gql } from 'graphql-tag';
 import { GraphQLClient } from 'graphql-request';
 import postgres from 'postgres';
-import { getZkappsWithPendingEventsQuery } from 'src/db/sql/events-actions/queries.js';
+import { getZkappsWithPendingEventsQuery } from '../../src/db/sql/events-actions/queries.js';
 import { after, describe, it } from 'node:test';
 import { EventOutput } from 'src/resolvers-types.js';
 import assert from 'node:assert';
-import { readFileSync } from 'fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Fixtures
+import J1fu_65_66 from './fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_65_66.json' with { type: "json" };
+import J1fu_84_83 from './fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_84_83.json' with { type: "json" };
 
 const db_client = postgres(process.env.PG_CONN);
 /**
@@ -86,16 +84,7 @@ describe('Events', () => {
         input,
       });
       totalEvents.concat(data);
-      const expectedData = JSON.parse(
-        readFileSync(
-          join(
-            __dirname,
-            'fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_65_66.json'
-          ),
-          { encoding: 'utf-8' }
-        )
-      );
-      assert.deepStrictEqual(data, expectedData);
+      assert.deepStrictEqual(data, J1fu_65_66);
     });
   });
   describe('Canonical Chain', () => {
@@ -111,16 +100,7 @@ describe('Events', () => {
       });
       totalEvents.concat(data);
       console.log(totalEvents);
-      const expectedData = JSON.parse(
-        readFileSync(
-          join(
-            __dirname,
-            'fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_84_83.json'
-          ),
-          { encoding: 'utf-8' }
-        )
-      );
-      assert.deepStrictEqual(data, expectedData);
+      assert.deepStrictEqual(data, J1fu_84_83);
     });
   });
 });
