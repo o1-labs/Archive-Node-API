@@ -440,3 +440,51 @@ export const USED_TABLES = [
   'zkapp_accounts',
   'zkapp_action_states',
 ] as const;
+
+export function getZkappsWithPendingEventsQuery(db_client: postgres.Sql) {
+  return db_client`
+  WITH RECURSIVE pending_chain(id, parent_id, chain_status) AS (
+  -- start at the tip
+  SELECT id, parent_id, chain_status
+    FROM blocks
+   WHERE height = (SELECT MAX(height) FROM blocks)
+
+  UNION ALL
+
+  -- walk back until we re-join the canonical branch
+  SELECT b.id, b.parent_id, b.chain_status
+    FROM blocks b
+    JOIN pending_chain pc
+      ON b.id = pc.parent_id
+   WHERE pc.id <> pc.parent_id
+     AND pc.chain_status <> 'canonical'
+)
+SELECT DISTINCT
+  pk.value AS public_key
+FROM
+  pending_chain pc
+
+  -- only commands in this block that didn’t fail
+  JOIN blocks_zkapp_commands bzc
+    ON bzc.block_id = pc.id
+   AND bzc.status <> 'failed'
+
+  -- get the command, then unwind its array of account-update IDs
+  JOIN zkapp_commands zkc
+    ON zkc.id = bzc.zkapp_command_id
+  JOIN LATERAL UNNEST(zkc.zkapp_account_updates_ids) AS upd(id) ON TRUE
+
+  -- pick up the body, but only if it actually emitted events
+  JOIN zkapp_account_update au
+    ON au.id = upd.id
+  JOIN zkapp_account_update_body aub
+    ON aub.id = au.body_id
+   AND aub.events_id IS NOT NULL
+
+  -- map back to the account’s public key
+  JOIN account_identifiers ai
+    ON ai.id = aub.account_identifier_id
+  JOIN public_keys pk
+    ON pk.id = ai.public_key_id;
+  `;
+}
