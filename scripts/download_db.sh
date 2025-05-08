@@ -63,6 +63,24 @@ for i in $(seq 0 2); do
   echo "Attempting to download archive node DB dump from: $URL"
 
   # abort download if the file is an XML error page
+  if curl -sf -O "$URL" && ! grep -q "<Error>" "$FILE"; then
+    tar -xf "$FILE"
+    mv "${FILE%.tar.gz}" "$PG_DUMP"
+    rm "$FILE"
+    echo "Downloaded and extracted to $DATA_DIR/$PG_DUMP"
+    exit 0
+  fi
+done
+
+# If not found, try the last 3 days at 00:00
+for i in $(seq 0 2); do
+  DATE=$(get_date "$i")
+  FILE="${NETWORK}-archive-dump-${DATE}_0000.sql.tar.gz"
+  URL="${BASE_URL}/${FILE}"
+
+  echo "Attempting to download archive node DB dump from: $URL"
+
+  # abort download if the file is an XML error page
   if curl -# -O "$URL" && ! grep -q "<Error>" "$FILE"; then
     tar -xf "$FILE"
     mv "${FILE%.tar.gz}" "$PG_DUMP"
