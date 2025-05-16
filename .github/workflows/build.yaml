@@ -48,9 +48,11 @@ jobs:
       - name: Determine tags
         id: determine_tags
         run: |
-          TAGS="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${{ github.sha }}"
-          echo "tags=$TAGS" >> $GITHUB_OUTPUT
-
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          FULL_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${{ github.sha }}"
+          SHORT_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${SHORT_SHA}"
+          echo "tags=${FULL_TAG},${SHORT_TAG}" >> $GITHUB_OUTPUT
+ 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.7.0
         with:
