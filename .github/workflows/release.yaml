@@ -1,0 +1,42 @@
+---
+name: "release"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+            suffix: linux-amd64
+          - os: ubuntu-latest
+            arch: arm64
+            suffix: linux-arm64
+    name: "Release for ${{ matrix.suffix }}"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          architecture: ${{ matrix.arch }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Package application
+        run: npm pack
+      - name: Create release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.API_TOKEN }}"
+          prerelease: false
+          files: |
+            *.tgz
