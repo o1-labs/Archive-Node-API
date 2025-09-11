@@ -66,6 +66,6 @@ jobs:
       # Other jobs upload their binaries to existing release
       - name: Upload Release Asset
         if: matrix.arch != 'x64'
-        run: gh release upload v0.0.1 *-${{ matrix.suffix }}.tgz
+        run: gh release upload ${{ github.ref_name }} *-${{ matrix.suffix }}.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
