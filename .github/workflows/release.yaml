@@ -60,10 +60,18 @@ jobs:
             fi
           done
 
-      - name: Create release
+      # Only one job creates the release
+      - name: Create Release
+        if: matrix.arch == 'amd64'
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
             *-${{ matrix.suffix }}.tgz
+
+      # All jobs upload their binaries
+      - name: Upload Release Asset
+        run: gh release upload v0.0.1 *-${{ matrix.suffix }}.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
