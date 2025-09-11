@@ -23,10 +23,14 @@ jobs:
         uses: actions/checkout@v4
 
       # Enable QEMU for ARM builds
-      - name: Set up QEMU
+      - name: Build in ARM64 Docker container
         if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v3
-
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:18-bullseye bash -c "
+            npm ci &&
+            npm run build &&
+            npm pack
+          "
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
