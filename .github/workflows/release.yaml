@@ -6,25 +6,49 @@ on:
       - "v*"
 
 jobs:
-  release:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x64
-            suffix: linux-amd64
-          - os: ubuntu-latest
-            arch: arm64
-            suffix: linux-arm64
-    name: "Release for ${{ matrix.suffix }}"
-    runs-on: ${{ matrix.os }}
+  build-x64:
+    name: "Release for linux-amd64"
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      # ARM64 build in Docker
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          architecture: x64
+
+      - run: |
+          npm ci
+          npm run build
+          npm pack
+
+      - name: Rename package with suffix
+        run: |
+          for file in *.tgz; do
+            if [ -f "$file" ]; then
+              mv "$file" "${file%.tgz}-linux-amd64.tgz"
+            fi
+          done
+
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            *-linux-amd64.tgz
+
+  build-arm64:
+    name: "Release for linux-arm64"
+    runs-on: ubuntu-latest
+    needs: build-x64
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
       - name: Build in ARM64 Docker container
-        if: matrix.arch == 'arm64'
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:18-bullseye bash -c "
             npm ci &&
@@ -32,40 +56,15 @@ jobs:
             npm pack
           "
 
-      # x64 build steps
-      - name: Build and package for x64
-        if: matrix.arch == 'x64'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          architecture: ${{ matrix.arch }}
-      - run: |
-          npm ci
-          npm run build
-          npm pack
-        if: matrix.arch == 'x64'
-
       - name: Rename package with suffix
         run: |
           for file in *.tgz; do
             if [ -f "$file" ]; then
-              mv "$file" "${file%.tgz}-${{ matrix.suffix }}.tgz"
+              mv "$file" "${file%.tgz}-linux-arm64.tgz"
             fi
           done
 
-      # Only one job creates the release
-      - name: Create Release
-        if: matrix.arch == 'x64'
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-          files: |
-            *-${{ matrix.suffix }}.tgz
-
-      # Other jobs upload their binaries to existing release
       - name: Upload Release Asset
-        if: matrix.arch != 'x64'
-        run: gh release upload ${{ github.ref_name }} *-${{ matrix.suffix }}.tgz
+        run: gh release upload ${{ github.ref_name }} *-linux-arm64.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
