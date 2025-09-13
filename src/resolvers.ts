@@ -1,6 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { loadSchemaSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 import { Resolvers } from './resolvers-types.js';
 import {
@@ -45,9 +47,16 @@ const resolvers: Resolvers = {
   },
 };
 
+// Get the directory containing this module file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Resolve schema.graphql relative to the package root (two levels up from build/src/)
+const schemaPath = join(__dirname, '..', '..', 'schema.graphql');
+
 const schema = makeExecutableSchema({
   resolvers: [resolvers],
-  typeDefs: loadSchemaSync('./schema.graphql', {
+  typeDefs: loadSchemaSync(schemaPath, {
     loaders: [new GraphQLFileLoader()],
   }),
 });
