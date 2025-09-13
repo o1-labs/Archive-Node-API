@@ -16,13 +16,20 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           architecture: x64
 
       - run: |
           npm ci
           npm run build
           npm pack
+
+      - name: Verify package contents
+        run: |
+          echo "Verifying package contains required files..."
+          tar -tzf *.tgz | grep "package/build/src/context.js" || (echo "ERROR: context.js not found in package" && exit 1)
+          tar -tzf *.tgz | grep "package/build/src/index.js" || (echo "ERROR: index.js not found in package" && exit 1)
+          echo "Package verification successful"
 
       - name: Rename package with suffix
         run: |
@@ -50,10 +57,14 @@ jobs:
 
       - name: Build in ARM64 Docker container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:18-bullseye bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:20-bullseye bash -c "
             npm ci &&
             npm run build &&
-            npm pack
+            npm pack &&
+            echo 'Verifying package contents...' &&
+            tar -tzf *.tgz | grep 'package/build/src/context.js' || (echo 'ERROR: context.js not found in package' && exit 1) &&
+            tar -tzf *.tgz | grep 'package/build/src/index.js' || (echo 'ERROR: index.js not found in package' && exit 1) &&
+            echo 'Package verification successful'
           "
 
       - name: Rename package with suffix
