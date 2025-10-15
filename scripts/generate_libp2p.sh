@@ -18,7 +18,17 @@ set -x
 
 # Exit on error, and pipefail
 set -eo pipefail
-. ../.env
+
+# Get script directory and load .env from project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    . "$PROJECT_ROOT/.env"
+else
+    echo "Error: .env file not found at $PROJECT_ROOT/.env"
+    exit 1
+fi
 
 # Get mode from first argument
 MODE="${1}"
@@ -36,13 +46,14 @@ fi
 export MINA_LIBP2P_PASS=$MINA_LIBP2P_PASS
 
 # Constants
+
 KEYPAIR_DIR="keys"
 KEYPAIR_NAME="libp2p-keys"
 MINA_KEYPAIR_IMAGE=$MINA
 
 # Derived Paths
 HOME_KEYPAIR_DIR="$HOME/$KEYPAIR_DIR"
-KEYPAIR_PATH="$KEYPAIR_DIR/$KEYPAIR_NAME"
+KEYPAIR_PATH="/root/$KEYPAIR_DIR/$KEYPAIR_NAME"
 
 # Create keypair directory if not exists
 if [ ! -d $HOME_KEYPAIR_DIR ]; then
@@ -57,19 +68,27 @@ if [[ "$MODE" == "docker" ]]; then
     echo "Generating Mina keypair using Docker..."
     docker run --interactive --tty --rm \
         --env "MINA_LIBP2P_PASS=$MINA_LIBP2P_PASS" \
-        --volume $HOME_KEYPAIR_DIR:/keys $MINA_KEYPAIR_IMAGE \
-        --privkey-path $KEYPAIR_PATH
+        --volume $HOME_KEYPAIR_DIR:/root/keys $MINA_KEYPAIR_IMAGE \
+        libp2p generate-keypair --privkey-path $KEYPAIR_PATH
+
+    # Check if keypair was generated
+    if [ ! -f "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME" ]; then
+        echo "Error: Keypair was not generated at $HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+        exit 1
+    fi
 
     # Set permissions
     echo "Setting permissions for "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"..."
     sudo chown $USER:$USER "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
     chmod 600 "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+    
+    echo "Docker keypair generation completed successfully."
 fi
 
 # Generate libp2p keypair
 if [[ "$MODE" == "binary" ]]; then
     echo "Generating libp2p keypair..."
-    mina advanced generate-libp2p-keypair --privkey-path "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+    mina libp2p generate-keypair --privkey-path "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
 fi
 
 echo "Done."
