@@ -12,6 +12,17 @@ import {
 
 export { BlocksService };
 
+// Interface representing the expected row structure from the database
+interface BlockRow {
+  id: number;
+  height: number;
+  creator: string;
+  state_hash: string;
+  timestamp: string;
+  internal_command_type?: string;
+  coinbase_amount?: string;
+}
+
 class BlocksService implements IBlocksService {
   private readonly client: postgres.Sql;
 
@@ -40,7 +51,7 @@ class BlocksService implements IBlocksService {
     sqlSpan.end();
 
     const processingSpan = tracingState.startSpan('blocks.processing');
-    const blocks = this.rowsToBlocks(rows);
+    const blocks = this.rowsToBlocks(rows as unknown as BlockRow[]);
     processingSpan.end();
     return blocks;
   }
@@ -76,7 +87,7 @@ class BlocksService implements IBlocksService {
       WHERE 1=1
     `;
 
-    const params: any[] = [];
+    const params: (string | number)[] = [];
     let paramIndex = 1;
 
     if (canonical) {
@@ -106,7 +117,7 @@ class BlocksService implements IBlocksService {
     return this.client.unsafe(sql, params);
   }
 
-  private rowsToBlocks(rows: any[]): Blocks {
+  private rowsToBlocks(rows: BlockRow[]): Blocks {
     // Group rows by block
     const blockMap = new Map<number, Block>();
 
