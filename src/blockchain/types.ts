@@ -73,3 +73,17 @@ export type Actions = {
   actionData: Action[];
   blockInfo: BlockInfo;
 }[];
+
+export type BlockTransactions = {
+  coinbase: string;
+};
+
+export type Block = {
+  blockHeight: number;
+  creator: string;
+  stateHash: string;
+  dateTime: string;
+  transactions: BlockTransactions;
+};
+
+export type Blocks = Block[];

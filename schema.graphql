@@ -1,3 +1,5 @@
+scalar DateTime
+
 """
 Filter for the consensus status of the block
 """
@@ -132,8 +134,44 @@ type NetworkStateOutput {
   maxBlockHeight: MaxBlockHeightInfo
 }
 
+enum BlockSortByInput {
+  BLOCKHEIGHT_ASC
+  BLOCKHEIGHT_DESC
+}
+
+"""
+Filter for blocks by date range, canonical status, and other criteria
+"""
+input BlockQueryInput {
+  """
+  Filter blocks from this date/time, inclusive
+  """
+  dateTime_gte: DateTime
+  """
+  Filter blocks to this date/time, exclusive
+  """
+  dateTime_lt: DateTime
+  """
+  Filter for canonical (finalized) blocks only
+  """
+  canonical: Boolean
+}
+
+type BlockTransactions {
+  coinbase: String!
+}
+
+type Block {
+  blockHeight: Int!
+  creator: String!
+  stateHash: String!
+  dateTime: DateTime!
+  transactions: BlockTransactions!
+}
+
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
   networkState: NetworkStateOutput!
+  blocks(query: BlockQueryInput, limit: Int, sortBy: BlockSortByInput): [Block]!
 }
