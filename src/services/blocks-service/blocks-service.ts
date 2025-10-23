@@ -1,5 +1,5 @@
 import type postgres from 'postgres';
-import { Blocks, Block, BlockTransaction } from '../../blockchain/types.js';
+import { Blocks, Block } from '../../blockchain/types.js';
 import type {
   BlockQueryInput,
   BlockSortByInput,
