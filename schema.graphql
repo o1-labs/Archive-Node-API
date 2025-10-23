@@ -157,7 +157,7 @@ input BlockQueryInput {
   canonical: Boolean
 }
 
-type BlockTransaction {
+type BlockTransactions {
   coinbase: String!
 }
 
@@ -166,7 +166,7 @@ type Block {
   creator: String!
   stateHash: String!
   dateTime: DateTime!
-  transactions: [BlockTransaction]!
+  transactions: BlockTransactions!
 }
 
 type Query {

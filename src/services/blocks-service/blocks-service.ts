@@ -128,22 +128,17 @@ class BlocksService implements IBlocksService {
       if (!blockMap.has(blockId)) {
         // Convert Unix milliseconds to ISO string
         const dateTime = new Date(parseInt(row.timestamp)).toISOString();
+        // coinbase_amount is in nanomina (1 MINA = 10^9 nanomina)
+        const transactions = row.coinbase_amount
+          ? { coinbase: row.coinbase_amount }
+          : { coinbase: '0' }; // Default to 0 if no coinbase found
+        
         blockMap.set(blockId, {
           blockHeight: row.height,
           creator: row.creator,
           stateHash: row.state_hash,
           dateTime: dateTime,
-          transactions: [],
-        });
-      }
-
-      const block = blockMap.get(blockId)!;
-
-      // Add coinbase transaction if exists
-      // coinbase_amount is in nanomina (1 MINA = 10^9 nanomina)
-      if (row.internal_command_type === 'coinbase' && row.coinbase_amount) {
-        block.transactions.push({
-          coinbase: row.coinbase_amount,
+          transactions: transactions,
         });
       }
     }

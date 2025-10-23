@@ -129,8 +129,8 @@ export type BlockQueryInput = {
   dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type BlockTransaction = {
-  __typename?: 'BlockTransaction';
+export type BlockTransactions = {
+  __typename?: 'BlockTransactions';
   coinbase: Scalars['String']['output'];
 };
 
@@ -140,7 +140,7 @@ export type Block = {
   creator: Scalars['String']['output'];
   dateTime: Scalars['DateTime']['output'];
   stateHash: Scalars['String']['output'];
-  transactions: Array<Maybe<BlockTransaction>>;
+  transactions: BlockTransactions;
 };
 
 export type Query = {
@@ -290,7 +290,7 @@ export type ResolversTypes = {
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
   BlockQueryInput: BlockQueryInput;
   BlockSortByInput: BlockSortByInput;
-  BlockTransaction: ResolverTypeWrapper<BlockTransaction>;
+  BlockTransactions: ResolverTypeWrapper<BlockTransactions>;
   NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
   MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   BlockStatusFilter: BlockStatusFilter;
@@ -314,7 +314,7 @@ export type ResolversParentTypes = {
   Block: Block;
   BlockInfo: BlockInfo;
   BlockQueryInput: BlockQueryInput;
-  BlockTransaction: BlockTransaction;
+  BlockTransactions: BlockTransactions;
   Boolean: Scalars['Boolean']['output'];
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
@@ -417,7 +417,7 @@ export type BlockResolvers<
   dateTime?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   stateHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   transactions?: Resolver<
-    Array<Maybe<ResolversTypes['BlockTransaction']>>,
+    ResolversTypes['BlockTransactions'],
     ParentType,
     ContextType
   >;
@@ -427,7 +427,7 @@ export type BlockResolvers<
 export type BlockTransactionResolvers<
   ContextType = GraphQLContext,
   ParentType extends
-    ResolversParentTypes['BlockTransaction'] = ResolversParentTypes['BlockTransaction'],
+    ResolversParentTypes['BlockTransactions'] = ResolversParentTypes['BlockTransactions'],
 > = {
   coinbase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -600,7 +600,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BlockInfo?: BlockInfoResolvers<ContextType>;
   BlockSortByInput?: BlockSortByInputResolvers;
   BlockStatusFilter?: BlockStatusFilterResolvers;
-  BlockTransaction?: BlockTransactionResolvers<ContextType>;
+  BlockTransactions?: BlockTransactionResolvers<ContextType>;
   EventData?: EventDataResolvers<ContextType>;
   EventOutput?: EventOutputResolvers<ContextType>;
   MaxBlockHeightInfo?: MaxBlockHeightInfoResolvers<ContextType>;
