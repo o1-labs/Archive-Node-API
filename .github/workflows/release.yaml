@@ -1,0 +1,81 @@
+name: "release"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-x64:
+    name: "Release for linux-amd64"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          architecture: x64
+
+      - run: |
+          npm ci
+          npm run build
+          npm pack
+
+      - name: Verify package contents
+        run: |
+          echo "Verifying package contains required files..."
+          tar -tzf *.tgz | grep "package/build/src/context.js" || (echo "ERROR: context.js not found in package" && exit 1)
+          tar -tzf *.tgz | grep "package/build/src/index.js" || (echo "ERROR: index.js not found in package" && exit 1)
+          echo "Package verification successful"
+
+      - name: Rename package with suffix
+        run: |
+          for file in *.tgz; do
+            if [ -f "$file" ]; then
+              mv "$file" "${file%.tgz}-linux-amd64.tgz"
+            fi
+          done
+
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            *-linux-amd64.tgz
+
+  build-arm64:
+    name: "Release for linux-arm64"
+    runs-on: ubuntu-latest
+    needs: build-x64
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Build in ARM64 Docker container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace node:20-bullseye bash -c "
+            npm ci &&
+            npm run build &&
+            npm pack &&
+            echo 'Verifying package contents...' &&
+            tar -tzf *.tgz | grep 'package/build/src/context.js' || (echo 'ERROR: context.js not found in package' && exit 1) &&
+            tar -tzf *.tgz | grep 'package/build/src/index.js' || (echo 'ERROR: index.js not found in package' && exit 1) &&
+            echo 'Package verification successful'
+          "
+
+      - name: Rename package with suffix
+        run: |
+          for file in *.tgz; do
+            if [ -f "$file" ]; then
+              mv "$file" "${file%.tgz}-linux-arm64.tgz"
+            fi
+          done
+
+      - name: Upload Release Asset
+        run: gh release upload ${{ github.ref_name }} *-linux-arm64.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
