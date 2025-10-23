@@ -9,6 +9,7 @@ import {
   TracingState,
   extractTraceStateFromOptions,
 } from '../../tracing/tracer.js';
+import { BLOCK_RANGE_SIZE } from '../../server/server.js';
 
 export { BlocksService };
 
@@ -65,7 +66,7 @@ class BlocksService implements IBlocksService {
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical ?? false;
     const orderBy = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
-    const limitValue = limit ?? 100;
+    const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
     // Build the SQL query for blocks with transactions
     // Archive Node uses a junction table blocks_internal_commands
