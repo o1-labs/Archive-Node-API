@@ -71,20 +71,23 @@ class BlocksService implements IBlocksService {
     // Build the SQL query for blocks with transactions
     // Archive Node uses a junction table blocks_internal_commands
     let sql = `
-      SELECT 
+      SELECT
         b.id,
         b.state_hash,
         b.height,
         b.timestamp,
-        b.creator_id,
-        b.chain_status,
         pk.value as creator,
-        ic.command_type as internal_command_type,
-        ic.fee as coinbase_amount
+        COALESCE(ic.fee, '0') as coinbase_amount
       FROM blocks b
       INNER JOIN public_keys pk ON b.creator_id = pk.id
-      LEFT JOIN blocks_internal_commands bic ON bic.block_id = b.id
-      LEFT JOIN internal_commands ic ON ic.id = bic.internal_command_id AND ic.command_type = 'coinbase'
+      LEFT JOIN (
+        SELECT
+          bic.block_id,
+          ic.fee
+        FROM internal_commands ic
+        INNER JOIN blocks_internal_commands bic ON ic.id = bic.internal_command_id
+        WHERE ic.command_type = 'coinbase'
+      ) AS ic ON b.id = ic.block_id
       WHERE 1=1
     `;
 
@@ -119,30 +122,14 @@ class BlocksService implements IBlocksService {
   }
 
   private rowsToBlocks(rows: BlockRow[]): Blocks {
-    // Group rows by block
-    const blockMap = new Map<number, Block>();
-
-    for (const row of rows) {
-      const blockId = row.id;
-
-      if (!blockMap.has(blockId)) {
-        // Convert Unix milliseconds to ISO string
-        const dateTime = new Date(parseInt(row.timestamp)).toISOString();
-        // coinbase_amount is in nanomina (1 MINA = 10^9 nanomina)
-        const transactions = row.coinbase_amount
-          ? { coinbase: row.coinbase_amount }
-          : { coinbase: '0' }; // Default to 0 if no coinbase found
-        
-        blockMap.set(blockId, {
-          blockHeight: row.height,
-          creator: row.creator,
-          stateHash: row.state_hash,
-          dateTime: dateTime,
-          transactions: transactions,
-        });
-      }
-    }
-
-    return Array.from(blockMap.values());
+    return rows.map((row) => ({
+      blockHeight: row.height,
+      creator: row.creator,
+      stateHash: row.state_hash,
+      dateTime: new Date(parseInt(row.timestamp)).toISOString(),
+      transactions: {
+        coinbase: row.coinbase_amount || '0',
+      },
+    }));
   }
 }
