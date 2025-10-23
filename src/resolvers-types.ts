@@ -34,6 +34,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean };
   Int: { input: number; output: number };
   Float: { input: number; output: number };
+  DateTime: { input: string; output: string };
 };
 
 export type ActionData = {
@@ -117,15 +118,47 @@ export type EventOutput = {
   eventData?: Maybe<Array<Maybe<EventData>>>;
 };
 
+export enum BlockSortByInput {
+  BlockheightAsc = 'BLOCKHEIGHT_ASC',
+  BlockheightDesc = 'BLOCKHEIGHT_DESC',
+}
+
+export type BlockQueryInput = {
+  canonical?: InputMaybe<Scalars['Boolean']['input']>;
+  dateTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
+  dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type BlockTransaction = {
+  __typename?: 'BlockTransaction';
+  coinbase: Scalars['String']['output'];
+};
+
+export type Block = {
+  __typename?: 'Block';
+  blockHeight: Scalars['Int']['output'];
+  creator: Scalars['String']['output'];
+  dateTime: Scalars['DateTime']['output'];
+  stateHash: Scalars['String']['output'];
+  transactions: Array<Maybe<BlockTransaction>>;
+};
+
 export type Query = {
   __typename?: 'Query';
   actions: Array<Maybe<ActionOutput>>;
+  blocks: Array<Maybe<Block>>;
   events: Array<Maybe<EventOutput>>;
   networkState: Maybe<NetworkStateOutput>;
 };
 
 export type QueryActionsArgs = {
   input: ActionFilterOptionsInput;
+};
+
+export type QueryBlocksArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  query?: InputMaybe<BlockQueryInput>;
+  sortBy?: InputMaybe<BlockSortByInput>;
 };
 
 export type QueryEventsArgs = {
@@ -253,11 +286,16 @@ export type ResolversTypes = {
   ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ResolverTypeWrapper<ActionOutput>;
   ActionStates: ResolverTypeWrapper<ActionStates>;
+  Block: ResolverTypeWrapper<Block>;
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
+  BlockQueryInput: BlockQueryInput;
+  BlockSortByInput: BlockSortByInput;
+  BlockTransaction: ResolverTypeWrapper<BlockTransaction>;
   NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
   MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   BlockStatusFilter: BlockStatusFilter;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
@@ -273,12 +311,17 @@ export type ResolversParentTypes = {
   ActionFilterOptionsInput: ActionFilterOptionsInput;
   ActionOutput: ActionOutput;
   ActionStates: ActionStates;
+  Block: Block;
   BlockInfo: BlockInfo;
+  BlockQueryInput: BlockQueryInput;
+  BlockTransaction: BlockTransaction;
   Boolean: Scalars['Boolean']['output'];
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
   Int: Scalars['Int']['output'];
+  MaxBlockHeightInfo: MaxBlockHeightInfo;
+  NetworkStateOutput: NetworkStateOutput;
   Query: {};
   String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
@@ -364,6 +407,32 @@ export type ActionStatesResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BlockResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['Block'] = ResolversParentTypes['Block'],
+> = {
+  blockHeight?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  creator?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  dateTime?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  stateHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  transactions?: Resolver<
+    Array<Maybe<ResolversTypes['BlockTransaction']>>,
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockTransactionResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['BlockTransaction'] = ResolversParentTypes['BlockTransaction'],
+> = {
+  coinbase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BlockInfoResolvers<
   ContextType = GraphQLContext,
   ParentType extends
@@ -392,6 +461,11 @@ export type BlockInfoResolvers<
   timestamp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
+
+export type BlockSortByInputResolvers = EnumResolverSignature<
+  { BLOCKHEIGHT_ASC?: any; BLOCKHEIGHT_DESC?: any },
+  ResolversTypes['BlockSortByInput']
+>;
 
 export type BlockStatusFilterResolvers = EnumResolverSignature<
   { ALL?: any; CANONICAL?: any; PENDING?: any },
@@ -435,6 +509,37 @@ export type EventOutputResolvers<
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type NetworkStateOutputResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['NetworkStateOutput'] = ResolversParentTypes['NetworkStateOutput'],
+> = {
+  maxBlockHeight?: Resolver<
+    ResolversTypes['MaxBlockHeightInfo'],
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MaxBlockHeightInfoResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['MaxBlockHeightInfo'] = ResolversParentTypes['MaxBlockHeightInfo'],
+> = {
+  canonicalMaxBlockHeight?: Resolver<
+    ResolversTypes['Int'],
+    ParentType,
+    ContextType
+  >;
+  pendingMaxBlockHeight?: Resolver<
+    ResolversTypes['Int'],
+    ParentType,
+    ContextType
+  >;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type QueryResolvers<
   ContextType = GraphQLContext,
   ParentType extends
@@ -445,6 +550,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryActionsArgs, 'input'>
+  >;
+  blocks?: Resolver<
+    Array<Maybe<ResolversTypes['Block']>>,
+    ParentType,
+    ContextType,
+    Partial<QueryBlocksArgs>
   >;
   events?: Resolver<
     Array<Maybe<ResolversTypes['EventOutput']>>,
@@ -485,10 +596,15 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ActionData?: ActionDataResolvers<ContextType>;
   ActionOutput?: ActionOutputResolvers<ContextType>;
   ActionStates?: ActionStatesResolvers<ContextType>;
+  Block?: BlockResolvers<ContextType>;
   BlockInfo?: BlockInfoResolvers<ContextType>;
+  BlockSortByInput?: BlockSortByInputResolvers;
   BlockStatusFilter?: BlockStatusFilterResolvers;
+  BlockTransaction?: BlockTransactionResolvers<ContextType>;
   EventData?: EventDataResolvers<ContextType>;
   EventOutput?: EventOutputResolvers<ContextType>;
+  MaxBlockHeightInfo?: MaxBlockHeightInfoResolvers<ContextType>;
+  NetworkStateOutput?: NetworkStateOutputResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   TransactionInfo?: TransactionInfoResolvers<ContextType>;
 };

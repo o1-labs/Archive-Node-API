@@ -3,11 +3,14 @@ import type {
   Actions,
   Events,
   NetworkState,
+  Blocks,
 } from '../../blockchain/types.js';
 import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
   ActionFilterOptionsInput,
   EventFilterOptionsInput,
+  BlockQueryInput,
+  BlockSortByInput,
 } from '../../resolvers-types.js';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
 import { EventsService } from '../../services/events-service/events-service.js';
@@ -16,6 +19,8 @@ import { ActionsService } from '../../services/actions-service/actions-service.j
 import { IActionsService } from '../../services/actions-service/actions-service.interface.js';
 import { NetworkService } from '../../services/network-service/network-service.js';
 import { INetworkService } from '../../services/network-service/network-service.interface.js';
+import { BlocksService } from '../../services/blocks-service/blocks-service.js';
+import { IBlocksService } from '../../services/blocks-service/blocks-service.interface.js';
 
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
@@ -28,6 +33,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private eventsService: IEventsService;
   private actionsService: IActionsService;
   private networkService: INetworkService;
+  private blocksService: IBlocksService;
 
   constructor(connectionString: string | undefined) {
     if (!connectionString)
@@ -38,6 +44,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.eventsService = new EventsService(this.client);
     this.actionsService = new ActionsService(this.client);
     this.networkService = new NetworkService(this.client);
+    this.blocksService = new BlocksService(this.client);
   }
 
   async getEvents(
@@ -56,6 +63,15 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   async getNetworkState(options: unknown): Promise<NetworkState> {
     return this.networkService.getNetworkState(options);
+  }
+
+  async getBlocks(
+    query: BlockQueryInput | null | undefined,
+    limit: number | null | undefined,
+    sortBy: BlockSortByInput | null | undefined,
+    options: unknown
+  ): Promise<Blocks> {
+    return this.blocksService.getBlocks(query, limit, sortBy, options);
   }
 
   async checkSQLSchema() {

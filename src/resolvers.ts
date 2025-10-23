@@ -42,6 +42,16 @@ const resolvers: Resolvers = {
         tracingState: new TracingState(graphQLSpan),
       });
     },
+
+    blocks: async (_, { query, limit, sortBy }, context) => {
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'blocks.graphql'
+      );
+      return context.db_client.getBlocks(query, limit, sortBy, {
+        tracingState: new TracingState(graphQLSpan),
+      });
+    },
   },
 };
 
