@@ -6,9 +6,12 @@ const config: CodegenConfig = {
   generates: {
     './src/resolvers-types.ts': {
       config: {
-        contextType: './context#GraphQLContext',
+        contextType: './context.js#GraphQLContext',
         enumValues: {
-          BlockStatusFilter: './blockchain/types#BlockStatusFilter',
+          BlockStatusFilter: './blockchain/types.js#BlockStatusFilter',
+        },
+        scalars: {
+          DateTime: { input: 'string', output: 'string' },
         },
       },
       plugins: ['typescript', 'typescript-resolvers'],

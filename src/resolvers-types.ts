@@ -1,5 +1,9 @@
 import { BlockStatusFilter } from './blockchain/types.js';
-import { GraphQLResolveInfo } from 'graphql';
+import {
+  GraphQLResolveInfo,
+  GraphQLScalarType,
+  GraphQLScalarTypeConfig,
+} from 'graphql';
 import { GraphQLContext } from './context.js';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -44,12 +48,22 @@ export type ActionData = {
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
+/**
+ * Filter actions from a specific account
+ *
+ * **WARNING**: The graphQL schema server will limit the block scan range to a fixed number of blocks.  The default is 10,000 blocks, but can be changed by the host.
+ * It is the responsibility of the client to use a block range that is within the limit, which will guarantee that all actions are eventually returned.  It is possible to get a partial result if you do not specify both a `from` and a `to` parameter.
+ */
 export type ActionFilterOptionsInput = {
   address: Scalars['String']['input'];
+  /** Filter for actions that happened before this action state, inclusive */
   endActionState?: InputMaybe<Scalars['String']['input']>;
+  /** Mina block height to filter actions from, inclusive */
   from?: InputMaybe<Scalars['Int']['input']>;
+  /** Filter for actions that happened after this action state, inclusive */
   fromActionState?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<BlockStatusFilter>;
+  /** Mina block height to filter actions to, exclusive */
   to?: InputMaybe<Scalars['Int']['input']>;
   tokenId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -71,6 +85,15 @@ export type ActionStates = {
   actionStateTwo?: Maybe<Scalars['String']['output']>;
 };
 
+export type Block = {
+  __typename?: 'Block';
+  blockHeight: Scalars['Int']['output'];
+  creator: Scalars['String']['output'];
+  dateTime: Scalars['DateTime']['output'];
+  stateHash: Scalars['String']['output'];
+  transactions: BlockTransactions;
+};
+
 export type BlockInfo = {
   __typename?: 'BlockInfo';
   chainStatus: Scalars['String']['output'];
@@ -84,18 +107,27 @@ export type BlockInfo = {
   timestamp: Scalars['String']['output'];
 };
 
-export type NetworkStateOutput = {
-  __typename?: 'NetworkStateOutput';
-  maxBlockHeight: MaxBlockHeightInfo
+/** Filter for blocks by date range, canonical status, and other criteria */
+export type BlockQueryInput = {
+  /** Filter for canonical (finalized) blocks only */
+  canonical?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter blocks from this date/time, inclusive */
+  dateTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter blocks to this date/time, exclusive */
+  dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type MaxBlockHeightInfo = {
-  __typename?: 'MaxBlockHeightInfo';
-  canonicalMaxBlockHeight: Scalars['Int']['output'];
-  pendingMaxBlockHeight: Scalars['Int']['output'];
-};
+export enum BlockSortByInput {
+  BlockheightAsc = 'BLOCKHEIGHT_ASC',
+  BlockheightDesc = 'BLOCKHEIGHT_DESC',
+}
 
 export { BlockStatusFilter };
+
+export type BlockTransactions = {
+  __typename?: 'BlockTransactions';
+  coinbase: Scalars['String']['output'];
+};
 
 export type EventData = {
   __typename?: 'EventData';
@@ -104,10 +136,18 @@ export type EventData = {
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
+/**
+ * Filter events from a specific account
+ *
+ * **WARNING**: The graphQL schema server will limit the block scan range to a fixed number of blocks.  The default is 10,000 blocks, but can be changed by the host.
+ * It is the responsibility of the client to use a block range that is within the limit, which will guarantee that all events are eventually returned.  It is possible to get a partial result if you do not specify both a `from` and a `to` parameter.
+ */
 export type EventFilterOptionsInput = {
   address: Scalars['String']['input'];
+  /** Mina block height to filter events from, inclusive */
   from?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<BlockStatusFilter>;
+  /** Mina block height to filter events to, exclusive */
   to?: InputMaybe<Scalars['Int']['input']>;
   tokenId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -118,29 +158,17 @@ export type EventOutput = {
   eventData?: Maybe<Array<Maybe<EventData>>>;
 };
 
-export enum BlockSortByInput {
-  BlockheightAsc = 'BLOCKHEIGHT_ASC',
-  BlockheightDesc = 'BLOCKHEIGHT_DESC',
-}
-
-export type BlockQueryInput = {
-  canonical?: InputMaybe<Scalars['Boolean']['input']>;
-  dateTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
-  dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
+export type MaxBlockHeightInfo = {
+  __typename?: 'MaxBlockHeightInfo';
+  canonicalMaxBlockHeight: Scalars['Int']['output'];
+  pendingMaxBlockHeight: Scalars['Int']['output'];
 };
 
-export type BlockTransactions = {
-  __typename?: 'BlockTransactions';
-  coinbase: Scalars['String']['output'];
-};
-
-export type Block = {
-  __typename?: 'Block';
-  blockHeight: Scalars['Int']['output'];
-  creator: Scalars['String']['output'];
-  dateTime: Scalars['DateTime']['output'];
-  stateHash: Scalars['String']['output'];
-  transactions: BlockTransactions;
+/** Metadata about the network */
+export type NetworkStateOutput = {
+  __typename?: 'NetworkStateOutput';
+  /** Returns the latest pending and canonical block heights that are synced by the archive node.  If the archive node is not fully synced, the pending block height will be lower than the actual network state.  Wait some time for the archive node to get back in sync. */
+  maxBlockHeight?: Maybe<MaxBlockHeightInfo>;
 };
 
 export type Query = {
@@ -148,7 +176,7 @@ export type Query = {
   actions: Array<Maybe<ActionOutput>>;
   blocks: Array<Maybe<Block>>;
   events: Array<Maybe<EventOutput>>;
-  networkState: Maybe<NetworkStateOutput>;
+  networkState: NetworkStateOutput;
 };
 
 export type QueryActionsArgs = {
@@ -180,7 +208,12 @@ export type ResolverTypeWrapper<T> = Promise<T> | T;
 export type ResolverWithResolve<TResult, TParent, TContext, TArgs> = {
   resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
 };
-export type Resolver<TResult, TParent = {}, TContext = {}, TArgs = {}> =
+export type Resolver<
+  TResult,
+  TParent = Record<PropertyKey, never>,
+  TContext = Record<PropertyKey, never>,
+  TArgs = Record<PropertyKey, never>,
+> =
   | ResolverFn<TResult, TParent, TContext, TArgs>
   | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
 
@@ -244,22 +277,29 @@ export type SubscriptionObject<
 export type SubscriptionResolver<
   TResult,
   TKey extends string,
-  TParent = {},
-  TContext = {},
-  TArgs = {},
+  TParent = Record<PropertyKey, never>,
+  TContext = Record<PropertyKey, never>,
+  TArgs = Record<PropertyKey, never>,
 > =
   | ((
       ...args: any[]
     ) => SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>)
   | SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>;
 
-export type TypeResolveFn<TTypes, TParent = {}, TContext = {}> = (
+export type TypeResolveFn<
+  TTypes,
+  TParent = Record<PropertyKey, never>,
+  TContext = Record<PropertyKey, never>,
+> = (
   parent: TParent,
   context: TContext,
   info: GraphQLResolveInfo
 ) => Maybe<TTypes> | Promise<Maybe<TTypes>>;
 
-export type IsTypeOfResolverFn<T = {}, TContext = {}> = (
+export type IsTypeOfResolverFn<
+  T = Record<PropertyKey, never>,
+  TContext = Record<PropertyKey, never>,
+> = (
   obj: T,
   context: TContext,
   info: GraphQLResolveInfo
@@ -268,10 +308,10 @@ export type IsTypeOfResolverFn<T = {}, TContext = {}> = (
 export type NextResolverFn<T> = () => Promise<T>;
 
 export type DirectiveResolverFn<
-  TResult = {},
-  TParent = {},
-  TContext = {},
-  TArgs = {},
+  TResult = Record<PropertyKey, never>,
+  TParent = Record<PropertyKey, never>,
+  TContext = Record<PropertyKey, never>,
+  TArgs = Record<PropertyKey, never>,
 > = (
   next: NextResolverFn<TResult>,
   parent: TParent,
@@ -290,17 +330,17 @@ export type ResolversTypes = {
   BlockInfo: ResolverTypeWrapper<BlockInfo>;
   BlockQueryInput: BlockQueryInput;
   BlockSortByInput: BlockSortByInput;
-  BlockTransactions: ResolverTypeWrapper<BlockTransactions>;
-  NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
-  MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   BlockStatusFilter: BlockStatusFilter;
+  BlockTransactions: ResolverTypeWrapper<BlockTransactions>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
-  Query: ResolverTypeWrapper<{}>;
+  MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
+  NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
+  Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
 };
@@ -316,13 +356,14 @@ export type ResolversParentTypes = {
   BlockQueryInput: BlockQueryInput;
   BlockTransactions: BlockTransactions;
   Boolean: Scalars['Boolean']['output'];
+  DateTime: Scalars['DateTime']['output'];
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
   Int: Scalars['Int']['output'];
   MaxBlockHeightInfo: MaxBlockHeightInfo;
   NetworkStateOutput: NetworkStateOutput;
-  Query: {};
+  Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
 };
@@ -343,7 +384,6 @@ export type ActionDataResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ActionOutputResolvers<
@@ -371,7 +411,6 @@ export type ActionOutputResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ActionStatesResolvers<
@@ -404,7 +443,6 @@ export type ActionStatesResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BlockResolvers<
@@ -421,16 +459,6 @@ export type BlockResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type BlockTransactionResolvers<
-  ContextType = GraphQLContext,
-  ParentType extends
-    ResolversParentTypes['BlockTransactions'] = ResolversParentTypes['BlockTransactions'],
-> = {
-  coinbase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BlockInfoResolvers<
@@ -459,18 +487,25 @@ export type BlockInfoResolvers<
   parentHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stateHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   timestamp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
-
-export type BlockSortByInputResolvers = EnumResolverSignature<
-  { BLOCKHEIGHT_ASC?: any; BLOCKHEIGHT_DESC?: any },
-  ResolversTypes['BlockSortByInput']
->;
 
 export type BlockStatusFilterResolvers = EnumResolverSignature<
   { ALL?: any; CANONICAL?: any; PENDING?: any },
   ResolversTypes['BlockStatusFilter']
 >;
+
+export type BlockTransactionsResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['BlockTransactions'] = ResolversParentTypes['BlockTransactions'],
+> = {
+  coinbase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export interface DateTimeScalarConfig
+  extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
+  name: 'DateTime';
+}
 
 export type EventDataResolvers<
   ContextType = GraphQLContext,
@@ -488,7 +523,6 @@ export type EventDataResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EventOutputResolvers<
@@ -506,20 +540,6 @@ export type EventOutputResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type NetworkStateOutputResolvers<
-  ContextType = GraphQLContext,
-  ParentType extends
-    ResolversParentTypes['NetworkStateOutput'] = ResolversParentTypes['NetworkStateOutput'],
-> = {
-  maxBlockHeight?: Resolver<
-    ResolversTypes['MaxBlockHeightInfo'],
-    ParentType,
-    ContextType
-  >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MaxBlockHeightInfoResolvers<
@@ -537,7 +557,18 @@ export type MaxBlockHeightInfoResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type NetworkStateOutputResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['NetworkStateOutput'] = ResolversParentTypes['NetworkStateOutput'],
+> = {
+  maxBlockHeight?: Resolver<
+    Maybe<ResolversTypes['MaxBlockHeightInfo']>,
+    ParentType,
+    ContextType
+  >;
 };
 
 export type QueryResolvers<
@@ -564,7 +595,7 @@ export type QueryResolvers<
     RequireFields<QueryEventsArgs, 'input'>
   >;
   networkState?: Resolver<
-    Maybe<ResolversTypes['NetworkStateOutput']>,
+    ResolversTypes['NetworkStateOutput'],
     ParentType,
     ContextType
   >;
@@ -589,7 +620,6 @@ export type TransactionInfoResolvers<
     ParentType,
     ContextType
   >;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
@@ -598,9 +628,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ActionStates?: ActionStatesResolvers<ContextType>;
   Block?: BlockResolvers<ContextType>;
   BlockInfo?: BlockInfoResolvers<ContextType>;
-  BlockSortByInput?: BlockSortByInputResolvers;
   BlockStatusFilter?: BlockStatusFilterResolvers;
-  BlockTransactions?: BlockTransactionResolvers<ContextType>;
+  BlockTransactions?: BlockTransactionsResolvers<ContextType>;
+  DateTime?: GraphQLScalarType;
   EventData?: EventDataResolvers<ContextType>;
   EventOutput?: EventOutputResolvers<ContextType>;
   MaxBlockHeightInfo?: MaxBlockHeightInfoResolvers<ContextType>;
