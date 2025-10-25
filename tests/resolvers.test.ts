@@ -45,15 +45,15 @@ import {
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        networkState: NetworkStateOutput;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -144,20 +144,25 @@ query maxBlockHeightInfo {
 }
 `;
 
-// This is the default connection string provided by the lightnet postgres container
-const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
+// The default connection string is the one provided by the lightnet postgres container
+const PG_CONN = process.env.PG_CONN || 'postgresql://postgres:postgres@localhost:5432/archive';
+
+// If the env var was not set, print the fallback value
+if (!process.env.PG_CONN) {
+  console.log(`PG_CONN not found in environment, using default: ${PG_CONN}`);
+}
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        networkState: NetworkStateOutput;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -281,7 +286,7 @@ describe('Query Resolvers', async () => {
       assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
       assert.ok(
         blockResponse.maxBlockHeight.pendingMaxBlockHeight >
-          blockResponse.maxBlockHeight.canonicalMaxBlockHeight
+        blockResponse.maxBlockHeight.canonicalMaxBlockHeight
       );
     });
 
@@ -659,7 +664,7 @@ describe('Query Resolvers', async () => {
             const currentAction = actionData![i]!;
             assert.ok(
               previousAction.transactionInfo!.sequenceNumber <=
-                currentAction.transactionInfo!.sequenceNumber
+              currentAction.transactionInfo!.sequenceNumber
             );
             if (
               previousAction.transactionInfo!.sequenceNumber ===
