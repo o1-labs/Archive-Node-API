@@ -9,6 +9,9 @@
 # - Docker: https://docs.docker.com/engine/install
 # - Mina Daemon: https://docs.minaprotocol.com/node-operators/getting-started
 
+# Usage: ./generate_libp2p.sh [docker|binary]
+# - docker: Generate keypair using Docker only
+# - binary: Generate libp2p keypair using mina binary only
 
 # Enable debug mode
 set -x
@@ -16,19 +19,41 @@ set -x
 # Exit on error, and pipefail
 set -eo pipefail
 
+# Get script directory and load .env from project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    . "$PROJECT_ROOT/.env"
+else
+    echo "Error: .env file not found at $PROJECT_ROOT/.env"
+    exit 1
+fi
+
+# Get mode from first argument
+MODE="${1}"
+
+# Validate mode
+if [[ "$MODE" != "docker" && "$MODE" != "binary" ]]; then
+  echo "Usage: $0 [docker|binary]"
+  echo "  docker - Generate keypair using Docker only"
+  echo "  binary - Generate libp2p keypair using mina binary only"
+  exit 1
+fi
+
 # Set environment variable
 # Make sure these match the environment variables used in the docker-compose.yml file
-export MINA_PRIVKEY_PASS="passlib"
-export MINA_LIBP2P_PASS="passlib"
+export MINA_LIBP2P_PASS=$MINA_LIBP2P_PASS
 
 # Constants
+
 KEYPAIR_DIR="keys"
 KEYPAIR_NAME="libp2p-keys"
-MINA_KEYPAIR_IMAGE="minaprotocol/mina-generate-keypair:1.3.0-9b0369c"
+MINA_KEYPAIR_IMAGE=$MINA
 
 # Derived Paths
 HOME_KEYPAIR_DIR="$HOME/$KEYPAIR_DIR"
-KEYPAIR_PATH="$KEYPAIR_DIR/$KEYPAIR_NAME"
+KEYPAIR_PATH="/root/$KEYPAIR_DIR/$KEYPAIR_NAME"
 
 # Create keypair directory if not exists
 if [ ! -d $HOME_KEYPAIR_DIR ]; then
@@ -39,19 +64,31 @@ if [ ! -d $HOME_KEYPAIR_DIR ]; then
 fi
 
 # Generate Mina keypair using Docker
-echo "Generating Mina keypair using Docker..."
-docker run --interactive --tty --rm \
-    --env "MINA_PRIVKEY_PASS=$MINA_PRIVKEY_PASS" \
-    --volume $HOME_KEYPAIR_DIR:/keys $MINA_KEYPAIR_IMAGE \
-    --privkey-path $KEYPAIR_PATH
+if [[ "$MODE" == "docker" ]]; then
+    echo "Generating Mina keypair using Docker..."
+    docker run --interactive --tty --rm \
+        --env "MINA_LIBP2P_PASS=$MINA_LIBP2P_PASS" \
+        --volume $HOME_KEYPAIR_DIR:/root/keys $MINA_KEYPAIR_IMAGE \
+        libp2p generate-keypair --privkey-path $KEYPAIR_PATH
 
-# Set permissions
-echo "Setting permissions for "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"..."
-sudo chown $USER:$USER "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
-chmod 600 "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+    # Check if keypair was generated
+    if [ ! -f "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME" ]; then
+        echo "Error: Keypair was not generated at $HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+        exit 1
+    fi
+
+    # Set permissions
+    echo "Setting permissions for "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"..."
+    sudo chown $USER:$USER "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+    chmod 600 "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+    
+    echo "Docker keypair generation completed successfully."
+fi
 
 # Generate libp2p keypair
-echo "Generating libp2p keypair..."
-mina advanced generate-libp2p-keypair --privkey-path "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+if [[ "$MODE" == "binary" ]]; then
+    echo "Generating libp2p keypair..."
+    mina libp2p generate-keypair --privkey-path "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+fi
 
 echo "Done."
