@@ -90,7 +90,7 @@ class BlocksService implements IBlocksService {
         INNER JOIN blocks_internal_commands bic ON ic.id = bic.internal_command_id
         WHERE ic.command_type = 'coinbase'
       ) AS ic ON b.id = ic.block_id
-      WHERE 1=1
+      WHERE TRUE
     `;
 
     const params: (string | number)[] = [];
