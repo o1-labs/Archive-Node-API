@@ -62,6 +62,8 @@ class BlocksService implements IBlocksService {
     limit: number | null | undefined,
     sortBy: BlockSortByInput | null | undefined
   ) {
+    const blockHeightGte = query?.blockHeight_gte;
+    const blockHeightLt = query?.blockHeight_lt;
     const dateTimeGte = query?.dateTime_gte;
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical ?? false;
@@ -96,6 +98,18 @@ class BlocksService implements IBlocksService {
 
     if (canonical) {
       sql += ` AND b.chain_status = 'canonical'`;
+    }
+
+    if (blockHeightGte) {
+      sql += ` AND b.height >= $${paramIndex}`;
+      params.push(blockHeightGte);
+      paramIndex++;
+    }
+
+    if (blockHeightLt) {
+      sql += ` AND b.height < $${paramIndex}`;
+      params.push(blockHeightLt);
+      paramIndex++;
     }
 
     if (dateTimeGte) {
