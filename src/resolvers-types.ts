@@ -109,6 +109,10 @@ export type BlockInfo = {
 
 /** Filter for blocks by date range, canonical status, and other criteria */
 export type BlockQueryInput = {
+  /** Filter blocks from this height, inclusive */
+  blockHeight_gte?: InputMaybe<Scalars['Int']['input']>;
+  /** Filter blocks to this height, exclusive */
+  blockHeight_lt?: InputMaybe<Scalars['Int']['input']>;
   /** Filter for canonical (finalized) blocks only */
   canonical?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter blocks from this date/time, inclusive */
