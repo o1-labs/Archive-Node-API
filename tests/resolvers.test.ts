@@ -45,15 +45,15 @@ import {
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        networkState: NetworkStateOutput;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -149,15 +149,15 @@ const PG_CONN = 'postgresql://postgres:postgres@localhost:5432/archive ';
 
 interface ExecutorResult {
   data:
-    | {
-        events: Array<EventOutput>;
-      }
-    | {
-        actions: Array<ActionOutput>;
-      }
-    | {
-        networkState: NetworkStateOutput;
-      };
+  | {
+    events: Array<EventOutput>;
+  }
+  | {
+    actions: Array<ActionOutput>;
+  }
+  | {
+    networkState: NetworkStateOutput;
+  };
 }
 
 interface EventQueryResult extends ExecutorResult {
@@ -277,17 +277,17 @@ describe('Query Resolvers', async () => {
 
     test('Fetching the max block height should return the max block height', async () => {
       blockResponse = results.data.networkState;
-      assert.ok(blockResponse.maxBlockHeight.canonicalMaxBlockHeight > 0);
-      assert.ok(blockResponse.maxBlockHeight.pendingMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight!.canonicalMaxBlockHeight > 0);
+      assert.ok(blockResponse.maxBlockHeight!.pendingMaxBlockHeight > 0);
       assert.ok(
-        blockResponse.maxBlockHeight.pendingMaxBlockHeight >
-          blockResponse.maxBlockHeight.canonicalMaxBlockHeight
+        blockResponse.maxBlockHeight!.pendingMaxBlockHeight >
+        blockResponse.maxBlockHeight!.canonicalMaxBlockHeight
       );
     });
 
     test('Fetched max block height from archive node should match with the one from mina node', async () => {
       assert.deepStrictEqual(
-        blockResponse.maxBlockHeight.pendingMaxBlockHeight,
+        blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
         fetchedBlockchainLength
       );
     });
@@ -301,7 +301,7 @@ describe('Query Resolvers', async () => {
       });
       test('Fetched max block height from archive node should match the one from mina node after one block', () => {
         assert.deepStrictEqual(
-          blockResponse.maxBlockHeight.pendingMaxBlockHeight,
+          blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
           fetchedBlockchainLength
         );
       });
@@ -659,7 +659,7 @@ describe('Query Resolvers', async () => {
             const currentAction = actionData![i]!;
             assert.ok(
               previousAction.transactionInfo!.sequenceNumber <=
-                currentAction.transactionInfo!.sequenceNumber
+              currentAction.transactionInfo!.sequenceNumber
             );
             if (
               previousAction.transactionInfo!.sequenceNumber ===
