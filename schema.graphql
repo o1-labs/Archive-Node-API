@@ -144,6 +144,14 @@ Filter for blocks by date range, canonical status, and other criteria
 """
 input BlockQueryInput {
   """
+  Filter blocks from this height, inclusive
+  """
+  blockHeight_gte: Int
+  """
+  Filter blocks to this height, exclusive
+  """
+  blockHeight_lt: Int
+  """
   Filter blocks from this date/time, inclusive
   """
   dateTime_gte: DateTime
