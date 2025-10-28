@@ -67,7 +67,7 @@ class BlocksService implements IBlocksService {
     const dateTimeGte = query?.dateTime_gte;
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical ?? false;
-    const orderBy = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
+    const orderBy: 'ASC' | 'DESC' = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
     const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
     // Build the SQL query for blocks with transactions
