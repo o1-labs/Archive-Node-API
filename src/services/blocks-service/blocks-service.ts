@@ -133,13 +133,14 @@ class BlocksService implements IBlocksService {
     if (inBestChain === true) {
       sql =
         `
-        WITH RECURSIVE best_chain AS (
+        WITH RECURSIVE best_chain_til_canonical AS (
             SELECT
                 id,
                 parent_id,
                 height
             FROM blocks
             WHERE height = (SELECT MAX(height) FROM blocks)
+            AND chain_status <> 'canonical'
 
             UNION
 
@@ -148,10 +149,11 @@ class BlocksService implements IBlocksService {
                potential_parent.parent_id,
                potential_parent.height
             FROM blocks potential_parent
-            JOIN best_chain ON potential_parent.id = best_chain.parent_id
+            JOIN best_chain_til_canonical ON potential_parent.id = best_chain_til_canonical.parent_id
+            WHERE potential_parent.chain_status <> 'canonical'
         )
         ` + sql
-      sql += ` AND b.id IN (SELECT id FROM best_chain)`;
+      sql += ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
     }
 
     sql += ` ORDER BY b.height ${orderBy}`;
