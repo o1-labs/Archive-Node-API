@@ -67,6 +67,8 @@ class BlocksService implements IBlocksService {
     const dateTimeGte = query?.dateTime_gte;
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical ?? false;
+    const inBestChain = query?.inBestChain;
+
     const orderBy = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
     const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
@@ -126,6 +128,30 @@ class BlocksService implements IBlocksService {
       sql += ` AND b.timestamp < $${paramIndex}`;
       params.push(timestampMs);
       paramIndex++;
+    }
+
+    if (inBestChain === true) {
+      sql =
+        `
+        WITH RECURSIVE best_chain AS (
+            SELECT
+                id,
+                parent_id,
+                height
+            FROM blocks
+            WHERE height = (SELECT MAX(height) FROM blocks)
+
+            UNION
+
+            SELECT
+               potential_parent.id,
+               potential_parent.parent_id,
+               potential_parent.height
+            FROM blocks potential_parent
+            JOIN best_chain ON potential_parent.id = best_chain.parent_id
+        )
+        ` + sql
+      sql += ` AND b.id IN (SELECT id FROM best_chain)`;
     }
 
     sql += ` ORDER BY b.height ${orderBy}`;
