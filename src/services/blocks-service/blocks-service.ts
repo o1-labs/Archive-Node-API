@@ -130,9 +130,8 @@ class BlocksService implements IBlocksService {
       paramIndex++;
     }
 
-    if (inBestChain === true) {
-      sql =
-        `
+    const best_chain_til_canonical_cte =
+      `
         WITH RECURSIVE best_chain_til_canonical AS (
             SELECT
                 id,
@@ -152,8 +151,19 @@ class BlocksService implements IBlocksService {
             JOIN best_chain_til_canonical ON potential_parent.id = best_chain_til_canonical.parent_id
             WHERE potential_parent.chain_status <> 'canonical'
         )
-        ` + sql
-      sql += ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
+        `
+    if (inBestChain === true) {
+      sql =
+        best_chain_til_canonical_cte
+        + sql
+        + ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
+    } else if (inBestChain === false) {
+      sql =
+        best_chain_til_canonical_cte
+        + sql
+        + ` AND (b.id NOT IN (SELECT id FROM best_chain_til_canonical)
+                 OR b.chain_status = 'orphaned')`;
+
     }
 
     sql += ` ORDER BY b.height ${orderBy}`;
