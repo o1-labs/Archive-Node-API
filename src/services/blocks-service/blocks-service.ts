@@ -66,7 +66,7 @@ class BlocksService implements IBlocksService {
     const blockHeightLt = query?.blockHeight_lt;
     const dateTimeGte = query?.dateTime_gte;
     const dateTimeLt = query?.dateTime_lt;
-    const canonical = query?.canonical ?? false;
+    const canonical = query?.canonical;
     const orderBy = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
     const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
@@ -96,8 +96,10 @@ class BlocksService implements IBlocksService {
     const params: (string | number)[] = [];
     let paramIndex = 1;
 
-    if (canonical) {
+    if (canonical === true) {
       sql += ` AND b.chain_status = 'canonical'`;
+    } else if (canonical === false) {
+      sql += ` AND b.chain_status <> 'canonical'`;
     }
 
     if (blockHeightGte) {
