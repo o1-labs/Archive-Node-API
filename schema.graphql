@@ -163,6 +163,10 @@ input BlockQueryInput {
   Filter for canonical (finalized) blocks only
   """
   canonical: Boolean
+  """
+  Filter for blocks in best chain only
+  """
+  inBestChain: Boolean
 }
 
 type BlockTransactions {

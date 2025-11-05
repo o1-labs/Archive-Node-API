@@ -119,6 +119,8 @@ export type BlockQueryInput = {
   dateTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
   /** Filter blocks to this date/time, exclusive */
   dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for blocks in best chain only */
+  inBestChain?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum BlockSortByInput {

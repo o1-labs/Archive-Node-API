@@ -67,6 +67,7 @@ class BlocksService implements IBlocksService {
     const dateTimeGte = query?.dateTime_gte;
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical;
+    const inBestChain = query?.inBestChain;
     const orderBy = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
     const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
@@ -128,6 +129,42 @@ class BlocksService implements IBlocksService {
       sql += ` AND b.timestamp < $${paramIndex}`;
       params.push(timestampMs);
       paramIndex++;
+    }
+
+    const best_chain_til_canonical_cte =
+      `
+        WITH RECURSIVE best_chain_til_canonical AS (
+            SELECT
+                id,
+                parent_id,
+                height
+            FROM blocks
+            WHERE height = (SELECT MAX(height) FROM blocks)
+            AND chain_status <> 'canonical'
+
+            UNION
+
+            SELECT
+               potential_parent.id,
+               potential_parent.parent_id,
+               potential_parent.height
+            FROM blocks potential_parent
+            JOIN best_chain_til_canonical ON potential_parent.id = best_chain_til_canonical.parent_id
+            WHERE potential_parent.chain_status <> 'canonical'
+        )
+        `
+    if (inBestChain === true) {
+      sql =
+        best_chain_til_canonical_cte
+        + sql
+        + ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
+    } else if (inBestChain === false) {
+      sql =
+        best_chain_til_canonical_cte
+        + sql
+        + ` AND (b.id NOT IN (SELECT id FROM best_chain_til_canonical)
+                 OR b.chain_status = 'orphaned')`;
+
     }
 
     sql += ` ORDER BY b.height ${orderBy}`;
