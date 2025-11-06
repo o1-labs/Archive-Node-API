@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    tags:
+      - 'v*'
 
 env:
     GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
@@ -21,6 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout PR branch
+        if: github.event_name == 'pull_request'
         run: |
           git fetch origin ${{github.event.pull_request.head.ref}}
           git checkout ${{github.event.pull_request.head.sha}}
@@ -48,10 +52,35 @@ jobs:
       - name: Determine tags
         id: determine_tags
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          FULL_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${{ github.sha }}"
-          SHORT_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api:dev-${SHORT_SHA}"
-          echo "tags=${FULL_TAG},${SHORT_TAG}" >> $GITHUB_OUTPUT
+          BASE_IMAGE="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api"
+
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            # Release build from tag (e.g., v1.2.3)
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG_NAME#v}  # Remove 'v' prefix
+
+            # Generate semantic version tags
+            TAGS="${BASE_IMAGE}:${VERSION}"
+            TAGS="${TAGS},${BASE_IMAGE}:latest"
+
+            # Add major.minor and major tags if it's a semantic version
+            if [[ $VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              TAGS="${TAGS},${BASE_IMAGE}:${MAJOR}.${MINOR}"
+              TAGS="${TAGS},${BASE_IMAGE}:${MAJOR}"
+            fi
+
+            echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+            echo "Building release tags: ${TAGS}"
+          else
+            # PR build - use dev tags with SHA
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            FULL_TAG="${BASE_IMAGE}:dev-${{ github.sha }}"
+            SHORT_TAG="${BASE_IMAGE}:dev-${SHORT_SHA}"
+            echo "tags=${FULL_TAG},${SHORT_TAG}" >> $GITHUB_OUTPUT
+            echo "Building dev tags: ${FULL_TAG},${SHORT_TAG}"
+          fi
  
       - name: Build and push Docker image
         uses: docker/build-push-action@v6.7.0
