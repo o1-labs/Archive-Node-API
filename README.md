@@ -148,6 +148,24 @@ npm install archive-node-graphql@1.2.3
 npm install archive-node-graphql@dev
 ```
 
+## Creating a Release
+
+To create a new release, follow these steps:
+
+1. **Update version in package.json**: `npm version <major|minor|patch>`
+2. **Commit the version change**: `git commit -am "Release v1.2.3"`
+3. **Create and push a tag**: `git tag v1.2.3 && git push origin v1.2.3`
+
+The CI/CD workflow will automatically:
+- Build and publish npm package to GCP registry with version from package.json
+- Build and push Docker image to both GCP Artifact Registry and GitHub Container Registry
+- Create semantic version tags (e.g., `1.2.3`, `1.2`, `1`, `latest`)
+
+**Published artifacts:**
+- npm: `https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/`
+- Docker (GCP): `europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api`
+- Docker (GitHub): `ghcr.io/o1-labs/archive-node-api`
+
 ## Starting the server
 
 To start the server, run
