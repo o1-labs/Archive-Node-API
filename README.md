@@ -125,6 +125,29 @@ This section aims to describe all the environment variables exposed to configure
 
 To see an example of sensible defaults, see the [env.example](./.env.example) configuration file.
 
+## Installing from npm Registry
+
+This package is published to a Google Cloud Artifact Registry and is available for public access.
+
+**Configure npm to use the registry:**
+
+```sh
+npm config set registry https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/
+```
+
+**Install the package:**
+
+```sh
+# Install the latest stable version
+npm install archive-node-graphql
+
+# Or install a specific version
+npm install archive-node-graphql@1.2.3
+
+# Or install the latest dev version
+npm install archive-node-graphql@dev
+```
+
 ## Starting the server
 
 To start the server, run

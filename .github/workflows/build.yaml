@@ -10,9 +10,11 @@ on:
 
 env:
     GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-    GAR_LOCATION: asia-northeast3
+    GAR_LOCATION: europe-west3
     PROJECT_ID: o1labs-192920
-    REGISTRY: gitops-images
+    REGISTRY: euro-docker-repo
+    NPM_REGISTRY_LOCATION: europe-southwest1-npm.pkg.dev
+    NPM_REGISTRY: euro-npm
 
 jobs:
   build-and-deploy:
@@ -48,6 +50,59 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+
+      - name: Configure npm for Artifact Registry
+        run: |
+          echo "//europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/:_authToken=$(gcloud auth print-access-token)" > .npmrc
+          echo "@archive-node-graphql:registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/" >> .npmrc
+          npm config set @archive-node-graphql:registry https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/
+
+      - name: Determine npm version
+        id: determine_npm_version
+        run: |
+          # Save original version BEFORE any modifications
+          ORIGINAL_VERSION=$(node -p "require('./package.json').version")
+          echo "original_version=${ORIGINAL_VERSION}" >> $GITHUB_OUTPUT
+
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            # Release build - use version from package.json
+            echo "version=${ORIGINAL_VERSION}" >> $GITHUB_OUTPUT
+            echo "needs_version_update=false" >> $GITHUB_OUTPUT
+            echo "Publishing release version from package.json: ${ORIGINAL_VERSION}"
+          else
+            # PR build - use dev version with SHA
+            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            DEV_VERSION="${ORIGINAL_VERSION}-dev.${SHORT_SHA}"
+            echo "version=${DEV_VERSION}" >> $GITHUB_OUTPUT
+            echo "needs_version_update=true" >> $GITHUB_OUTPUT
+            echo "Publishing dev version: ${DEV_VERSION}"
+          fi
+
+      - name: Update package version for dev builds
+        if: steps.determine_npm_version.outputs.needs_version_update == 'true'
+        run: |
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.determine_npm_version.outputs.version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+
+      - name: Build npm package
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish to npm registry
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            # Release version - publish with 'latest' tag
+            npm publish --tag latest
+          else
+            # Dev version - publish with 'dev' tag
+            npm publish --tag dev
+          fi
+
+      - name: Restore original package version for dev builds
+        if: always() && steps.determine_npm_version.outputs.needs_version_update == 'true'
+        run: |
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.determine_npm_version.outputs.original_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+          rm -f .npmrc
 
       - name: Determine tags
         id: determine_tags
