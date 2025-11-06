@@ -51,6 +51,14 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Configure npm authentication for Artifact Registry
         run: |
           # Only set authentication, not the default registry
@@ -107,34 +115,45 @@ jobs:
       - name: Determine tags
         id: determine_tags
         run: |
-          BASE_IMAGE="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api"
+          GCP_IMAGE="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api"
+          GITHUB_IMAGE="ghcr.io/${{ github.repository_owner }}/archive-node-api"
 
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
             # Release build from tag (e.g., v1.2.3)
             TAG_NAME=${GITHUB_REF#refs/tags/}
             VERSION=${TAG_NAME#v}  # Remove 'v' prefix
 
-            # Generate semantic version tags
-            TAGS="${BASE_IMAGE}:${VERSION}"
-            TAGS="${TAGS},${BASE_IMAGE}:latest"
+            # Generate GCP semantic version tags
+            TAGS="${GCP_IMAGE}:${VERSION}"
+            TAGS="${TAGS},${GCP_IMAGE}:latest"
 
-            # Add major.minor and major tags if it's a semantic version
+            # Add GCP major.minor and major tags if it's a semantic version
             if [[ $VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
-              TAGS="${TAGS},${BASE_IMAGE}:${MAJOR}.${MINOR}"
-              TAGS="${TAGS},${BASE_IMAGE}:${MAJOR}"
+              TAGS="${TAGS},${GCP_IMAGE}:${MAJOR}.${MINOR}"
+              TAGS="${TAGS},${GCP_IMAGE}:${MAJOR}"
+            fi
+
+            # Add GitHub Container Registry tags for releases
+            TAGS="${TAGS},${GITHUB_IMAGE}:${VERSION}"
+            TAGS="${TAGS},${GITHUB_IMAGE}:latest"
+
+            # Add GitHub major.minor and major tags if it's a semantic version
+            if [[ $VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+              TAGS="${TAGS},${GITHUB_IMAGE}:${MAJOR}.${MINOR}"
+              TAGS="${TAGS},${GITHUB_IMAGE}:${MAJOR}"
             fi
 
             echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-            echo "Building release tags: ${TAGS}"
+            echo "Building release tags for GCP and GitHub: ${TAGS}"
           else
-            # PR build - use dev tags with SHA
+            # PR build - use dev tags with SHA (GCP only)
             SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-            FULL_TAG="${BASE_IMAGE}:dev-${{ github.sha }}"
-            SHORT_TAG="${BASE_IMAGE}:dev-${SHORT_SHA}"
+            FULL_TAG="${GCP_IMAGE}:dev-${{ github.sha }}"
+            SHORT_TAG="${GCP_IMAGE}:dev-${SHORT_SHA}"
             echo "tags=${FULL_TAG},${SHORT_TAG}" >> $GITHUB_OUTPUT
-            echo "Building dev tags: ${FULL_TAG},${SHORT_TAG}"
+            echo "Building dev tags (GCP only): ${FULL_TAG},${SHORT_TAG}"
           fi
  
       - name: Build and push Docker image
