@@ -51,11 +51,11 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
-      - name: Configure npm for Artifact Registry
+      - name: Configure npm authentication for Artifact Registry
         run: |
+          # Only set authentication, not the default registry
+          # This allows dependencies to install from public npm
           echo "//europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/:_authToken=$(gcloud auth print-access-token)" > .npmrc
-          echo "@archive-node-graphql:registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/" >> .npmrc
-          npm config set @archive-node-graphql:registry https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/
 
       - name: Determine npm version
         id: determine_npm_version
@@ -92,10 +92,10 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
             # Release version - publish with 'latest' tag
-            npm publish --tag latest
+            npm publish --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag latest
           else
             # Dev version - publish with 'dev' tag
-            npm publish --tag dev
+            npm publish --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag dev
           fi
 
       - name: Restore original package version for dev builds
