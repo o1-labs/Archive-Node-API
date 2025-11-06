@@ -140,7 +140,7 @@ class BlocksService implements IBlocksService {
                 height
             FROM blocks
             WHERE height = (SELECT MAX(height) FROM blocks)
-            AND chain_status <> 'canonical'
+            AND chain_status = 'pending'
 
             UNION
 
