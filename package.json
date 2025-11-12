@@ -7,8 +7,14 @@
     "url": "https://github.com/o1-labs/Archive-Node-API"
   },
   "main": "build/src/index.js",
-  "start": "build/src/index.js",
+  "bin": {
+    "archive-node-api": "build/src/index.js"
+  },
   "type": "module",
+  "files": [
+    "build/**/*",
+    "schema.graphql"
+  ],
   "scripts": {
     "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
