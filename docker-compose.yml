@@ -41,7 +41,7 @@ services:
     image: ${POSTGRES}
     container_name: postgres
     ports:
-      - '5432:5432'
+      - '${PGPORT}:5432'
     env_file:
       - ./.env
     environment:
@@ -49,6 +49,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
       PGDATA: ${PGDATA}
+      PGPORT: 5432
     volumes:
       - './data/${PG_DUMP}:/data/${PG_DUMP}'
       - './scripts/init_docker_compose.sh:/docker-entrypoint-initdb.d/init.sh'
