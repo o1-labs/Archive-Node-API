@@ -28,7 +28,6 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
     FROM
       blocks b
       INNER JOIN pending_chain ON b.id = pending_chain.parent_id
-      AND pending_chain.id <> pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
   ), 
   full_chain AS (
@@ -42,15 +41,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
           pending_chain
         WHERE 1=1
           ${
-            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
-            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
-            fromAsNum
-              ? db_client`AND height >= ${fromAsNum} AND height < ${toAsNum!}`
-              : db_client`AND height >= (
+    // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+    // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+    fromAsNum
+      ? db_client`AND height >= ${fromAsNum} AND height < ${toAsNum!}`
+      : db_client`AND height >= (
                 SELECT MAX(height)
                 FROM pending_chain
             ) - ${BLOCK_RANGE_SIZE}`
-          }
+    }
         UNION ALL
         SELECT
           id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output
@@ -59,15 +58,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
         WHERE
           chain_status = 'canonical'
           ${
-            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
-            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
-            fromAsNum
-              ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
-              : db_client`AND b.height >= (
+    // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+    // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+    fromAsNum
+      ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
+      : db_client`AND b.height >= (
                 SELECT MAX(b2.height)
                 FROM blocks b2
             ) - ${BLOCK_RANGE_SIZE}`
-          }
+    }
       ) AS full_chain
   )
   `;
@@ -117,10 +116,9 @@ function blocksAccessedCTE(db_client: postgres.Sql, status: BlockStatusFilter) {
     INNER JOIN full_chain b ON aa.block_id = b.id
   WHERE
     1 = 1
-    ${
-      status === BlockStatusFilter.all
-        ? db_client``
-        : db_client`AND chain_status = ${status.toLowerCase()}`
+    ${status === BlockStatusFilter.all
+      ? db_client``
+      : db_client`AND chain_status = ${status.toLowerCase()}`
     }
   )`;
 }
@@ -308,15 +306,13 @@ function emittedActionStateCTE(
       INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
     WHERE
       1 = 1
-    ${
-      fromActionState
-        ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionState})`
-        : db_client``
+    ${fromActionState
+      ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionState})`
+      : db_client``
     }
-    ${
-      endActionState
-        ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionState})`
-        : db_client``
+    ${endActionState
+      ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionState})`
+      : db_client``
     }
   )`;
 }
