@@ -16,8 +16,22 @@ DB_DIR="db"
 PG_DUMP="archive.sql"
 BASE_URL="https://storage.googleapis.com/mina-archive-dumps"
 
+# Detect which docker compose command to use
+get_docker_compose_cmd() {
+  if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+    echo "docker compose"
+  elif command -v docker-compose &> /dev/null; then
+    echo "docker-compose"
+  else
+    echo "Error: Neither 'docker compose' nor 'docker-compose' found" >&2
+    exit 1
+  fi
+}
+
+DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
+
 # Stop docker containers 
-docker-compose stop postgres
+$DOCKER_COMPOSE_CMD stop postgres
 
 # clear db and data directories
 rm -rf "$DB_DIR"
