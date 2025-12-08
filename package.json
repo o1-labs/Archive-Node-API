@@ -9,6 +9,11 @@
   "main": "build/src/index.js",
   "start": "build/src/index.js",
   "type": "module",
+  "files": [
+    "build",
+    "schema.graphql",
+    "README.md"
+  ],
   "scripts": {
     "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
