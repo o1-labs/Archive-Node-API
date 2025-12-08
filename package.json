@@ -1,6 +1,6 @@
 {
   "name": "archive-node-graphql",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A NodeJS GraphQL server for exposing data for o1js/zkApps",
   "repository": {
     "type": "git",
