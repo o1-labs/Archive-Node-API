@@ -11,10 +11,13 @@
   "type": "module",
   "files": [
     "build",
+    "src",
     "schema.graphql",
-    "README.md"
+    "README.md",
+    "tsconfig.json"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon --exec 'node -r dotenv/config --loader ts-node/esm' src/index.ts",
