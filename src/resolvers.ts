@@ -6,29 +6,44 @@ import {
   TracingState,
   setSpanNameFromGraphQLContext,
 } from './tracing/tracer.js';
+import { join } from 'path';
+
+const graphqlSchemaPath = join(__dirname, '..', 'schema.graphql');
 
 const fullResolvers: Resolvers = {
   Query: {
     events: async (_, { input }, context) => {
-      const graphQLSpan = setSpanNameFromGraphQLContext(context, 'events.graphql');
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'events.graphql'
+      );
       return context.db_client.getEvents(input, {
         tracingState: new TracingState(graphQLSpan),
       });
     },
     actions: async (_, { input }, context) => {
-      const graphQLSpan = setSpanNameFromGraphQLContext(context, 'actions.graphql');
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'actions.graphql'
+      );
       return context.db_client.getActions(input, {
         tracingState: new TracingState(graphQLSpan),
       });
     },
     networkState: async (_, __, context) => {
-      const graphQLSpan = setSpanNameFromGraphQLContext(context, 'networkState.graphql');
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'networkState.graphql'
+      );
       return context.db_client.getNetworkState({
         tracingState: new TracingState(graphQLSpan),
       });
     },
     blocks: async (_, { query, limit, sortBy }, context) => {
-      const graphQLSpan = setSpanNameFromGraphQLContext(context, 'blocks.graphql');
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'blocks.graphql'
+      );
       return context.db_client.getBlocks(query, limit, sortBy, {
         tracingState: new TracingState(graphQLSpan),
       });
@@ -41,7 +56,9 @@ let typeDefs: string | undefined = undefined;
 
 // If the ENABLED_QUERIES environment variable is set, filter the schema and resolvers.
 if (process.env.ENABLED_QUERIES !== undefined) {
-  const enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) => q.trim());
+  const enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) =>
+    q.trim()
+  );
 
   // If the list is not empty, filter the resolvers.
   if (enabledQueries.length > 0) {
@@ -54,7 +71,7 @@ if (process.env.ENABLED_QUERIES !== undefined) {
     };
 
     // Filter the schema AST.
-    const typeDefsString = fs.readFileSync('./schema.graphql', 'utf-8');
+    const typeDefsString = fs.readFileSync(graphqlSchemaPath, 'utf-8');
     const typeDefsAst = parse(typeDefsString);
     const modifiedAst = visit(typeDefsAst, {
       ObjectTypeDefinition(node) {
@@ -76,7 +93,7 @@ if (process.env.ENABLED_QUERIES !== undefined) {
 // Create the executable schema.
 const schema = makeExecutableSchema({
   resolvers: [resolvers],
-  typeDefs: typeDefs || fs.readFileSync('./schema.graphql', 'utf-8'),
+  typeDefs: typeDefs || fs.readFileSync(graphqlSchemaPath, 'utf-8'),
 });
 
 export { resolvers, schema };
