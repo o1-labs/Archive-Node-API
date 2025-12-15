@@ -1,13 +1,16 @@
 {
   "name": "mina-archive-node-graphql",
-  "version": "0.0.6",
+  "version": "0.0.7-prerelease-1",
   "description": "A NodeJS GraphQL server for exposing data for o1js/zkApps",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/o1-labs/Archive-Node-API.git"
+    "url": "https://github.com/o1-labs/Archive-Node-API"
   },
   "main": "build/src/index.js",
   "start": "build/src/index.js",
+  "files": [
+    "build/"
+  ],
   "type": "module",
   "scripts": {
     "build": "npm run clean && npx tsc",
