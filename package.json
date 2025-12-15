@@ -1,6 +1,6 @@
 {
   "name": "mina-archive-node-graphql",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A NodeJS GraphQL server for exposing data for o1js/zkApps",
   "repository": {
     "type": "git",
