@@ -125,7 +125,15 @@ This section aims to describe all the environment variables exposed to configure
 
 To see an example of sensible defaults, see the [env.example](./.env.example) configuration file.
 
-## Installing from npm Registry
+## Installing from npm
+
+This package is published to npm and is available for public access
+
+```sh
+npm install mina-archive-node-graphql
+```
+
+## Installing from artifact registry
 
 This package is published to a Google Cloud Artifact Registry and is available for public access.
 
@@ -157,11 +165,13 @@ To create a new release, follow these steps:
 3. **Create and push a tag**: `git tag v1.2.3 && git push origin v1.2.3`
 
 The CI/CD workflow will automatically:
+
 - Build and publish npm package to GCP registry with version from package.json
 - Build and push Docker image to both GCP Artifact Registry and GitHub Container Registry
 - Create semantic version tags (e.g., `1.2.3`, `1.2`, `1`, `latest`)
 
 **Published artifacts:**
+
 - npm: `https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/`
 - Docker (GCP): `europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api`
 - Docker (GitHub): `ghcr.io/o1-labs/archive-node-api`
