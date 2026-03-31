@@ -44,57 +44,80 @@ describe('EventsService', () => {
     test('transforms single block with single event', () => {
       service = new EventsService(makeClient());
 
-      const row = makeRow();
-      // Build the map manually to simulate what partitionBlocks would produce
+      const stateHash = 'block_abc';
+      const txHash = 'tx_001';
+      const fieldId = 42;
+      const expectedFieldValue = 'my_field_val';
+      const expectedHeight = '150';
+
+      const row = makeRow({
+        state_hash: stateHash,
+        hash: txHash,
+        height: expectedHeight,
+        field_id: fieldId,
+        field_value: expectedFieldValue,
+        event_field_element_ids: [fieldId],
+      });
+
       const blocksMap = new Map();
       const txMap = new Map();
-      txMap.set('tx_hash_1', [row]);
-      blocksMap.set('state_hash_1', txMap);
+      txMap.set(txHash, [row]);
+      blocksMap.set(stateHash, txMap);
 
-      const fieldValues = new Map([['100', 'field_val_1']]);
+      const fieldValues = new Map([[String(fieldId), expectedFieldValue]]);
 
       const result = service.blocksToEvents(blocksMap, fieldValues);
 
       assert.strictEqual(result.length, 1);
-      assert.strictEqual(result[0].blockInfo.height, 100);
-      assert.strictEqual(result[0].blockInfo.stateHash, 'state_hash_1');
+      assert.strictEqual(result[0].blockInfo.height, Number(expectedHeight));
+      assert.strictEqual(result[0].blockInfo.stateHash, stateHash);
       assert.strictEqual(result[0].eventData.length, 1);
-      assert.deepStrictEqual(result[0].eventData[0].data, ['field_val_1']);
+      assert.deepStrictEqual(result[0].eventData[0].data, [expectedFieldValue]);
     });
 
     test('transforms block with multiple transactions', () => {
       service = new EventsService(makeClient());
 
+      const stateHash = 'block_xyz';
+      const txHash1 = 'tx_a';
+      const txHash2 = 'tx_b';
+      const fieldId1 = 100;
+      const fieldId2 = 200;
+      const fieldVal1 = 'val_alpha';
+      const fieldVal2 = 'val_beta';
+
       const row1 = makeRow({
-        hash: 'tx1',
+        state_hash: stateHash,
+        hash: txHash1,
         zkapp_account_update_id: 1,
         zkapp_account_updates_ids: [1],
         event_field_elements_id: 10,
         event_element_ids: [10],
-        event_field_element_ids: [100],
-        field_id: 100,
-        field_value: 'val1',
+        event_field_element_ids: [fieldId1],
+        field_id: fieldId1,
+        field_value: fieldVal1,
       });
       const row2 = makeRow({
-        hash: 'tx2',
+        state_hash: stateHash,
+        hash: txHash2,
         zkapp_account_update_id: 2,
         zkapp_account_updates_ids: [2],
         event_field_elements_id: 20,
         event_element_ids: [20],
-        event_field_element_ids: [200],
-        field_id: 200,
-        field_value: 'val2',
+        event_field_element_ids: [fieldId2],
+        field_id: fieldId2,
+        field_value: fieldVal2,
       });
 
       const blocksMap = new Map();
       const txMap = new Map();
-      txMap.set('tx1', [row1]);
-      txMap.set('tx2', [row2]);
-      blocksMap.set('state_hash_1', txMap);
+      txMap.set(txHash1, [row1]);
+      txMap.set(txHash2, [row2]);
+      blocksMap.set(stateHash, txMap);
 
       const fieldValues = new Map([
-        ['100', 'val1'],
-        ['200', 'val2'],
+        [String(fieldId1), fieldVal1],
+        [String(fieldId2), fieldVal2],
       ]);
 
       const result = service.blocksToEvents(blocksMap, fieldValues);
@@ -106,26 +129,31 @@ describe('EventsService', () => {
     test('transforms multiple blocks', () => {
       service = new EventsService(makeClient());
 
+      const stateHash1 = 'block_1';
+      const stateHash2 = 'block_2';
+      const txHash1 = 'tx_1';
+      const txHash2 = 'tx_2';
+
       const row1 = makeRow({
-        state_hash: 'block1',
-        hash: 'tx1',
+        state_hash: stateHash1,
+        hash: txHash1,
         height: '100',
       });
       const row2 = makeRow({
-        state_hash: 'block2',
-        hash: 'tx2',
+        state_hash: stateHash2,
+        hash: txHash2,
         height: '101',
       });
 
       const blocksMap = new Map();
 
       const txMap1 = new Map();
-      txMap1.set('tx1', [row1]);
-      blocksMap.set('block1', txMap1);
+      txMap1.set(txHash1, [row1]);
+      blocksMap.set(stateHash1, txMap1);
 
       const txMap2 = new Map();
-      txMap2.set('tx2', [row2]);
-      blocksMap.set('block2', txMap2);
+      txMap2.set(txHash2, [row2]);
+      blocksMap.set(stateHash2, txMap2);
 
       const fieldValues = new Map([['100', 'val']]);
 
@@ -143,41 +171,49 @@ describe('EventsService', () => {
     test('handles multi-field events correctly', () => {
       service = new EventsService(makeClient());
 
-      // Event has two fields: 100 and 101
+      const stateHash = 'block_multi';
+      const txHash = 'tx_multi';
+      const fieldIdA = 100;
+      const fieldIdB = 101;
+      const fieldValA = 'field_a';
+      const fieldValB = 'field_b';
+
       const row1 = makeRow({
+        state_hash: stateHash,
+        hash: txHash,
         event_field_elements_id: 10,
         event_element_ids: [10],
-        event_field_element_ids: [100, 101],
-        field_id: 100,
-        field_value: 'field_a',
+        event_field_element_ids: [fieldIdA, fieldIdB],
+        field_id: fieldIdA,
+        field_value: fieldValA,
       });
       const row2 = makeRow({
-        // Duplicate row for second field — same event
+        state_hash: stateHash,
+        hash: txHash,
         event_field_elements_id: 10,
         event_element_ids: [10],
-        event_field_element_ids: [100, 101],
-        field_id: 101,
-        field_value: 'field_b',
+        event_field_element_ids: [fieldIdA, fieldIdB],
+        field_id: fieldIdB,
+        field_value: fieldValB,
       });
 
       const blocksMap = new Map();
       const txMap = new Map();
-      txMap.set('tx_hash_1', [row1, row2]);
-      blocksMap.set('state_hash_1', txMap);
+      txMap.set(txHash, [row1, row2]);
+      blocksMap.set(stateHash, txMap);
 
       const fieldValues = new Map([
-        ['100', 'field_a'],
-        ['101', 'field_b'],
+        [String(fieldIdA), fieldValA],
+        [String(fieldIdB), fieldValB],
       ]);
 
       const result = service.blocksToEvents(blocksMap, fieldValues);
 
       assert.strictEqual(result.length, 1);
-      // After deduplication, there should be one event with two field values
       assert.strictEqual(result[0].eventData.length, 1);
       assert.deepStrictEqual(result[0].eventData[0].data, [
-        'field_a',
-        'field_b',
+        fieldValA,
+        fieldValB,
       ]);
     });
   });

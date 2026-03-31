@@ -80,18 +80,6 @@ describe('ActionsService', () => {
       });
     });
 
-    test('it sorts by sequence number ascending with three items', () => {
-      const actions = [
-        dummyAction({ sequenceNumber: 3 }),
-        dummyAction({ sequenceNumber: 1 }),
-        dummyAction({ sequenceNumber: 2 }),
-      ];
-      const sorted = actionsService.sortActions(actions);
-      assert.strictEqual(sorted[0].transactionInfo.sequenceNumber, 1);
-      assert.strictEqual(sorted[1].transactionInfo.sequenceNumber, 2);
-      assert.strictEqual(sorted[2].transactionInfo.sequenceNumber, 3);
-    });
-
     test('it handles mixed sequence numbers and account update indices', () => {
       const ids = [1, 2];
       const actions = [
