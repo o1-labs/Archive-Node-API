@@ -2,23 +2,37 @@ import { gql } from 'graphql-tag';
 import { GraphQLClient } from 'graphql-request';
 import postgres from 'postgres';
 import { getZkappsWithPendingEventsQuery } from '../../src/db/sql/events-actions/queries.js';
-import { after, describe, it } from 'node:test';
+import { after, before, describe, it } from 'node:test';
 import { EventOutput } from 'src/resolvers-types.js';
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Fixtures
-import J1fu_65_66 from './fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_65_66.json' with { type: "json" };
-import J1fu_84_83 from './fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_84_83.json' with { type: "json" };
+const J1fu_65_66 = JSON.parse(
+  readFileSync(
+    join(
+      __dirname,
+      'fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_65_66.json'
+    ),
+    'utf-8'
+  )
+);
+const J1fu_84_83 = JSON.parse(
+  readFileSync(
+    join(
+      __dirname,
+      'fixtures/B62qpHtWX41NstxzzUe8xooKogqomDwgJ4CN8J3V2274v5B9dnfJ1fu_84_83.json'
+    ),
+    'utf-8'
+  )
+);
 
-const db_client = postgres(process.env.PG_CONN);
-/**
- * This gets all the public keys of accounts with events.
- *
- * TODO: This returns ZkApps and validators for some reason.  Ideally it would only return ZkApps.
- */
-const zkappsWithPendingEvents = (
-  await getZkappsWithPendingEventsQuery(db_client).execute()
-).map((x) => x.public_key);
+let db_client: ReturnType<typeof postgres>;
+let zkappsWithPendingEvents: string[];
 
 const endpoint =
   process.env.STAGING_GRAPHQL_ENDPOINT ||
@@ -45,8 +59,17 @@ const getEventsQuery = gql`
   }
 `;
 
+before(async () => {
+  if (process.env.PG_CONN) {
+    db_client = postgres(process.env.PG_CONN);
+    zkappsWithPendingEvents = (
+      await getZkappsWithPendingEventsQuery(db_client).execute()
+    ).map((x) => x.public_key);
+  }
+});
+
 after(async () => {
-  await db_client.end();
+  if (db_client) await db_client.end();
 });
 
 describe('Events', () => {
