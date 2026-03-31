@@ -1,17 +1,17 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import fs from 'fs';
-import { parse, print, visit } from 'graphql';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import { Resolvers } from './resolvers-types.js';
+import { visit, print, parse } from 'graphql';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   TracingState,
   setSpanNameFromGraphQLContext,
 } from './tracing/tracer.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const graphqlSchemaPath = join(__dirname, '..', 'schema.graphql');
+const __dirname = path.dirname(__filename);
+const schemaPath = path.resolve(__dirname, '../../schema.graphql');
 
 const fullResolvers: Resolvers = {
   Query: {
@@ -74,7 +74,7 @@ if (process.env.ENABLED_QUERIES !== undefined) {
     };
 
     // Filter the schema AST.
-    const typeDefsString = fs.readFileSync(graphqlSchemaPath, 'utf-8');
+    const typeDefsString = fs.readFileSync(schemaPath, 'utf-8');
     const typeDefsAst = parse(typeDefsString);
     const modifiedAst = visit(typeDefsAst, {
       ObjectTypeDefinition(node) {
@@ -96,7 +96,7 @@ if (process.env.ENABLED_QUERIES !== undefined) {
 // Create the executable schema.
 const schema = makeExecutableSchema({
   resolvers: [resolvers],
-  typeDefs: typeDefs || fs.readFileSync(graphqlSchemaPath, 'utf-8'),
+  typeDefs: typeDefs || fs.readFileSync(schemaPath, 'utf-8'),
 });
 
 export { resolvers, schema };
