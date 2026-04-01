@@ -18,6 +18,7 @@
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon --exec 'node -r dotenv/config --loader ts-node/esm' src/index.ts",
     "test": "./run-tests.sh",
     "test:integration": "npm run build && node --enable-source-maps --test ./build/tests/integration/integration.test.js",
+    "test:live-network": "npm run build && node --enable-source-maps --test-timeout 600000 --test ./build/tests/live-network/live-network.test.js",
     "clean": "rimraf ./build",
     "gen-test-mocks": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm tests/mocked_sql/generate_mock_data.ts",
     "benchmark": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm benchmark/setup.ts && npx artillery run benchmark/graphql.yaml --output benchmark/report.json",
