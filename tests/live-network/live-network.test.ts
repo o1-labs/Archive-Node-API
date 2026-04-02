@@ -25,6 +25,7 @@ import {
   startLightnet,
   stopLightnet,
   acquireKeyPair,
+  importAndUnlockWhaleAccount,
   sendPayment,
   waitForBlockHeight,
   PG_CONN,
@@ -167,34 +168,28 @@ describe('Actions (live network)', () => {
 // ─── Transactions ────────────────────────────────────────────────────
 
 describe('Transactions (live network)', () => {
-  test('send payment and verify it appears in archive', async (t) => {
-    let sender, receiver;
-    try {
-      sender = await acquireKeyPair();
-      receiver = await acquireKeyPair();
-    } catch (e) {
-      t.skip('Accounts manager not available, skipping transaction test');
-      return;
-    }
+  test('send payment and verify it appears in archive', async () => {
+    // Import and unlock a whale account (pre-funded genesis key inside the container)
+    console.log('  Importing and unlocking whale account...');
+    const senderPk = await importAndUnlockWhaleAccount();
+    console.log(`  Sender: ${senderPk.slice(0, 20)}...`);
 
-    let txHash: string;
-    try {
-      console.log(`  Sending payment from ${sender.publicKey.slice(0, 15)}... to ${receiver.publicKey.slice(0, 15)}...`);
-      txHash = await sendPayment(
-        sender.publicKey,
-        receiver.publicKey,
-        '1000000000', // 1 MINA
-        '100000000'   // 0.1 MINA fee
-      );
-    } catch (e: any) {
-      t.skip(`sendPayment failed (${e.message}), skipping`);
-      return;
-    }
+    // Get a receiver address from the accounts manager
+    const receiver = await acquireKeyPair();
+    console.log(`  Receiver: ${receiver.publicKey.slice(0, 20)}...`);
+
+    // Send payment
+    const txHash = await sendPayment(
+      senderPk,
+      receiver.publicKey,
+      '1000000000', // 1 MINA
+      '100000000'   // 0.1 MINA fee
+    );
     assert.ok(txHash, 'should get a transaction hash');
-    console.log(`  Payment sent: ${txHash.slice(0, 20)}...`);
+    console.log(`  Payment sent: ${txHash.slice(0, 25)}...`);
 
-    // Wait for the transaction to be included in a block
-    console.log('  Waiting for transaction to be included in a block...');
+    // Wait for the transaction to appear in the archive database
+    console.log('  Waiting for transaction to appear in archive...');
     const maxWait = 120000;
     const start = Date.now();
     let found = false;

@@ -13,8 +13,11 @@
  * - LIGHTNET_PROOF_LEVEL: none or full (default: none)
  * - LIGHTNET_SLOT_TIME: slot time in ms (default: 20000)
  */
-import { execSync, exec, ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import http from 'http';
+
+const MINA_PRIVKEY_PASS = 'naughty blue worm';
+const WHALE_KEY_PATH = '/root/.mina-network/offline_whale_keys/offline_whale_account_0';
 
 const LIGHTNET_IMAGE =
   process.env.LIGHTNET_IMAGE ??
@@ -133,27 +136,11 @@ async function queryDaemonStatus(): Promise<string> {
 }
 
 /**
- * Send a simple payment transaction via the Mina daemon GraphQL.
+ * Execute a GraphQL query/mutation against the Mina daemon.
  */
-export async function sendPayment(
-  from: string,
-  to: string,
-  amount: string,
-  fee: string
-): Promise<string> {
+function daemonGraphQL(query: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify({
-      query: `mutation {
-        sendPayment(input: {
-          from: "${from}",
-          to: "${to}",
-          amount: "${amount}",
-          fee: "${fee}"
-        }) {
-          payment { hash }
-        }
-      }`,
-    });
+    const body = JSON.stringify({ query });
     const req = http.request(
       {
         hostname: 'localhost',
@@ -164,7 +151,7 @@ export async function sendPayment(
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
         },
-        timeout: 10000,
+        timeout: 15000,
       },
       (res) => {
         let data = '';
@@ -172,25 +159,58 @@ export async function sendPayment(
         res.on('end', () => {
           try {
             const json = JSON.parse(data);
-            if (json.data?.sendPayment?.payment?.hash) {
-              resolve(json.data.sendPayment.payment.hash);
+            if (json.errors) {
+              reject(new Error(JSON.stringify(json.errors)));
             } else {
-              reject(
-                new Error(
-                  `sendPayment failed: ${JSON.stringify(json.errors ?? json)}`
-                )
-              );
+              resolve(json.data);
             }
           } catch {
-            reject(new Error(`Invalid response from daemon: ${data}`));
+            reject(new Error(`Invalid GraphQL response: ${data}`));
           }
         });
       }
     );
     req.on('error', reject);
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('GraphQL request timeout'));
+    });
     req.write(body);
     req.end();
   });
+}
+
+/**
+ * Import a whale key from the container filesystem and unlock it.
+ * Returns the public key of the imported account.
+ */
+export async function importAndUnlockWhaleAccount(): Promise<string> {
+  const importResult = await daemonGraphQL(
+    `mutation { importAccount(password: "${MINA_PRIVKEY_PASS}", path: "${WHALE_KEY_PATH}") { publicKey } }`
+  );
+  const pk = importResult.importAccount.publicKey;
+
+  await daemonGraphQL(
+    `mutation { unlockAccount(input: { publicKey: "${pk}", password: "${MINA_PRIVKEY_PASS}" }) { publicKey } }`
+  );
+
+  return pk;
+}
+
+/**
+ * Send a simple payment transaction via the Mina daemon GraphQL.
+ * The sender account must already be imported and unlocked.
+ */
+export async function sendPayment(
+  from: string,
+  to: string,
+  amount: string,
+  fee: string
+): Promise<string> {
+  const result = await daemonGraphQL(
+    `mutation { sendPayment(input: { from: "${from}", to: "${to}", amount: "${amount}", fee: "${fee}" }) { payment { hash } } }`
+  );
+  return result.sendPayment.payment.hash;
 }
 
 /**
@@ -217,13 +237,9 @@ export async function acquireKeyPair(): Promise<{
             if (json.pk && json.sk) {
               resolve({ publicKey: json.pk, privateKey: json.sk });
             } else {
-              reject(
-                new Error(
-                  `acquireKeyPair failed: ${JSON.stringify(json)}`
-                )
-              );
+              reject(new Error(`acquireKeyPair failed: ${JSON.stringify(json)}`));
             }
-          } catch (e) {
+          } catch {
             reject(new Error(`Invalid response from accounts manager: ${data}`));
           }
         });
