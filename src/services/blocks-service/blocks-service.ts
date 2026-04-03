@@ -54,7 +54,7 @@ interface ZkAppCommandRow {
   fee: string;
   memo: string;
   status: string;
-  failure_reasons_ids: string | null;
+  failure_reasons_ids: number[] | string | null;
 }
 
 interface FeeTransferRow {
@@ -368,7 +368,9 @@ class BlocksService implements IBlocksService {
       fee: row.fee,
       memo: row.memo,
       status: row.status,
-      failureReason: row.failure_reasons_ids,
+      failureReason: row.failure_reasons_ids
+        ? String(row.failure_reasons_ids)
+        : null,
     };
   }
 

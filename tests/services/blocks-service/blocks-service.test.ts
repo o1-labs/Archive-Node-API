@@ -267,7 +267,7 @@ describe('BlocksService', () => {
       assert.strictEqual(result.failureReason, null);
     });
 
-    test('maps failure_reasons_ids to failureReason when present', () => {
+    test('maps failure_reasons_ids to failureReason when present as string', () => {
       const row: ZkAppCommandRow = {
         block_id: 1,
         hash: 'CkpTest',
@@ -279,6 +279,20 @@ describe('BlocksService', () => {
       };
       const result = service.mapZkAppCommandRow(row);
       assert.strictEqual(result.failureReason, '{1,2}');
+    });
+
+    test('maps failure_reasons_ids to failureReason when present as array', () => {
+      const row: ZkAppCommandRow = {
+        block_id: 1,
+        hash: 'CkpTest',
+        fee_payer: 'B62qA',
+        fee: '10000000',
+        memo: '',
+        status: 'failed',
+        failure_reasons_ids: [6, 165],
+      };
+      const result = service.mapZkAppCommandRow(row);
+      assert.strictEqual(result.failureReason, '6,165');
     });
   });
 
