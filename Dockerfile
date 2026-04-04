@@ -1,19 +1,19 @@
 # Stage 1: Build the TypeScript code
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY src ./src
 COPY tsconfig.json ./
-COPY schema.graphql ./
 RUN npm run build
 
 # Stage 2: Copy the built code and the node modules
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY package*.json ./
+COPY schema.graphql ./
 
 # Don't run as root
 RUN addgroup -g 1001 -S nodejs

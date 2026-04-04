@@ -169,8 +169,39 @@ input BlockQueryInput {
   inBestChain: Boolean
 }
 
+type UserCommand {
+  hash: String!
+  kind: String!
+  from: String!
+  to: String!
+  amount: String!
+  fee: String!
+  memo: String!
+  nonce: Int!
+  status: String!
+  failureReason: String
+}
+
+type ZkAppCommand {
+  hash: String!
+  feePayer: String!
+  fee: String!
+  memo: String!
+  status: String!
+  failureReason: String
+}
+
+type FeeTransfer {
+  recipient: String!
+  fee: String!
+  type: String!
+}
+
 type BlockTransactions {
   coinbase: String!
+  userCommands: [UserCommand!]!
+  zkappCommands: [ZkAppCommand!]!
+  feeTransfer: [FeeTransfer!]!
 }
 
 type Block {

@@ -4,10 +4,12 @@ import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
 
-export { BLOCK_RANGE_SIZE, buildServer };
+export { BLOCK_RANGE_SIZE, ENABLE_BLOCK_TRANSACTION_DETAILS, buildServer };
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
+const ENABLE_BLOCK_TRANSACTION_DETAILS =
+  process.env.ENABLE_BLOCK_TRANSACTION_DETAILS === 'true';
 
 function buildServer(context: GraphQLContext, plugins: Plugin[]) {
   const yoga = createYoga<GraphQLContext>({

@@ -1,22 +1,31 @@
 {
-  "name": "mina-archive-node-graphql",
-  "version": "0.0.8",
-  "description": "A NodeJS GraphQL server for exposing data for o1js/zkApps",
+  "name": "@o1-labs/mina-archive-node-graphql",
+  "version": "0.0.5",
+  "description": "A NodeJS GraphQL server for exposing Mina Protocol archive node data for o1js/zkApps",
   "repository": {
     "type": "git",
     "url": "https://github.com/o1-labs/Archive-Node-API"
   },
   "main": "build/src/index.js",
   "start": "build/src/index.js",
-  "files": [
-    "build/"
-  ],
+  "bin": {
+    "mina-archive-node-graphql": "build/src/index.js"
+  },
   "type": "module",
+  "files": [
+    "build",
+    "src",
+    "schema.graphql",
+    "README.md",
+    "tsconfig.json"
+  ],
   "scripts": {
-    "build": "npm run clean && npx tsc && cp schema.graphql build/",
+    "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon --exec 'node -r dotenv/config --loader ts-node/esm' src/index.ts",
     "test": "./run-tests.sh",
+    "test:unit": "npm run build && for f in ./build/tests/unit/*test.js ./build/tests/utils.test.js ./build/tests/services/*/*.test.js; do node --enable-source-maps --test \"$f\"; done",
+    "test:coverage": "npm run build && npx c8 --include 'build/src/**' --reporter text --reporter lcov -- bash -c 'for f in ./build/tests/unit/*test.js ./build/tests/utils.test.js ./build/tests/services/*/*.test.js; do node --enable-source-maps --test \"$f\"; done'",
     "test:integration": "npm run build && node --enable-source-maps --test ./build/tests/integration/integration.test.js",
     "test:live-network": "npm run build && node --enable-source-maps --test-timeout 600000 --test ./build/tests/live-network/live-network.test.js",
     "test:devnet-dump": "npm run build && node --enable-source-maps --test-timeout 900000 --test ./build/tests/devnet-dump/devnet-dump.test.js",
@@ -26,10 +35,11 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "codegen": "graphql-codegen-esm --config codegen.ts",
-    "compose": "docker compose up"
+    "compose": "docker compose up",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["mina", "mina-protocol", "archive-node", "graphql", "o1js", "zkapp", "blockchain"],
+  "author": "O(1) Labs <build@o1labs.org>",
   "license": "ISC",
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.1",
@@ -40,6 +50,7 @@
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
     "artillery": "^2.0.0-36",
+    "c8": "^11.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.48.0",
     "graphql-request": "^7.4.0",
