@@ -1,21 +1,14 @@
 import { test, before, describe, after } from 'node:test';
 import assert from 'node:assert';
 import { ActionsService } from '../../../src/services/actions-service/actions-service.js';
-import { Sql } from 'postgres';
 import { Action } from '../../../src/blockchain/types.js';
+import { makeClient } from '../../test-helpers.js';
 
 describe('ActionsService', () => {
   let actionsService: ActionsService;
 
   before(() => {
-    const client = {
-      query: () => {},
-      CLOSE: () => {},
-      END: () => {},
-      PostgresError: class {},
-      options: {},
-    } as unknown as Sql<{}>;
-    actionsService = new ActionsService(client);
+    actionsService = new ActionsService(makeClient());
   });
 
   describe('sortActions', () => {
@@ -85,6 +78,40 @@ describe('ActionsService', () => {
           assert.strictEqual(sortedActions[2].accountUpdateId, '2');
         });
       });
+    });
+
+    test('it handles mixed sequence numbers and account update indices', () => {
+      const ids = [1, 2];
+      const actions = [
+        dummyAction({ sequenceNumber: 2, accountUpdateId: '2', zkappAccountUpdateIds: ids }),
+        dummyAction({ sequenceNumber: 1, accountUpdateId: '2', zkappAccountUpdateIds: ids }),
+        dummyAction({ sequenceNumber: 1, accountUpdateId: '1', zkappAccountUpdateIds: ids }),
+        dummyAction({ sequenceNumber: 2, accountUpdateId: '1', zkappAccountUpdateIds: ids }),
+      ];
+      const sorted = actionsService.sortActions(actions);
+      assert.strictEqual(sorted[0].transactionInfo.sequenceNumber, 1);
+      assert.strictEqual(sorted[0].accountUpdateId, '1');
+      assert.strictEqual(sorted[1].transactionInfo.sequenceNumber, 1);
+      assert.strictEqual(sorted[1].accountUpdateId, '2');
+      assert.strictEqual(sorted[2].transactionInfo.sequenceNumber, 2);
+      assert.strictEqual(sorted[2].accountUpdateId, '1');
+      assert.strictEqual(sorted[3].transactionInfo.sequenceNumber, 2);
+      assert.strictEqual(sorted[3].accountUpdateId, '2');
+    });
+
+    test('it returns empty array for empty input', () => {
+      assert.strictEqual(actionsService.sortActions([]).length, 0);
+    });
+
+    test('it handles account update id not in the list', () => {
+      const actions = [
+        dummyAction({ sequenceNumber: 1, accountUpdateId: '99', zkappAccountUpdateIds: [1, 2] }),
+        dummyAction({ sequenceNumber: 1, accountUpdateId: '1', zkappAccountUpdateIds: [1, 2] }),
+      ];
+      const sorted = actionsService.sortActions(actions);
+      // accountUpdateId 99 not in [1,2] → indexOf returns -1, sorts before index 0
+      assert.strictEqual(sorted[0].accountUpdateId, '99');
+      assert.strictEqual(sorted[1].accountUpdateId, '1');
     });
   });
 });

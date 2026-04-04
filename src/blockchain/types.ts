@@ -74,8 +74,39 @@ export type Actions = {
   blockInfo: BlockInfo;
 }[];
 
+export type UserCommand = {
+  hash: string;
+  kind: string;
+  from: string;
+  to: string;
+  amount: string;
+  fee: string;
+  memo: string;
+  nonce: number;
+  status: string;
+  failureReason: string | null;
+};
+
+export type ZkAppCommand = {
+  hash: string;
+  feePayer: string;
+  fee: string;
+  memo: string;
+  status: string;
+  failureReason: string | null;
+};
+
+export type FeeTransfer = {
+  recipient: string;
+  fee: string;
+  type: string;
+};
+
 export type BlockTransactions = {
   coinbase: string;
+  userCommands: UserCommand[];
+  zkappCommands: ZkAppCommand[];
+  feeTransfer: FeeTransfer[];
 };
 
 export type Block = {

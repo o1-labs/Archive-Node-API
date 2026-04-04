@@ -1,0 +1,57 @@
+# API keys and secrets
+.env
+.env.*
+
+# Source files (included via tsconfig, but we ship the build)
+src/**/*.test.ts
+src/**/*.spec.ts
+
+# Test files
+tests/
+coverage/
+*.test.js
+*.spec.js
+
+# Development files
+benchmark/
+.vscode/
+.idea/
+*.iml
+
+# Documentation
+README-docker.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+db/
+data/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Editor configs
+.eslintrc*
+.eslintignore
+.prettierrc*
+.prettierignore
+.editorconfig
+
+# Scripts
+run-tests.sh
+
+# Misc
+*.log
+*.tgz
+.DS_Store
+.npmrc
+node_modules/

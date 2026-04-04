@@ -119,6 +119,8 @@ export type BlockQueryInput = {
   dateTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
   /** Filter blocks to this date/time, exclusive */
   dateTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Filter for blocks in best chain only */
+  inBestChain?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export enum BlockSortByInput {
@@ -131,6 +133,9 @@ export { BlockStatusFilter };
 export type BlockTransactions = {
   __typename?: 'BlockTransactions';
   coinbase: Scalars['String']['output'];
+  feeTransfer: Array<FeeTransfer>;
+  userCommands: Array<UserCommand>;
+  zkappCommands: Array<ZkAppCommand>;
 };
 
 export type EventData = {
@@ -160,6 +165,13 @@ export type EventOutput = {
   __typename?: 'EventOutput';
   blockInfo?: Maybe<BlockInfo>;
   eventData?: Maybe<Array<Maybe<EventData>>>;
+};
+
+export type FeeTransfer = {
+  __typename?: 'FeeTransfer';
+  fee: Scalars['String']['output'];
+  recipient: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type MaxBlockHeightInfo = {
@@ -205,6 +217,30 @@ export type TransactionInfo = {
   sequenceNumber: Scalars['Int']['output'];
   status: Scalars['String']['output'];
   zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
+};
+
+export type UserCommand = {
+  __typename?: 'UserCommand';
+  amount: Scalars['String']['output'];
+  failureReason?: Maybe<Scalars['String']['output']>;
+  fee: Scalars['String']['output'];
+  from: Scalars['String']['output'];
+  hash: Scalars['String']['output'];
+  kind: Scalars['String']['output'];
+  memo: Scalars['String']['output'];
+  nonce: Scalars['Int']['output'];
+  status: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type ZkAppCommand = {
+  __typename?: 'ZkAppCommand';
+  failureReason?: Maybe<Scalars['String']['output']>;
+  fee: Scalars['String']['output'];
+  feePayer: Scalars['String']['output'];
+  hash: Scalars['String']['output'];
+  memo: Scalars['String']['output'];
+  status: Scalars['String']['output'];
 };
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -341,12 +377,15 @@ export type ResolversTypes = {
   EventData: ResolverTypeWrapper<EventData>;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: ResolverTypeWrapper<EventOutput>;
+  FeeTransfer: ResolverTypeWrapper<FeeTransfer>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   MaxBlockHeightInfo: ResolverTypeWrapper<MaxBlockHeightInfo>;
   NetworkStateOutput: ResolverTypeWrapper<NetworkStateOutput>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
+  UserCommand: ResolverTypeWrapper<UserCommand>;
+  ZkAppCommand: ResolverTypeWrapper<ZkAppCommand>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -364,12 +403,15 @@ export type ResolversParentTypes = {
   EventData: EventData;
   EventFilterOptionsInput: EventFilterOptionsInput;
   EventOutput: EventOutput;
+  FeeTransfer: FeeTransfer;
   Int: Scalars['Int']['output'];
   MaxBlockHeightInfo: MaxBlockHeightInfo;
   NetworkStateOutput: NetworkStateOutput;
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
+  UserCommand: UserCommand;
+  ZkAppCommand: ZkAppCommand;
 };
 
 export type ActionDataResolvers<
@@ -504,6 +546,21 @@ export type BlockTransactionsResolvers<
     ResolversParentTypes['BlockTransactions'] = ResolversParentTypes['BlockTransactions'],
 > = {
   coinbase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  feeTransfer?: Resolver<
+    Array<ResolversTypes['FeeTransfer']>,
+    ParentType,
+    ContextType
+  >;
+  userCommands?: Resolver<
+    Array<ResolversTypes['UserCommand']>,
+    ParentType,
+    ContextType
+  >;
+  zkappCommands?: Resolver<
+    Array<ResolversTypes['ZkAppCommand']>,
+    ParentType,
+    ContextType
+  >;
 };
 
 export interface DateTimeScalarConfig
@@ -544,6 +601,16 @@ export type EventOutputResolvers<
     ParentType,
     ContextType
   >;
+};
+
+export type FeeTransferResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['FeeTransfer'] = ResolversParentTypes['FeeTransfer'],
+> = {
+  fee?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  recipient?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type MaxBlockHeightInfoResolvers<
@@ -626,6 +693,44 @@ export type TransactionInfoResolvers<
   >;
 };
 
+export type UserCommandResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['UserCommand'] = ResolversParentTypes['UserCommand'],
+> = {
+  amount?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  failureReason?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  fee?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  from?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  nonce?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  to?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ZkAppCommandResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['ZkAppCommand'] = ResolversParentTypes['ZkAppCommand'],
+> = {
+  failureReason?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  fee?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  feePayer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = GraphQLContext> = {
   ActionData?: ActionDataResolvers<ContextType>;
   ActionOutput?: ActionOutputResolvers<ContextType>;
@@ -637,8 +742,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DateTime?: GraphQLScalarType;
   EventData?: EventDataResolvers<ContextType>;
   EventOutput?: EventOutputResolvers<ContextType>;
+  FeeTransfer?: FeeTransferResolvers<ContextType>;
   MaxBlockHeightInfo?: MaxBlockHeightInfoResolvers<ContextType>;
   NetworkStateOutput?: NetworkStateOutputResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   TransactionInfo?: TransactionInfoResolvers<ContextType>;
+  UserCommand?: UserCommandResolvers<ContextType>;
+  ZkAppCommand?: ZkAppCommandResolvers<ContextType>;
 };
