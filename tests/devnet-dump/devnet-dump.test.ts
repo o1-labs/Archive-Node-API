@@ -292,6 +292,146 @@ describe('Block details across height ranges (devnet dump)', () => {
   });
 });
 
+// ─── Quickcheck: Random Block Sampling ─────────────────────────────
+
+const RANDOM_BLOCK_COUNT = 20;
+const RANDOM_RANGE_COUNT = 10;
+
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+describe(`Quickcheck: ${RANDOM_BLOCK_COUNT} random individual blocks (devnet dump)`, () => {
+  let randomHeights: number[];
+
+  before(() => {
+    randomHeights = Array.from({ length: RANDOM_BLOCK_COUNT }, () =>
+      randomInt(minHeight, maxCanonicalHeight)
+    );
+    console.log(`  Sampled heights: ${randomHeights.join(', ')}`);
+  });
+
+  test('every sampled block returns valid data', async () => {
+    for (const height of randomHeights) {
+      const blocks = await blocksService.getBlocks(
+        { blockHeight_gte: height, blockHeight_lt: height + 1, canonical: true },
+        1,
+        null,
+        nullOptions
+      );
+      assert.ok(
+        blocks.length <= 1,
+        `height ${height}: expected 0 or 1 block, got ${blocks.length}`
+      );
+      if (blocks.length === 0) continue; // gap in canonical chain is OK
+
+      const block = blocks[0];
+      assert.strictEqual(Number(block.blockHeight), height, `height mismatch at ${height}`);
+      assert.ok(block.stateHash?.length > 10, `height ${height}: stateHash too short`);
+      assert.ok(
+        block.creator?.startsWith('B62q'),
+        `height ${height}: creator should be B62, got ${block.creator}`
+      );
+      const date = new Date(block.dateTime);
+      assert.ok(!isNaN(date.getTime()), `height ${height}: invalid dateTime ${block.dateTime}`);
+      assert.ok(
+        date.getFullYear() >= 2023,
+        `height ${height}: dateTime year should be >= 2023, got ${date.getFullYear()}`
+      );
+      assert.ok(block.transactions, `height ${height}: transactions missing`);
+    }
+  });
+});
+
+describe(`Quickcheck: ${RANDOM_RANGE_COUNT} random block ranges (devnet dump)`, () => {
+  let ranges: { from: number; to: number }[];
+
+  before(() => {
+    ranges = Array.from({ length: RANDOM_RANGE_COUNT }, () => {
+      const from = randomInt(minHeight, maxCanonicalHeight - 10);
+      const span = randomInt(2, 20);
+      return { from, to: Math.min(from + span, maxCanonicalHeight + 1) };
+    });
+    console.log(`  Sampled ranges: ${ranges.map(r => `[${r.from},${r.to})`).join(', ')}`);
+  });
+
+  test('every range query returns consistent results', async () => {
+    for (const { from, to } of ranges) {
+      const blocks = await blocksService.getBlocks(
+        { blockHeight_gte: from, blockHeight_lt: to, canonical: true },
+        null,
+        'BLOCKHEIGHT_ASC' as any,
+        nullOptions
+      );
+      for (const block of blocks) {
+        const h = Number(block.blockHeight);
+        assert.ok(
+          h >= from && h < to,
+          `range [${from},${to}): block height ${h} out of bounds`
+        );
+        assert.ok(block.stateHash, `range [${from},${to}) h=${h}: missing stateHash`);
+        assert.ok(block.creator, `range [${from},${to}) h=${h}: missing creator`);
+        assert.ok(block.dateTime, `range [${from},${to}) h=${h}: missing dateTime`);
+      }
+      // Verify ASC ordering within range
+      for (let i = 1; i < blocks.length; i++) {
+        assert.ok(
+          Number(blocks[i].blockHeight) >= Number(blocks[i - 1].blockHeight),
+          `range [${from},${to}): not in ASC order`
+        );
+      }
+    }
+  });
+
+  test('DESC ordering matches ASC for same random range', async () => {
+    const { from, to } = ranges[0];
+    const asc = await blocksService.getBlocks(
+      { blockHeight_gte: from, blockHeight_lt: to, canonical: true },
+      null,
+      'BLOCKHEIGHT_ASC' as any,
+      nullOptions
+    );
+    const desc = await blocksService.getBlocks(
+      { blockHeight_gte: from, blockHeight_lt: to, canonical: true },
+      null,
+      'BLOCKHEIGHT_DESC' as any,
+      nullOptions
+    );
+    assert.strictEqual(asc.length, desc.length, 'ASC and DESC should return same count');
+    const ascHashes = asc.map(b => b.stateHash);
+    const descHashes = desc.map(b => b.stateHash).reverse();
+    assert.deepStrictEqual(ascHashes, descHashes, 'reversed DESC should equal ASC');
+  });
+});
+
+describe('Quickcheck: random zkApp addresses (devnet dump)', () => {
+  test('events and actions queries succeed for random zkApp addresses', async () => {
+    const rows = await client`
+      SELECT DISTINCT pk.value as address
+      FROM account_identifiers ai
+      JOIN public_keys pk ON ai.public_key_id = pk.id
+      JOIN zkapp_accounts za ON ai.id = za.account_identifier_id
+      ORDER BY random()
+      LIMIT 10
+    `;
+
+    if (rows.length === 0) {
+      console.log('  No zkApp accounts in dump, skipping');
+      return;
+    }
+
+    console.log(`  Testing ${rows.length} random zkApp addresses`);
+    for (const row of rows) {
+      const address = row.address;
+      const events = await eventsService.getEvents({ address }, nullOptions);
+      assert.ok(Array.isArray(events), `events for ${address.slice(0, 15)}... should be array`);
+
+      const actions = await actionsService.getActions({ address }, nullOptions);
+      assert.ok(Array.isArray(actions), `actions for ${address.slice(0, 15)}... should be array`);
+    }
+  });
+});
+
 // ─── Events & Actions on Real Data ──────────────────────────────────
 
 describe('Events and Actions (devnet dump)', () => {
