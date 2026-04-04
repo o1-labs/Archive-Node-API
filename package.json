@@ -1,19 +1,26 @@
 {
-  "name": "mina-archive-node-graphql",
-  "version": "0.0.8",
-  "description": "A NodeJS GraphQL server for exposing data for o1js/zkApps",
+  "name": "@o1-labs/mina-archive-node-graphql",
+  "version": "0.0.5",
+  "description": "A NodeJS GraphQL server for exposing Mina Protocol archive node data for o1js/zkApps",
   "repository": {
     "type": "git",
     "url": "https://github.com/o1-labs/Archive-Node-API"
   },
   "main": "build/src/index.js",
   "start": "build/src/index.js",
-  "files": [
-    "build/"
-  ],
+  "bin": {
+    "mina-archive-node-graphql": "build/src/index.js"
+  },
   "type": "module",
+  "files": [
+    "build",
+    "src",
+    "schema.graphql",
+    "README.md",
+    "tsconfig.json"
+  ],
   "scripts": {
-    "build": "npm run clean && npx tsc && cp schema.graphql build/",
+    "build": "npm run clean && npx tsc",
     "start": "node build/src/index.js",
     "dev": "cross-env NODE_NO_WARNINGS=1 npx nodemon --exec 'node -r dotenv/config --loader ts-node/esm' src/index.ts",
     "test": "./run-tests.sh",
@@ -27,10 +34,11 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "codegen": "graphql-codegen-esm --config codegen.ts",
-    "compose": "docker compose up"
+    "compose": "docker compose up",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["mina", "mina-protocol", "archive-node", "graphql", "o1js", "zkapp", "blockchain"],
+  "author": "O(1) Labs <build@o1labs.org>",
   "license": "ISC",
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.1",
