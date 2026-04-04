@@ -11,6 +11,11 @@ for f in ./build/**/*test.js; do
     echo "Skipping live-api test: $f (set LIVE_API_TESTS=true to run)"
     continue
   fi
+  # Skip tests that require dedicated setup (use their own npm scripts)
+  if [[ "$f" == *"/devnet-dump/"* ]] || [[ "$f" == *"/live-network/"* ]]; then
+    echo "Skipping $f (run via dedicated npm script)"
+    continue
+  fi
   echo "Running $f"
   node --enable-source-maps --stack-trace-limit=1000 --test $f;
 done
