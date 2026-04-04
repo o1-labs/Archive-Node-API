@@ -1,5 +1,8 @@
 # Archive Node Events GraphQL Server
 
+[![Unit Tests](https://github.com/o1-labs/Archive-Node-API/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/o1-labs/Archive-Node-API/actions/workflows/unit-tests.yaml)
+[![codecov](https://codecov.io/gh/o1-labs/Archive-Node-API/branch/main/graph/badge.svg)](https://codecov.io/gh/o1-labs/Archive-Node-API)
+
 This GraphQL server is built to expose information from [Mina's Archive Node](https://docs.minaprotocol.com/node-operators/archive-node).
 
 ## Description
