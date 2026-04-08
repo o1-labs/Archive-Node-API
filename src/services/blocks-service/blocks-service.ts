@@ -394,7 +394,7 @@ class BlocksService implements IBlocksService {
       blockHeight: row.height,
       creator: row.creator,
       stateHash: row.state_hash,
-      parentHash: row.parent_hash,
+      parentHash: ENABLE_BLOCK_TRANSACTION_DETAILS ? row.parent_hash : '',
       dateTime: new Date(parseInt(row.timestamp)).toISOString(),
       transactions: {
         coinbase: row.coinbase_amount || '0',

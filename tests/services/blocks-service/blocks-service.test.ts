@@ -37,7 +37,7 @@ describe('BlocksService', () => {
       assert.strictEqual(blocks[0].blockHeight, 100);
       assert.strictEqual(blocks[0].creator, 'B62qtest1');
       assert.strictEqual(blocks[0].stateHash, '3NKtest1');
-      assert.strictEqual(blocks[0].parentHash, '3NKparent1');
+      assert.strictEqual(blocks[0].parentHash, '');
       assert.strictEqual(
         blocks[0].dateTime,
         new Date(1700000000000).toISOString()
