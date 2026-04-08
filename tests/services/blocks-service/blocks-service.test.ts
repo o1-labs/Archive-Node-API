@@ -26,6 +26,7 @@ describe('BlocksService', () => {
       height: 100,
       creator: 'B62qtest1',
       state_hash: '3NKtest1',
+      parent_hash: '3NKparent1',
       timestamp: '1700000000000',
       coinbase_amount: '720000000000',
     };
@@ -36,6 +37,7 @@ describe('BlocksService', () => {
       assert.strictEqual(blocks[0].blockHeight, 100);
       assert.strictEqual(blocks[0].creator, 'B62qtest1');
       assert.strictEqual(blocks[0].stateHash, '3NKtest1');
+      assert.strictEqual(blocks[0].parentHash, '3NKparent1');
       assert.strictEqual(
         blocks[0].dateTime,
         new Date(1700000000000).toISOString()
@@ -389,8 +391,8 @@ describe('BlocksService', () => {
       );
 
       const blockRows = [
-        { id: 10, height: 500, creator: 'B62qCreator1', state_hash: '3NK1', timestamp: '1700000000000', coinbase_amount: '720000000000' },
-        { id: 20, height: 501, creator: 'B62qCreator2', state_hash: '3NK2', timestamp: '1700000060000', coinbase_amount: '720000000000' },
+        { id: 10, height: 500, creator: 'B62qCreator1', state_hash: '3NK1', parent_hash: '3NKp1', timestamp: '1700000000000', coinbase_amount: '720000000000' },
+        { id: 20, height: 501, creator: 'B62qCreator2', state_hash: '3NK2', parent_hash: '3NKp2', timestamp: '1700000060000', coinbase_amount: '720000000000' },
       ];
 
       const blocks = service.rowsToBlocks(blockRows, ucMap);

@@ -208,6 +208,7 @@ type Block {
   blockHeight: Int!
   creator: String!
   stateHash: String!
+  parentHash: String!
   dateTime: DateTime!
   transactions: BlockTransactions!
 }

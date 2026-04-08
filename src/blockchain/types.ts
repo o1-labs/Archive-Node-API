@@ -113,6 +113,7 @@ export type Block = {
   blockHeight: number;
   creator: string;
   stateHash: string;
+  parentHash: string;
   dateTime: string;
   transactions: BlockTransactions;
 };
