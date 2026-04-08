@@ -25,4 +25,7 @@ benchmark/*.csv
  
 # docker-compose postgres volumes
 db/   
-data/   
+data/
+
+# memsearch
+.memsearch/

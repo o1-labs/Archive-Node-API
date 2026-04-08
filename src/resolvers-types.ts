@@ -90,6 +90,7 @@ export type Block = {
   blockHeight: Scalars['Int']['output'];
   creator: Scalars['String']['output'];
   dateTime: Scalars['DateTime']['output'];
+  parentHash: Scalars['String']['output'];
   stateHash: Scalars['String']['output'];
   transactions: BlockTransactions;
 };
@@ -499,6 +500,7 @@ export type BlockResolvers<
   blockHeight?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   creator?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   dateTime?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  parentHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stateHash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   transactions?: Resolver<
     ResolversTypes['BlockTransactions'],

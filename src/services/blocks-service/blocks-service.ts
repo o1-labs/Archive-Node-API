@@ -28,6 +28,7 @@ interface BlockRow {
   height: number;
   creator: string;
   state_hash: string;
+  parent_hash: string;
   timestamp: string;
   internal_command_type?: string;
   coinbase_amount?: string;
@@ -136,6 +137,7 @@ class BlocksService implements IBlocksService {
       SELECT
         b.id,
         b.state_hash,
+        b.parent_hash,
         b.height,
         b.timestamp,
         pk.value as creator,
@@ -392,6 +394,7 @@ class BlocksService implements IBlocksService {
       blockHeight: row.height,
       creator: row.creator,
       stateHash: row.state_hash,
+      parentHash: ENABLE_BLOCK_TRANSACTION_DETAILS ? row.parent_hash : '',
       dateTime: new Date(parseInt(row.timestamp)).toISOString(),
       transactions: {
         coinbase: row.coinbase_amount || '0',
