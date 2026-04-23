@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { buildContext } from './context.js';
 import { buildServer } from './server/server.js';
 import { buildPlugins } from './server/plugins.js';
