@@ -130,34 +130,20 @@ To see an example of sensible defaults, see the [env.example](./.env.example) co
 
 ## Installing from npm
 
-This package is published to npm and is available for public access
-
-```sh
-npm install mina-archive-node-graphql
-```
-
-## Installing from artifact registry
-
-This package is published to a Google Cloud Artifact Registry and is available for public access.
-
-**Configure npm to use the registry:**
-
-```sh
-npm config set registry https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/
-```
-
-**Install the package:**
+The package is published to the public npm registry as a scoped package under the `@o1-labs` org.
 
 ```sh
 # Install the latest stable version
-npm install archive-node-graphql
+npm install @o1-labs/mina-archive-node-graphql
 
 # Or install a specific version
-npm install archive-node-graphql@1.2.3
+npm install @o1-labs/mina-archive-node-graphql@0.0.6
 
-# Or install the latest dev version
-npm install archive-node-graphql@dev
+# Or run it once without installing
+npx @o1-labs/mina-archive-node-graphql
 ```
+
+A global install exposes the `mina-archive-node-graphql` binary on your `PATH`.
 
 ## Creating a Release
 
@@ -169,14 +155,13 @@ To create a new release, follow these steps:
 
 The CI/CD workflow will automatically:
 
-- Build and publish npm package to GCP registry with version from package.json
-- Build and push Docker image to both GCP Artifact Registry and GitHub Container Registry
+- Build and publish the package to the public npm registry as `@o1-labs/mina-archive-node-graphql` with provenance
+- Build and push the Docker image to GitHub Container Registry
 - Create semantic version tags (e.g., `1.2.3`, `1.2`, `1`, `latest`)
 
 **Published artifacts:**
 
-- npm: `https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/`
-- Docker (GCP): `europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api`
+- npm (public): `https://www.npmjs.com/package/@o1-labs/mina-archive-node-graphql`
 - Docker (GitHub): `ghcr.io/o1-labs/archive-node-api`
 
 ## Starting the server
