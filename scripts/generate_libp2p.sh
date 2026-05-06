@@ -1,57 +1,57 @@
 #!/usr/bin/env bash
 
-# This script generates a Mina keypair and a libp2p keypair.
-# This is used to bootstrap the Mina daemon in the docker container that's used by the docker compose network.
-# It will generate a keypair under /HOME/keys and name the keys "libp2p-keys".
-# These should not be used in production, and are only used for local development.
+# Generates a Mina account keypair and a libp2p keypair using the mina-daemon
+# Docker image. Used to bootstrap the Mina daemon in the docker-compose
+# network. These keys are for LOCAL DEVELOPMENT ONLY — do not use in production.
+#
+# Output: $HOME/keys/libp2p-keys (and the .pub file alongside).
+#
+# Requires: Docker (https://docs.docker.com/engine/install). No local `mina`
+# binary needed — both keypair generators run inside the daemon image.
 
-# To run this script, make sure you have the following installed:
-# - Docker: https://docs.docker.com/engine/install
-# - Mina Daemon: https://docs.minaprotocol.com/node-operators/getting-started
-
-
-# Enable debug mode
 set -x
-
-# Exit on error, and pipefail
 set -eo pipefail
 
-# Set environment variable
-# Make sure these match the environment variables used in the docker-compose.yml file
+# Match the values used in .env.example.compose / docker-compose.yml
 export MINA_PRIVKEY_PASS="passlib"
 export MINA_LIBP2P_PASS="passlib"
 
-# Constants
 KEYPAIR_DIR="keys"
 KEYPAIR_NAME="libp2p-keys"
-MINA_KEYPAIR_IMAGE="minaprotocol/mina-generate-keypair:1.3.0-9b0369c"
+# The mina-generate-keypair image was retired in 2022; the mina-daemon image
+# absorbed its keypair-generation subcommands. Keep this tag in sync with
+# .env.example.compose#MINA so we generate keys with the same toolchain we
+# run the daemon under.
+MINA_IMAGE="minaprotocol/mina-daemon:3.3.1-7b34378-bullseye-mainnet"
 
-# Derived Paths
 HOME_KEYPAIR_DIR="$HOME/$KEYPAIR_DIR"
-KEYPAIR_PATH="$KEYPAIR_DIR/$KEYPAIR_NAME"
 
-# Create keypair directory if not exists
-if [ ! -d $HOME_KEYPAIR_DIR ]; then
+if [ ! -d "$HOME_KEYPAIR_DIR" ]; then
     echo "Directory $HOME_KEYPAIR_DIR does not exist. Creating now..."
-    mkdir -p "$HOME_KEYPAIR_DIR" 
+    mkdir -p "$HOME_KEYPAIR_DIR"
     chmod 700 "$HOME_KEYPAIR_DIR"
-    echo "Directory $HOME_KEYPAIR_DIR created and permissions set to 700."
 fi
 
-# Generate Mina keypair using Docker
-echo "Generating Mina keypair using Docker..."
+# Generate the Mina account keypair
+echo "Generating Mina keypair..."
 docker run --interactive --tty --rm \
     --env "MINA_PRIVKEY_PASS=$MINA_PRIVKEY_PASS" \
-    --volume $HOME_KEYPAIR_DIR:/keys $MINA_KEYPAIR_IMAGE \
-    --privkey-path $KEYPAIR_PATH
+    --volume "$HOME_KEYPAIR_DIR:/keys" \
+    "$MINA_IMAGE" \
+    advanced generate-keypair --privkey-path "/keys/$KEYPAIR_NAME"
 
-# Set permissions
-echo "Setting permissions for "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"..."
-sudo chown $USER:$USER "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
-chmod 600 "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
-
-# Generate libp2p keypair
+# Generate the libp2p keypair (separate file: ${KEYPAIR_NAME}-libp2p)
 echo "Generating libp2p keypair..."
-mina advanced generate-libp2p-keypair --privkey-path "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
+docker run --interactive --tty --rm \
+    --env "MINA_LIBP2P_PASS=$MINA_LIBP2P_PASS" \
+    --volume "$HOME_KEYPAIR_DIR:/keys" \
+    "$MINA_IMAGE" \
+    advanced generate-libp2p-keypair --privkey-path "/keys/$KEYPAIR_NAME"
+
+# The container runs as root, so the resulting files are root-owned. Reclaim
+# them and lock down to the user.
+echo "Resetting ownership and permissions on $HOME_KEYPAIR_DIR/$KEYPAIR_NAME..."
+sudo chown -R "$USER:$USER" "$HOME_KEYPAIR_DIR"
+chmod 600 "$HOME_KEYPAIR_DIR/$KEYPAIR_NAME"
 
 echo "Done."
