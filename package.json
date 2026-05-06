@@ -26,7 +26,7 @@
     "test": "./run-tests.sh",
     "test:unit": "npm run build && for f in ./build/tests/unit/*test.js ./build/tests/utils.test.js ./build/tests/services/*/*.test.js; do node --enable-source-maps --test \"$f\"; done",
     "test:coverage": "npm run build && npx c8 --include 'build/src/**' --reporter text --reporter lcov -- bash -c 'for f in ./build/tests/unit/*test.js ./build/tests/utils.test.js ./build/tests/services/*/*.test.js; do node --enable-source-maps --test \"$f\"; done'",
-    "test:integration": "npm run build && node --enable-source-maps --test ./build/tests/integration/integration.test.js",
+    "test:integration": "npm run build && for f in ./build/tests/integration/*.test.js; do node --enable-source-maps --test \"$f\"; done",
     "test:live-network": "npm run build && node --enable-source-maps --test-timeout 600000 --test ./build/tests/live-network/live-network.test.js",
     "test:devnet-dump": "npm run build && node --enable-source-maps --test-timeout 900000 --test ./build/tests/devnet-dump/devnet-dump.test.js",
     "clean": "rimraf ./build",
