@@ -70,7 +70,18 @@ jobs:
           exit 1
 
       - name: Run smoke load test
-        run: npx artillery run benchmark/smoke.yaml --output benchmark/smoke-report.json
+        # PR runs use the 30s default in benchmark/smoke.yaml. Pushes to main
+        # override the phase to 5 minutes — a soak run before code lands /
+        # ships. Same arrival rate either way; we want soak duration, not
+        # higher peak load.
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            npx artillery run benchmark/smoke.yaml \
+              --output benchmark/smoke-report.json \
+              --overrides '{"config":{"phases":[{"duration":300,"arrivalRate":5,"name":"main-soak"}]}}'
+          else
+            npx artillery run benchmark/smoke.yaml --output benchmark/smoke-report.json
+          fi
 
       - name: Upload report and server log
         if: always()
