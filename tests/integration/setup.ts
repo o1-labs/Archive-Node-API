@@ -4,7 +4,8 @@
  * Requirements:
  * - PostgreSQL running on PG_TEST_HOST:PG_TEST_PORT (defaults: localhost:5432)
  * - A superuser PG_TEST_USER/PG_TEST_PASSWORD (defaults: postgres/postgres)
- * - The sample dump at ARCHIVE_DUMP_PATH (defaults: ~/work/minaprotocol/mina/src/test/archive/sample_db/archive_db.sql)
+ * - The sample dump at ARCHIVE_DUMP_PATH (defaults to the checked-in fixture
+ *   at tests/integration/fixtures/archive_db.sql)
  *
  * The test database is created fresh for each test run and dropped afterward.
  */
