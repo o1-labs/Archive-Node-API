@@ -9,7 +9,6 @@
 # Requires: Docker (https://docs.docker.com/engine/install). No local `mina`
 # binary needed — both keypair generators run inside the daemon image.
 
-set -x
 set -eo pipefail
 
 # Match the values used in .env.example.compose / docker-compose.yml
