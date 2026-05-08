@@ -5,10 +5,28 @@ name: Smoke Load Test
 # see benchmark/smoke.yaml for the rationale.
 
 on:
+  # Only run when something behaviorally relevant changes. Docs-only PRs
+  # don't need ~2 min of runner time.
   pull_request:
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'schema.graphql'
+      - 'tests/integration/fixtures/**'
+      - 'benchmark/smoke.yaml'
+      - '.github/workflows/smoke-load-test.yaml'
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'schema.graphql'
+      - 'tests/integration/fixtures/**'
+      - 'benchmark/smoke.yaml'
+      - '.github/workflows/smoke-load-test.yaml'
 
 jobs:
   smoke-load:

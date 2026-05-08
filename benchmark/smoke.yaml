@@ -25,9 +25,19 @@ config:
   plugins:
     expect: {}
     ensure: {}
+  # Documented v2.x ensure syntax (`thresholds:` array + `conditions:`).
+  # Verified locally: a strict threshold (`p95: 1`) makes Artillery exit 1,
+  # a loose one (`p95: 5000`) exits 0. Note: the metric is `http.response_time.p95`,
+  # NOT `engine.http.response_time.p95` — the `engine.` prefix in the plugin's
+  # own README example does not parse in this Artillery version.
   ensure:
-    p95: 5000
-    maxErrorRate: 1
+    thresholds:
+      - http.response_time.p95: 5000
+    conditions:
+      # `expect: statusCode: 200` failures mark the vuser as failed.
+      # Cap at 1% — same intent as the legacy `maxErrorRate: 1`.
+      - expression: vusers.failed / vusers.created <= 0.01
+        strict: true
 scenarios:
   # Events and actions are the hot query paths and the most likely place for
   # a regression to land. The fixture address may have zero matching events;
@@ -46,7 +56,7 @@ scenarios:
               }
             variables:
               input:
-                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkR'
+                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML'
           expect:
             - statusCode: 200
   - name: 'actions query'
@@ -63,6 +73,6 @@ scenarios:
               }
             variables:
               input:
-                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkR'
+                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML'
           expect:
             - statusCode: 200
