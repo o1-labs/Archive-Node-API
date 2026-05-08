@@ -1,0 +1,78 @@
+# CI smoke load test.
+#
+# This is NOT a performance benchmark — GitHub-hosted runners are noisy
+# shared VMs and any throughput / latency number measured there is unreliable
+# (10–30% run-to-run variance, neighbor noise, mid-run throttling). For real
+# perf measurement, run `npm run benchmark` locally against Lightnet.
+#
+# What this catches:
+#   - the server crashes / hangs under any load
+#   - a query path that 500s
+#   - error-rate spikes
+#
+# What this does NOT catch:
+#   - subtle perf regressions
+#   - throughput changes
+#
+# Thresholds are intentionally loose so noise alone never fails CI; only
+# pathological breakage does.
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: 'smoke'
+  plugins:
+    expect: {}
+    ensure: {}
+  # Documented v2.x ensure syntax (`thresholds:` array + `conditions:`).
+  # Verified locally: a strict threshold (`p95: 1`) makes Artillery exit 1,
+  # a loose one (`p95: 5000`) exits 0. Note: the metric is `http.response_time.p95`,
+  # NOT `engine.http.response_time.p95` — the `engine.` prefix in the plugin's
+  # own README example does not parse in this Artillery version.
+  ensure:
+    thresholds:
+      - http.response_time.p95: 5000
+    conditions:
+      # `expect: statusCode: 200` failures mark the vuser as failed.
+      # Cap at 1% — same intent as the legacy `maxErrorRate: 1`.
+      - expression: vusers.failed / vusers.created <= 0.01
+        strict: true
+scenarios:
+  # Events and actions are the hot query paths and the most likely place for
+  # a regression to land. The fixture address may have zero matching events;
+  # the smoke goal is "the SQL doesn't blow up under load," not "data exists."
+  - name: 'events query'
+    flow:
+      - post:
+          url: '/'
+          json:
+            query: |
+              query GetEvents($input: EventFilterOptionsInput!) {
+                events(input: $input) {
+                  blockInfo { height stateHash chainStatus }
+                  eventData { data }
+                }
+              }
+            variables:
+              input:
+                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML'
+          expect:
+            - statusCode: 200
+  - name: 'actions query'
+    flow:
+      - post:
+          url: '/'
+          json:
+            query: |
+              query GetActions($input: ActionFilterOptionsInput!) {
+                actions(input: $input) {
+                  blockInfo { height stateHash chainStatus }
+                  actionData { data }
+                }
+              }
+            variables:
+              input:
+                address: 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML'
+          expect:
+            - statusCode: 200
