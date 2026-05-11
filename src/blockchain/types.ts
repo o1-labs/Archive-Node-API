@@ -25,7 +25,9 @@ export type Action = {
 };
 
 export type NetworkState = {
-  maxBlockHeight: MaxBlockHeightInfo;
+  // Nullable when the archive has no canonical or pending blocks indexed yet.
+  // Matches the schema: NetworkStateOutput.maxBlockHeight is nullable.
+  maxBlockHeight: MaxBlockHeightInfo | null;
 };
 
 export type MaxBlockHeightInfo = {

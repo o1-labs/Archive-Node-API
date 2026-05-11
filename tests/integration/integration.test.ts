@@ -263,6 +263,7 @@ describe('NetworkService (integration)', () => {
 
   test('pending height > canonical height', async () => {
     const state = await networkService.getNetworkState(nullOptions);
+    assert.ok(state.maxBlockHeight, 'fixture seeds both canonical and pending rows');
     assert.ok(
       state.maxBlockHeight.pendingMaxBlockHeight >
         state.maxBlockHeight.canonicalMaxBlockHeight

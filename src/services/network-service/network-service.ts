@@ -32,19 +32,37 @@ class NetworkService implements INetworkService {
     sqlSpan.end();
 
     const processingSpan = tracingState.startSpan('networkState.processing');
-    const maxBlockHeightInfo = {
-      canonicalMaxBlockHeight: Number(
-        rows.filter((row) => row.chain_status === 'canonical')[0].height
-      ),
-      pendingMaxBlockHeight: Number(
-        rows.filter((row) => row.chain_status === 'pending')[0].height
-      ),
-    };
-    const networkState = {
-      maxBlockHeight: maxBlockHeightInfo
+
+    // The SQL returns at most one row per chain_status. Either row may be
+    // missing on a fresh archive or against a static fixture, so don't
+    // assume both are present.
+    const canonicalRow = rows.find((r) => r.chain_status === 'canonical');
+    const pendingRow = rows.find((r) => r.chain_status === 'pending');
+
+    // No data at all: surface as maxBlockHeight=null. The schema allows it
+    // (NetworkStateOutput.maxBlockHeight is nullable) and it's a clearer
+    // signal to clients than fake zeroes.
+    if (!canonicalRow && !pendingRow) {
+      processingSpan.end();
+      return { maxBlockHeight: null };
     }
+
+    // canonical ≤ pending by definition. When one side is missing, fall back
+    // so the schema's non-null Int! contract is honored without lying:
+    //   - missing canonical → 0 (no block has been finalized yet)
+    //   - missing pending   → equal to canonical (archive is fully quiesced)
+    const canonicalMaxBlockHeight = canonicalRow ? Number(canonicalRow.height) : 0;
+    const pendingMaxBlockHeight = pendingRow
+      ? Number(pendingRow.height)
+      : canonicalMaxBlockHeight;
+
     processingSpan.end();
-    return networkState;
+    return {
+      maxBlockHeight: {
+        canonicalMaxBlockHeight,
+        pendingMaxBlockHeight,
+      },
+    };
   }
 
   private async executeNetworkStateQuery() {
