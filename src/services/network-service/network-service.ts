@@ -19,7 +19,7 @@ class NetworkService implements INetworkService {
 
   async getNetworkState(options: unknown): Promise<NetworkState> {
     const tracingState = extractTraceStateFromOptions(options);
-    return (await this.getNetworkStateData({ tracingState })) ?? [];
+    return this.getNetworkStateData({ tracingState });
   }
 
   async getNetworkStateData({
