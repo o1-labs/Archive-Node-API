@@ -135,6 +135,7 @@ describe('NetworkState (live network)', () => {
 
   test('pending height >= canonical height', async () => {
     const state = await networkService.getNetworkState(nullOptions);
+    assert.ok(state.maxBlockHeight, 'live network should have at least one indexed block');
     assert.ok(
       state.maxBlockHeight.pendingMaxBlockHeight >=
         state.maxBlockHeight.canonicalMaxBlockHeight,

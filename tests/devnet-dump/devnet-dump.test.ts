@@ -44,6 +44,7 @@ before(async () => {
 
   // Discover chain boundaries
   const state = await networkService.getNetworkState(nullOptions);
+  assert.ok(state.maxBlockHeight, 'devnet dump must have at least one indexed block');
   maxCanonicalHeight = state.maxBlockHeight.canonicalMaxBlockHeight;
   const minRow = await client`SELECT MIN(height) as min_height FROM blocks WHERE chain_status = 'canonical'`;
   minHeight = Number(minRow[0].min_height);

@@ -26,6 +26,7 @@ describe('Network State', () => {
     const data: { networkState: NetworkState } =
       await client.request(networkStateQuery);
     const { maxBlockHeight } = data.networkState;
+    assert.ok(maxBlockHeight, 'staging archive should have indexed blocks');
     const { canonicalMaxBlockHeight, pendingMaxBlockHeight } = maxBlockHeight;
 
     assert.strictEqual(pendingMaxBlockHeight - canonicalMaxBlockHeight, K);
