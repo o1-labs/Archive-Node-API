@@ -98,6 +98,57 @@ export type ZkAppCommand = {
   failureReason: string | null;
 };
 
+export type ZkappAccountPrecondition = {
+  state: ZkappFieldArray | null;
+  actionState: ZkappFieldArray | null;
+  provedState: boolean | null;
+  isNew: boolean | null;
+};
+
+export type ZkappFieldArray = {
+  fields: (string | null)[];
+};
+
+export type ZkappNestedFieldArray = {
+  fields: string[];
+};
+
+export type ZkappGlobalSlotBounds = {
+  lowerBound: number | null;
+  upperBound: number | null;
+};
+
+export type ZkappNetworkPrecondition = {
+  globalSlotSinceGenesis: ZkappGlobalSlotBounds;
+};
+
+export type ZkappAccountUpdate = {
+  id: string;
+  publicKey: string;
+  tokenId: string;
+  authorizationKind: string;
+  balanceChange: string;
+  incrementNonce: boolean;
+  callDepth: number;
+  actions: ZkappNestedFieldArray[];
+  events: ZkappNestedFieldArray[];
+  appState: ZkappFieldArray | null;
+  accountPrecondition: ZkappAccountPrecondition;
+  networkPrecondition: ZkappNetworkPrecondition;
+};
+
+export type ZkappCommand = {
+  blockInfo: BlockInfo;
+  hash: string;
+  feePayer: string;
+  fee: string;
+  memo: string;
+  sequenceNumber: number;
+  accountUpdates: ZkappAccountUpdate[];
+};
+
+export type ZkappCommands = ZkappCommand[];
+
 export type FeeTransfer = {
   recipient: string;
   fee: string;

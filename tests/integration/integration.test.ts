@@ -7,7 +7,7 @@
  * The sample dump contains:
  * - 24 canonical blocks (heights 1-25), 15 orphaned blocks
  * - 1 pending block (inserted by test setup at height 26)
- * - 227 failed zkapp commands (no successful ones, so events/actions return empty)
+ * - 227 failed zkapp commands plus 1 applied command inserted by test setup
  * - Coinbase internal commands
  * - 240 public keys, default token only
  */
@@ -18,6 +18,7 @@ import { EventsService } from '../../src/services/events-service/events-service.
 import { ActionsService } from '../../src/services/actions-service/actions-service.js';
 import { NetworkService } from '../../src/services/network-service/network-service.js';
 import { BlocksService } from '../../src/services/blocks-service/blocks-service.js';
+import { ZkappCommandsService } from '../../src/services/zkapp-commands-service/zkapp-commands-service.js';
 import { BlockStatusFilter } from '../../src/blockchain/types.js';
 import { DEFAULT_TOKEN_ID } from '../../src/blockchain/constants.js';
 import { TracingState } from '../../src/tracing/tracer.js';
@@ -399,6 +400,35 @@ describe('ActionsService (integration)', () => {
   });
 });
 
+// ─── Zkapp Commands Service ──────────────────────────────────────────
+
+describe('ZkappCommandsService (integration)', () => {
+  let zkappCommandsService: ZkappCommandsService;
+
+  before(() => {
+    zkappCommandsService = new ZkappCommandsService(client);
+  });
+
+  test('returns successful zkApp commands with account updates', async () => {
+    const commands = await zkappCommandsService.getZkappCommands(
+      {
+        blockStatus: BlockStatusFilter.canonical,
+        from: 25,
+        to: 26,
+      },
+      nullOptions
+    );
+
+    assert.strictEqual(commands.length, 1);
+    assert.strictEqual(commands[0].hash, 'integration-test-zkapp-command-hash');
+    assert.strictEqual(commands[0].blockInfo.height, 25);
+    assert.strictEqual(commands[0].blockInfo.chainStatus, 'canonical');
+    assert.strictEqual(commands[0].accountUpdates.length, 1);
+    assert.ok(commands[0].accountUpdates[0].publicKey.length > 0);
+    assert.deepStrictEqual(commands[0].accountUpdates[0].events, []);
+  });
+});
+
 // ─── SQL Schema Validation ───────────────────────────────────────────
 
 describe('Schema validation (integration)', () => {
@@ -414,6 +444,7 @@ describe('Schema validation (integration)', () => {
       'accounts_accessed',
       'blocks_zkapp_commands',
       'zkapp_commands',
+      'zkapp_fee_payer_body',
       'zkapp_account_update',
       'zkapp_account_update_body',
       'zkapp_events',

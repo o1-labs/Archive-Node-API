@@ -188,6 +188,8 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `ENABLE_LOGGING` | `false` | Enable request logging |
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
+| `ZKAPP_COMMAND_RANGE_SIZE` | `1000` | Max block range for `zkappCommands` |
+| `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000` | Max expanded account updates for one `zkappCommands` query |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |

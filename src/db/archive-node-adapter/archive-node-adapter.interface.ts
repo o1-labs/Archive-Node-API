@@ -1,18 +1,30 @@
-import type { EventFilterOptionsInput } from '../../resolvers-types.js';
+import type {
+  ActionFilterOptionsInput,
+  EventFilterOptionsInput,
+  ZkappCommandFilterOptionsInput,
+} from '../../resolvers-types.js';
 import type {
   Actions,
   Events,
   NetworkState,
   Blocks,
+  ZkappCommands,
 } from '../../blockchain/types.js';
-import type { BlockQueryInput, BlockSortByInput } from '../../resolvers-types.js';
+import type {
+  BlockQueryInput,
+  BlockSortByInput,
+} from '../../resolvers-types.js';
 
 export interface DatabaseAdapter {
   getEvents(input: EventFilterOptionsInput, options?: unknown): Promise<Events>;
   getActions(
-    input: EventFilterOptionsInput,
+    input: ActionFilterOptionsInput,
     options?: unknown
   ): Promise<Actions>;
+  getZkappCommands(
+    input: ZkappCommandFilterOptionsInput,
+    options?: unknown
+  ): Promise<ZkappCommands>;
   getNetworkState(options?: unknown): Promise<NetworkState>;
   getBlocks(
     query: BlockQueryInput | null | undefined,
