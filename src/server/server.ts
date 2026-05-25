@@ -11,7 +11,10 @@ import { logger, resolveYogaLogLevel } from './logger.js';
 
 export {
   BLOCK_RANGE_SIZE,
+  ZKAPP_COMMAND_RANGE_SIZE,
+  ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT,
   ENABLE_BLOCK_TRANSACTION_DETAILS,
+  ENABLE_ZKAPP_COMMANDS_QUERY,
   buildYoga,
   buildServer,
 };
@@ -20,6 +23,16 @@ const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
 const ENABLE_BLOCK_TRANSACTION_DETAILS = parseBoolean(
   process.env.ENABLE_BLOCK_TRANSACTION_DETAILS
 );
+// The zkappCommands range query is far heavier than block transaction detail —
+// it expands account updates — so it gets its own switch rather than riding on
+// that flag. Default off: an operator opts in deliberately.
+const ENABLE_ZKAPP_COMMANDS_QUERY = parseBoolean(
+  process.env.ENABLE_ZKAPP_COMMANDS_QUERY
+);
+const ZKAPP_COMMAND_RANGE_SIZE =
+  Number(process.env.ZKAPP_COMMAND_RANGE_SIZE) || 1000;
+const ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT =
+  Number(process.env.ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT) || 5000;
 const YOGA_LOG_LEVEL = resolveYogaLogLevel();
 
 const yogaLog =

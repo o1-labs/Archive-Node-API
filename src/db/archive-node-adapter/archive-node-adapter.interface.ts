@@ -1,6 +1,8 @@
 import type {
+  ActionFilterOptionsInput,
   EventFilterOptionsInput,
   VerificationKeyUpdateFilterInput,
+  ZkappCommandFilterOptionsInput,
 } from '../../resolvers-types.js';
 import type {
   Actions,
@@ -8,6 +10,7 @@ import type {
   NetworkState,
   Blocks,
   VerificationKeyUpdates,
+  ZkappCommands,
 } from '../../blockchain/types.js';
 import type {
   BlockQueryInput,
@@ -17,9 +20,13 @@ import type {
 export interface DatabaseAdapter {
   getEvents(input: EventFilterOptionsInput, options?: unknown): Promise<Events>;
   getActions(
-    input: EventFilterOptionsInput,
+    input: ActionFilterOptionsInput,
     options?: unknown
   ): Promise<Actions>;
+  getZkappCommands(
+    input: ZkappCommandFilterOptionsInput,
+    options?: unknown
+  ): Promise<ZkappCommands>;
   getNetworkState(options?: unknown): Promise<NetworkState>;
   getVerificationKeyUpdates(
     input: VerificationKeyUpdateFilterInput,

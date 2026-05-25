@@ -13,6 +13,7 @@ const BOOLEAN_VARS = [
   'ENABLE_METRICS',
   'ENABLE_JAEGER',
   'ENABLE_BLOCK_TRANSACTION_DETAILS',
+  'ENABLE_ZKAPP_COMMANDS_QUERY',
 ] as const;
 
 /** Env vars that, when set, must be positive integers. */
@@ -23,6 +24,7 @@ const KNOWN_QUERIES = [
   'events',
   'actions',
   'verificationKeyUpdates',
+  'zkappCommands',
   'networkState',
   'blocks',
 ] as const;
