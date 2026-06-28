@@ -7,12 +7,17 @@ import { inspect } from 'node:util';
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
 import { useMetrics } from './metrics.js';
+import { useRateLimit } from './rate-limit.js';
 
 export { buildPlugins };
 
 async function buildPlugins() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
+
+  // Per-IP request rate limiting. Runs on every request before GraphQL parsing,
+  // so over-limit traffic is rejected as cheaply as possible.
+  plugins.push(useRateLimit());
 
   if (process.env.ENABLE_METRICS === 'true') {
     // Prometheus /metrics endpoint + RED metrics for every request.

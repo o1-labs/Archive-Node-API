@@ -180,6 +180,8 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
 | `CORS_ORIGIN` | `*` | CORS allowed origin |
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
+| `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window length in milliseconds |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
@@ -194,6 +196,12 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 
 - Standard Postgres connection-string format: `postgres://user:pass@host:port/dbname`
 - For HA, pass multiple hosts: `postgres://host1:5432,host2:5432/archive` (same syntax as `psql`).
+
+### Notes on rate limiting
+
+- The limit is keyed on the client IP, taken from `X-Forwarded-For` (first hop), then `X-Real-IP`, then the socket address. Run the API behind a proxy/load balancer that sets `X-Forwarded-For` so each client is identified correctly; without it, unproxied traffic shares a single `unknown` bucket.
+- The counter is in-memory and **per-instance**: with N replicas the effective limit is roughly N × `RATE_LIMIT_MAX`. A shared store (e.g. Redis) for exact cross-replica limits is tracked as deployment hardening.
+- Health checks (`/healthcheck`) are never rate-limited.
 
 ---
 
