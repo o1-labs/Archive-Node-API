@@ -23,9 +23,9 @@ coverage/**/*
 benchmark/*.json
 benchmark/*.csv
  
-# docker-compose postgres volumes
-db/   
-data/
+# docker-compose postgres volumes (root-anchored so they don't match src/db/ etc.)
+/db/
+/data/
 
 # memsearch
 .memsearch/

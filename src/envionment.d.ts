@@ -5,6 +5,10 @@ declare global {
       PORT?: string;
       PG_CONN: string;
       SHUTDOWN_TIMEOUT_MS?: string;
+      PG_MAX_CONNECTIONS?: string;
+      PG_IDLE_TIMEOUT?: string;
+      PG_CONNECT_TIMEOUT?: string;
+      PG_STATEMENT_TIMEOUT?: string;
       CORS_ORIGIN?: string;
       READINESS_PING_TIMEOUT_MS?: string;
       RATE_LIMIT_MAX?: string;
