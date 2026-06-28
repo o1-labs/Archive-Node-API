@@ -8,6 +8,7 @@ import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
 import { useMetrics } from './metrics.js';
 import { useRateLimit } from './rate-limit.js';
+import { buildArmorPlugins } from './graphql-armor.js';
 
 export { buildPlugins };
 
@@ -18,6 +19,10 @@ async function buildPlugins() {
   // Per-IP request rate limiting. Runs on every request before GraphQL parsing,
   // so over-limit traffic is rejected as cheaply as possible.
   plugins.push(useRateLimit());
+
+  // Query-cost protections (depth / aliases / tokens / cost). These reject
+  // abusive query shapes before execution.
+  plugins.push(...buildArmorPlugins());
 
   if (process.env.ENABLE_METRICS === 'true') {
     // Prometheus /metrics endpoint + RED metrics for every request.
