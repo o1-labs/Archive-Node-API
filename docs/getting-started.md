@@ -234,6 +234,14 @@ readinessProbe:
 
 If you set `ENABLE_GRAPHIQL=true`, open <http://localhost:8080/> in a browser for the in-page query explorer.
 
+### Metrics
+
+Prometheus metrics are exposed at `/metrics` — RED metrics (`http_requests_total`, `http_request_duration_seconds`, `http_requests_in_flight`) plus standard Node process metrics.
+
+```sh
+curl -fsS http://localhost:8080/metrics | head
+```
+
 ### Confirm the DB is wired up
 
 This query returns the latest indexed block height — compare it with [MinaScan](https://minascan.io/mainnet/home) to confirm you're looking at the network you think you are:
