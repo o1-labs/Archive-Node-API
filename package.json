@@ -94,6 +94,7 @@
     "dotenv": "^16.3.1",
     "graphql": "^16.8.0",
     "graphql-yoga": "5.21.2",
+    "pino": "^10.3.1",
     "postgres": "^3.3.5",
     "prom-client": "^15.1.3"
   },
