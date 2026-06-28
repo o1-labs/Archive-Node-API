@@ -4,6 +4,7 @@ declare global {
       LOG_LEVEL: string;
       PORT?: string;
       PG_CONN: string;
+      SHUTDOWN_TIMEOUT_MS?: string;
       CORS_ORIGIN?: string;
       READINESS_PING_TIMEOUT_MS?: string;
       ENABLE_LOGGING?: bool;

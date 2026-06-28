@@ -4,6 +4,7 @@ import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
 import { inspect } from 'node:util';
 
+import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
 import { useMetrics } from './metrics.js';
 
@@ -20,8 +21,10 @@ async function buildPlugins() {
 
   plugins.push(useGraphQlJit());
 
+  // Returned so the entry point can flush spans on shutdown.
+  let provider: BasicTracerProvider | undefined;
   if (process.env.ENABLE_LOGGING) {
-    const provider = await initJaegerProvider();
+    provider = await initJaegerProvider();
     plugins.push(
       useOpenTelemetry(
         {
@@ -62,5 +65,5 @@ async function buildPlugins() {
       },
     })
   );
-  return plugins;
+  return { plugins, provider };
 }
