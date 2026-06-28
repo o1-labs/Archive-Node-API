@@ -1,0 +1,9 @@
+node_modules
+build
+coverage
+.git
+.github
+.memsearch
+db
+data
+*.log
