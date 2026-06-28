@@ -199,14 +199,19 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 Once the server prints `Server is running on port: 8080`:
 
 ```sh
-# health probe — should return OK
+# liveness probe — process is up (does not check the DB)
 curl -fsS http://localhost:8080/healthcheck && echo
+
+# readiness probe — returns 200 only when Postgres is reachable, else 503
+curl -fsS http://localhost:8080/readiness && echo
 
 # sanity GraphQL query
 curl -fsS http://localhost:8080/ \
   -H 'Content-Type: application/json' \
   -d '{"query":"{ __typename }"}'
 ```
+
+Use `/healthcheck` as the Kubernetes **liveness** probe and `/readiness` as the **readiness** probe: a node whose database is unreachable reports not-ready (so it stops receiving traffic) while staying live (so it isn't needlessly restarted).
 
 If you set `ENABLE_GRAPHIQL=true`, open <http://localhost:8080/> in a browser for the in-page query explorer.
 

@@ -95,6 +95,15 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     }
   }
 
+  async ping(): Promise<boolean> {
+    try {
+      await this.client`SELECT 1`;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async close() {
     return this.client.end();
   }

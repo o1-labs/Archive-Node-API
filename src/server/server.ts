@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
+import { useReadiness } from './readiness.js';
 
 export { BLOCK_RANGE_SIZE, ENABLE_BLOCK_TRANSACTION_DETAILS, buildServer };
 
@@ -17,9 +18,12 @@ function buildServer(context: GraphQLContext, plugins: Plugin[]) {
     logging: LOG_LEVEL,
     graphqlEndpoint: '/',
     landingPage: false,
+    // Liveness — the process is up and serving HTTP.
     healthCheckEndpoint: '/healthcheck',
     graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
-    plugins,
+    // Readiness (DB reachable) is prepended so probes short-circuit before any
+    // other request hook (e.g. rate limiting) can interfere with them.
+    plugins: [useReadiness(context.db_client), ...plugins],
     cors: {
       origin: process.env.CORS_ORIGIN ?? '*',
       methods: ['GET', 'POST'],
