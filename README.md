@@ -123,6 +123,8 @@ For SLOs, capacity guidance, what to monitor, and incident response, see the [op
 
 Reference Kubernetes and production Docker Compose manifests — with liveness/readiness probes, resource limits, autoscaling, and a hardened pod security context — live in [`deploy/`](./deploy/). Read [`docs/security.md`](./docs/security.md) for the deployment contract (TLS gateway, read-only DB role, private Postgres).
 
+The API is a public, read-only service and is meant to run **behind a TLS-terminating gateway**, against a **read-only** Postgres role. Before exposing it publicly, read [`docs/security.md`](./docs/security.md) — it covers the security model, network architecture, the built-in abuse protections, and a deployment checklist.
+
 ## Contributing
 
 - AI coding agents: read [`AGENTS.md`](./AGENTS.md) first.
