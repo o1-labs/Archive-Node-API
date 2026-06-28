@@ -170,7 +170,9 @@ JAEGER_ENDPOINT=http://localhost:14268/api/traces
 
 ## Configuration
 
-The server reads config from environment variables. `PG_CONN` is the only required one.
+The server reads config from environment variables. `PG_CONN` is the only required one. Configuration is validated at startup — a missing `PG_CONN`, a non-numeric `PORT`, or a mistyped boolean makes the server exit immediately with a clear message rather than booting into a broken state.
+
+Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `on`/`off` (case-insensitive); `false` reliably means off.
 
 | Variable | Default | Description |
 | --- | --- | --- |
