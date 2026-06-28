@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # Application dependencies. Production and development updates are grouped
+  # separately so security-relevant runtime bumps are easy to review on their own.
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      production-dependencies:
+        dependency-type: production
+      development-dependencies:
+        dependency-type: development
+
+  # Keep CI action versions current and patched.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+
+  # Keep the pinned base-image digest in the Dockerfile fresh.
+  - package-ecosystem: docker
+    directory: '/'
+    schedule:
+      interval: weekly

@@ -1,0 +1,49 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    # Weekly, so advisories on unchanged code are still surfaced.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      # Hard gate: fail on critical advisories in what actually ships (prod deps).
+      - name: Audit production dependencies (gate on critical)
+        run: npm audit --omit=dev --audit-level=critical
+      # Informational: surface the full picture (incl. dev tooling) without blocking.
+      - name: Full audit (informational)
+        run: npm audit || true
+
+  sbom:
+    name: SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate CycloneDX SBOM
+        continue-on-error: true
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+      - name: Upload SBOM artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json
