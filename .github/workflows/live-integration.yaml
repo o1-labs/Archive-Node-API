@@ -1,0 +1,54 @@
+name: Live Integration
+
+# Read-only integration tests against deployed Archive Node API endpoints on each
+# network. Scheduled (not on PRs) so schema/query drift against real data is
+# caught without slowing the PR loop. Endpoints come from repo variables; a
+# network with no configured URL is skipped, so this stays green until they're set.
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # nightly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-api:
+    name: live-api (${{ matrix.network }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        network: [devnet, mainnet, mesa]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+
+      - name: Resolve endpoint for ${{ matrix.network }}
+        id: endpoint
+        env:
+          DEVNET_URL: ${{ vars.DEVNET_ARCHIVE_API_URL }}
+          MAINNET_URL: ${{ vars.MAINNET_ARCHIVE_API_URL }}
+          MESA_URL: ${{ vars.MESA_ARCHIVE_API_URL }}
+        run: |
+          case "${{ matrix.network }}" in
+            devnet)  URL="$DEVNET_URL" ;;
+            mainnet) URL="$MAINNET_URL" ;;
+            mesa)    URL="$MESA_URL" ;;
+          esac
+          if [ -z "$URL" ]; then
+            echo "No endpoint configured for ${{ matrix.network }} (set the *_ARCHIVE_API_URL repo variable); skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=$URL" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run live-api tests against ${{ matrix.network }}
+        if: steps.endpoint.outputs.skip != 'true'
+        env:
+          STAGING_GRAPHQL_ENDPOINT: ${{ steps.endpoint.outputs.url }}
+        run: npm run test:live-api
