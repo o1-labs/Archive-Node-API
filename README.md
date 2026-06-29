@@ -90,6 +90,8 @@ git push --follow-tags
 
 CI builds, publishes the npm package with provenance, and pushes Docker tags `1.2.3`, `1.2`, `1`, `latest`.
 
+From 1.0.0 the GraphQL schema, HTTP endpoints, and configuration are a versioned public contract — see the [versioning & schema stability policy](./docs/versioning.md) for what counts as a breaking change and how deprecations work.
+
 ## Hardware requirements
 
 The bottleneck is the Postgres database, not this server. For production load, point `PG_CONN` at multiple read replicas — the server fans queries across them and recovers automatically as hosts come and go. A recent benchmark on a 12-core / 32 GB box (API + Postgres co-located) sustained ~800 req/s with p99 latency of 39 ms. Use `npm run benchmark` to size your own deployment.
