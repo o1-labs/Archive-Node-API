@@ -108,6 +108,10 @@ deployment.
 
 For SLOs, capacity guidance, what to monitor, and incident response, see the [operations runbook](./docs/runbook.md).
 
+## Deployment
+
+Reference Kubernetes and production Docker Compose manifests — with liveness/readiness probes, resource limits, autoscaling, and a hardened pod security context — live in [`deploy/`](./deploy/). Read [`docs/security.md`](./docs/security.md) for the deployment contract (TLS gateway, read-only DB role, private Postgres).
+
 ## Contributing
 
 - AI coding agents: read [`AGENTS.md`](./AGENTS.md) first.
