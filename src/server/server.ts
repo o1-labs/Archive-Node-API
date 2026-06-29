@@ -5,15 +5,20 @@ import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
 import { useReadiness } from './readiness.js';
 
-export { BLOCK_RANGE_SIZE, ENABLE_BLOCK_TRANSACTION_DETAILS, buildServer };
+export {
+  BLOCK_RANGE_SIZE,
+  ENABLE_BLOCK_TRANSACTION_DETAILS,
+  buildYoga,
+  buildServer,
+};
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
 const ENABLE_BLOCK_TRANSACTION_DETAILS =
   process.env.ENABLE_BLOCK_TRANSACTION_DETAILS === 'true';
 
-function buildServer(context: GraphQLContext, plugins: Plugin[]) {
-  const yoga = createYoga<GraphQLContext>({
+function buildYoga(context: GraphQLContext, plugins: Plugin[]) {
+  return createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
     graphqlEndpoint: '/',
@@ -21,6 +26,10 @@ function buildServer(context: GraphQLContext, plugins: Plugin[]) {
     // Liveness — the process is up and serving HTTP.
     healthCheckEndpoint: '/healthcheck',
     graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
+    // Mask unexpected (non-GraphQLError) errors so internal details — SQL,
+    // connection strings, stack traces — never reach clients. Explicit rather
+    // than relying on the default, so it can't be silently turned off.
+    maskedErrors: true,
     // Readiness (DB reachable) is prepended so probes short-circuit before any
     // other request hook (e.g. rate limiting) can interfere with them.
     plugins: [useReadiness(context.db_client), ...plugins],
@@ -30,5 +39,8 @@ function buildServer(context: GraphQLContext, plugins: Plugin[]) {
     },
     context,
   });
-  return createServer(yoga);
+}
+
+function buildServer(context: GraphQLContext, plugins: Plugin[]) {
+  return createServer(buildYoga(context, plugins));
 }
