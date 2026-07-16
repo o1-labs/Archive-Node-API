@@ -9,6 +9,7 @@ declare global {
       READINESS_PING_TIMEOUT_MS?: string;
       RATE_LIMIT_MAX?: string;
       RATE_LIMIT_WINDOW_MS?: string;
+      TRUST_PROXY?: string;
       ENABLE_LOGGING?: bool;
       ENABLE_METRICS?: bool;
       ENABLE_INTROSPECTION?: bool;

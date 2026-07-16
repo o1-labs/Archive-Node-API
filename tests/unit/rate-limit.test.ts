@@ -20,9 +20,14 @@ describe('Rate limiting', () => {
         resolveRateLimitConfig({
           RATE_LIMIT_MAX: '100',
           RATE_LIMIT_WINDOW_MS: '5000',
+          TRUST_PROXY: '2',
         }),
-        { max: 100, windowMs: 5000 }
+        { max: 100, windowMs: 5000, trustProxy: 2 }
       );
+    });
+
+    test('trusts no proxy hops by default', () => {
+      assert.strictEqual(resolveRateLimitConfig({}).trustProxy, 0);
     });
 
     test('allows max=0 to disable, but never a zero-length window', () => {
@@ -38,6 +43,7 @@ describe('Rate limiting', () => {
         resolveRateLimitConfig({
           RATE_LIMIT_MAX: 'abc',
           RATE_LIMIT_WINDOW_MS: '-5',
+          TRUST_PROXY: 'yes',
         }),
         RATE_LIMIT_DEFAULTS
       );
@@ -82,18 +88,25 @@ describe('Rate limiting', () => {
   });
 
   describe('useRateLimit (end-to-end through Yoga)', () => {
-    function makeServer() {
+    /** `trustProxy` mirrors the deployment topology: 1 = one LB in front. */
+    function makeServer(trustProxy = '1') {
       const yoga = createYoga({
         schema,
         graphqlEndpoint: '/',
-        plugins: [useRateLimit({ RATE_LIMIT_MAX: '2', RATE_LIMIT_WINDOW_MS: '10000' })],
+        plugins: [
+          useRateLimit({
+            RATE_LIMIT_MAX: '2',
+            RATE_LIMIT_WINDOW_MS: '10000',
+            TRUST_PROXY: trustProxy,
+          }),
+        ],
       });
-      return (ip: string) =>
+      return (forwardedFor?: string) =>
         yoga.fetch('http://localhost/', {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
-            'x-forwarded-for': ip,
+            ...(forwardedFor ? { 'x-forwarded-for': forwardedFor } : {}),
           },
           body: JSON.stringify({ query: '{ __typename }' }),
         });
@@ -114,6 +127,76 @@ describe('Rate limiting', () => {
       await request('5.5.5.5');
       await request('5.5.5.5'); // 5.5.5.5 now blocked
       assert.strictEqual((await request('9.9.9.9')).status, 200);
+    });
+
+    test('a rotated X-Forwarded-For cannot mint fresh buckets', async () => {
+      // One LB in front, so the real client is the last entry — the attacker
+      // controls only what it prepends, and varying that must not help.
+      const request = makeServer('1');
+      assert.strictEqual((await request('a.a.a.a, 7.7.7.7')).status, 200);
+      assert.strictEqual((await request('b.b.b.b, 7.7.7.7')).status, 200);
+      assert.strictEqual((await request('c.c.c.c, 7.7.7.7')).status, 429);
+    });
+
+    test('ignores X-Forwarded-For entirely when no proxy is trusted', async () => {
+      // Directly exposed: every request keys on the socket address regardless
+      // of the header, so rotating it buys nothing.
+      const request = makeServer('0');
+      assert.strictEqual((await request('1.1.1.1')).status, 200);
+      assert.strictEqual((await request('2.2.2.2')).status, 200);
+      assert.strictEqual((await request('3.3.3.3')).status, 429);
+    });
+
+    test('falls back to the socket when the chain is shorter than the hop count', async () => {
+      // Two hops configured but only one entry present: trusting it would mean
+      // trusting a client-supplied value, so it must not be used as the key.
+      const request = makeServer('2');
+      assert.strictEqual((await request('1.1.1.1')).status, 200);
+      assert.strictEqual((await request('2.2.2.2')).status, 200);
+      assert.strictEqual((await request('3.3.3.3')).status, 429);
+    });
+
+    test('the 429 still carries CORS headers', async () => {
+      // Cross-origin browser clients read the short-circuited 429 directly; an
+      // ACAO-less response would surface to them as an opaque CORS error
+      // instead, hiding the real reason the request failed.
+      const origin = 'https://explorer.example.com';
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        cors: { origin },
+        plugins: [useRateLimit({ RATE_LIMIT_MAX: '1', TRUST_PROXY: '1' })],
+      });
+      const request = () =>
+        yoga.fetch('http://localhost/', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            origin,
+            'x-forwarded-for': '8.8.8.8',
+          },
+          body: JSON.stringify({ query: '{ __typename }' }),
+        });
+
+      await request();
+      const limited = await request();
+      assert.strictEqual(limited.status, 429);
+      assert.strictEqual(limited.headers.get('access-control-allow-origin'), origin);
+    });
+
+    test('never rate-limits the healthcheck probe', async () => {
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        plugins: [useRateLimit({ RATE_LIMIT_MAX: '1', TRUST_PROXY: '1' })],
+      });
+      const probe = () =>
+        yoga.fetch('http://localhost/healthcheck', {
+          headers: { 'x-forwarded-for': '4.4.4.4' },
+        });
+      for (let i = 0; i < 5; i++) {
+        assert.notStrictEqual((await probe()).status, 429);
+      }
     });
   });
 });

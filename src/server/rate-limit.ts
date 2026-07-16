@@ -25,11 +25,18 @@ interface RateLimitConfig {
   max: number;
   /** Length of the fixed window in milliseconds. */
   windowMs: number;
+  /**
+   * Number of trusted proxy hops in front of this server. `0` (the default)
+   * ignores forwarding headers entirely and keys on the socket address, which
+   * is the only safe reading when the server is directly exposed.
+   */
+  trustProxy: number;
 }
 
 const RATE_LIMIT_DEFAULTS: RateLimitConfig = {
   max: 600,
   windowMs: 60_000,
+  trustProxy: 0,
 };
 
 type EnvSource = Record<string, string | undefined>;
@@ -53,6 +60,7 @@ function resolveRateLimitConfig(env: EnvSource = process.env): RateLimitConfig {
       1,
       intFromEnv(env.RATE_LIMIT_WINDOW_MS, RATE_LIMIT_DEFAULTS.windowMs)
     ),
+    trustProxy: intFromEnv(env.TRUST_PROXY, RATE_LIMIT_DEFAULTS.trustProxy),
   };
 }
 
@@ -65,9 +73,13 @@ interface RateLimitResult {
 
 /**
  * Fixed-window counter keyed by client id. `now` is injectable so the windowing
- * logic can be tested deterministically.
+ * logic can be tested deterministically. Counting is independent of how the id
+ * is derived, so this takes only the window options.
  */
-function createRateLimiter(config: RateLimitConfig, now: () => number = Date.now) {
+function createRateLimiter(
+  config: Pick<RateLimitConfig, 'max' | 'windowMs'>,
+  now: () => number = Date.now
+) {
   const buckets = new Map<string, { count: number; resetAt: number }>();
 
   function check(id: string): RateLimitResult {
@@ -102,23 +114,52 @@ type MaybeNodeSocket = {
   socket?: { remoteAddress?: string };
 };
 
+function socketAddress(serverContext: unknown): string {
+  const ctx = serverContext as MaybeNodeSocket;
+  return ctx?.req?.socket?.remoteAddress ?? ctx?.socket?.remoteAddress ?? 'unknown';
+}
+
 /**
- * Identify the client. Behind a proxy/load balancer (the expected production
- * topology) the real address arrives in `X-Forwarded-For`; we take the first hop.
- * Falls back to `X-Real-IP`, then the raw socket address, then a shared `unknown`
- * bucket so direct/unproxied traffic is still bounded in aggregate.
+ * Identify the client, trusting forwarding headers only as far as `trustProxy`
+ * hops allow.
+ *
+ * `X-Forwarded-For` is client-supplied and every proxy *appends* to it, so the
+ * left-hand entries are whatever the caller sent and cannot be trusted: reading
+ * the first hop lets one source rotate the header to mint a fresh bucket per
+ * request and evade the limit entirely (while growing the bucket Map). Only the
+ * rightmost entries — appended by proxies we actually control — are meaningful,
+ * so with N trusted hops the real client is the Nth entry from the right.
+ *
+ * Honouring the header at all still matters: it is what keeps NAT'd and
+ * LB-fronted clients in their own buckets instead of collapsing onto one shared
+ * address. Hence a hop count rather than a blanket on/off.
  */
-function clientId(request: Request, serverContext: unknown): string {
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const first = forwardedFor.split(',')[0].trim();
-    if (first) return first;
+function clientId(
+  request: Request,
+  serverContext: unknown,
+  trustProxy: number
+): string {
+  if (trustProxy <= 0) return socketAddress(serverContext);
+
+  const forwarded = request.headers
+    .get('x-forwarded-for')
+    ?.split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (forwarded?.length) {
+    // Undefined when the chain is shorter than the configured hop count (a
+    // misconfiguration, or a request injected inside the trust boundary) —
+    // fall through to the socket rather than trust an attacker-chosen entry.
+    const client = forwarded[forwarded.length - trustProxy];
+    if (client) return client;
   }
+
+  // Single-valued and overwritten by the adjacent proxy, so it carries no hop
+  // structure; only meaningful once we've established there is a proxy at all.
   const realIp = request.headers.get('x-real-ip')?.trim();
   if (realIp) return realIp;
 
-  const ctx = serverContext as MaybeNodeSocket;
-  return ctx?.req?.socket?.remoteAddress ?? ctx?.socket?.remoteAddress ?? 'unknown';
+  return socketAddress(serverContext);
 }
 
 /**
@@ -139,7 +180,9 @@ function useRateLimit(env: EnvSource = process.env): Plugin {
     onRequest({ request, serverContext, url, endResponse, fetchAPI }) {
       if (url.pathname === HEALTHCHECK_PATH) return;
 
-      const result = limiter.check(clientId(request, serverContext));
+      const result = limiter.check(
+        clientId(request, serverContext, config.trustProxy)
+      );
       if (result.allowed) return;
 
       const retryAfter = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000));
