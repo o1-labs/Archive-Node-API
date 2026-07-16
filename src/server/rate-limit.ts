@@ -166,11 +166,30 @@ function clientId(
  * Yoga plugin that rejects over-limit requests with HTTP 429 before they reach
  * GraphQL parsing/execution. Returns a no-op plugin when `max` is 0 (disabled).
  */
-function useRateLimit(env: EnvSource = process.env): Plugin {
+function useRateLimit(
+  env: EnvSource = process.env,
+  warn: (message: string) => void = console.warn
+): Plugin {
   const config = resolveRateLimitConfig(env);
   if (config.max <= 0) return {};
 
   const limiter = createRateLimiter(config);
+
+  // TRUST_PROXY=0 is the safe default, but it's wrong for the expected
+  // production topology, and the symptom — every client sharing one bucket
+  // behind the LB — otherwise appears only as unexplained throttling. Warn
+  // once on the first forwarded request rather than per request.
+  let warnedAboutProxy = config.trustProxy > 0;
+  const warnIfProxied = (request: Request) => {
+    if (warnedAboutProxy || !request.headers.has('x-forwarded-for')) return;
+    warnedAboutProxy = true;
+    warn(
+      '[rate-limit] TRUST_PROXY=0 but requests carry X-Forwarded-For — every ' +
+        'client behind the proxy shares one rate-limit bucket. Set TRUST_PROXY ' +
+        'to the number of proxy hops in front of this API (e.g. 1 behind a load ' +
+        'balancer) to bucket clients individually.'
+    );
+  };
   // Periodically reclaim memory from expired buckets; unref'd so it never keeps
   // the process alive on shutdown.
   const sweep = setInterval(() => limiter.prune(), config.windowMs);
@@ -179,6 +198,7 @@ function useRateLimit(env: EnvSource = process.env): Plugin {
   return {
     onRequest({ request, serverContext, url, endResponse, fetchAPI }) {
       if (url.pathname === HEALTHCHECK_PATH) return;
+      warnIfProxied(request);
 
       const result = limiter.check(
         clientId(request, serverContext, config.trustProxy)

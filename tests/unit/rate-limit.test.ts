@@ -184,6 +184,56 @@ describe('Rate limiting', () => {
       assert.strictEqual(limited.headers.get('access-control-allow-origin'), origin);
     });
 
+    test('warns once when TRUST_PROXY=0 but traffic is proxied', async () => {
+      const warnings: string[] = [];
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        plugins: [
+          useRateLimit({ RATE_LIMIT_MAX: '10', TRUST_PROXY: '0' }, (m) =>
+            warnings.push(m)
+          ),
+        ],
+      });
+      const request = () =>
+        yoga.fetch('http://localhost/', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-forwarded-for': '1.1.1.1',
+          },
+          body: JSON.stringify({ query: '{ __typename }' }),
+        });
+
+      await request();
+      await request();
+      // Once, not per request — this runs on every request under load.
+      assert.strictEqual(warnings.length, 1);
+      assert.match(warnings[0], /TRUST_PROXY/);
+    });
+
+    test('stays quiet when the topology is configured correctly', async () => {
+      const warnings: string[] = [];
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        plugins: [
+          useRateLimit({ RATE_LIMIT_MAX: '10', TRUST_PROXY: '1' }, (m) =>
+            warnings.push(m)
+          ),
+        ],
+      });
+      await yoga.fetch('http://localhost/', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': '1.1.1.1',
+        },
+        body: JSON.stringify({ query: '{ __typename }' }),
+      });
+      assert.deepStrictEqual(warnings, []);
+    });
+
     test('never rate-limits the healthcheck probe', async () => {
       const yoga = createYoga({
         schema,
