@@ -71,6 +71,29 @@ describe('Graceful shutdown', () => {
     assert.deepStrictEqual(exits, [0]);
   });
 
+  test('a crash-initiated shutdown drains cleanly but still exits non-zero', async () => {
+    const calls: string[] = [];
+    const exits: number[] = [];
+    const shutdown = createGracefulShutdown({
+      closeServer: async () => {
+        calls.push('server');
+      },
+      closers: [
+        async () => {
+          calls.push('traces');
+        },
+      ],
+      timeoutMs: 1000,
+      onExit: (code) => exits.push(code),
+      log: silent,
+    });
+
+    await shutdown('uncaughtException', 1);
+    // The drain still runs in full — only the exit code differs from a signal.
+    assert.deepStrictEqual(calls, ['server', 'traces']);
+    assert.deepStrictEqual(exits, [1]);
+  });
+
   test('exits 1 when draining exceeds the timeout, and only once', async () => {
     const exits: number[] = [];
     const shutdown = createGracefulShutdown({

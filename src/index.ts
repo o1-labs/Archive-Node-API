@@ -24,6 +24,10 @@ const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000;
       closeServer: () =>
         new Promise<void>((resolve, reject) => {
           server.close((error) => (error ? reject(error) : resolve()));
+          // `close` also waits on idle keep-alive sockets, which browser
+          // clients hold open for keepAliveTimeout; dropping them keeps the
+          // drain prompt so the closers below still run inside the timeout.
+          server.closeIdleConnections();
         }),
       closers: [
         // Flush any buffered OpenTelemetry spans before exit.
@@ -39,13 +43,15 @@ const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000;
       process.on(signal, () => void shutdown(signal));
     });
 
+    // Crashes exit non-zero: an exit 0 reads as a clean stop to Kubernetes and
+    // systemd, suppressing restarts and non-zero-exit alerting.
     process.on('uncaughtException', (error) => {
       console.error('Uncaught exception:', error);
-      void shutdown('uncaughtException');
+      void shutdown('uncaughtException', 1);
     });
     process.on('unhandledRejection', (reason) => {
       console.error('Unhandled rejection:', reason);
-      void shutdown('unhandledRejection');
+      void shutdown('unhandledRejection', 1);
     });
   } catch (error) {
     console.error('An error occurred:', error);

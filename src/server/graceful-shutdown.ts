@@ -17,8 +17,9 @@ interface GracefulShutdownOptions {
 /**
  * Build an idempotent shutdown handler. On the first invocation it drains the
  * server, runs each closer (a failing closer is logged but doesn't abort the
- * rest), then exits 0. A hard timeout guarantees the process exits even if a
- * connection or teardown step hangs, and `onExit` is invoked at most once.
+ * rest), then exits with the caller's code. A hard timeout guarantees the
+ * process exits even if a connection or teardown step hangs, and `onExit` is
+ * invoked at most once.
  *
  * Subsequent invocations (e.g. a second signal) are ignored.
  */
@@ -34,7 +35,11 @@ function createGracefulShutdown(options: GracefulShutdownOptions) {
 
   let started = false;
 
-  return async function shutdown(reason: string): Promise<void> {
+  /**
+   * `exitCode` is the code used when the drain succeeds; a crash-initiated
+   * shutdown must pass non-zero so supervisors still see a failed exit.
+   */
+  return async function shutdown(reason: string, exitCode = 0): Promise<void> {
     if (started) return;
     started = true;
     log(`Shutting down (${reason})…`);
@@ -61,7 +66,7 @@ function createGracefulShutdown(options: GracefulShutdownOptions) {
           log('Error during shutdown step', error);
         }
       }
-      exitOnce(0);
+      exitOnce(exitCode);
     } catch (error) {
       log('Error closing server', error);
       exitOnce(1);
