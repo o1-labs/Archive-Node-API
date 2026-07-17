@@ -27,9 +27,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
       b.id, b.state_hash, b.parent_hash, b.parent_id, b.height, b.global_slot_since_genesis, b.global_slot_since_hard_fork, b.timestamp, b.chain_status, b.ledger_hash, b.last_vrf_output
     FROM
       blocks b
+      -- The walk terminates because genesis has parent_id = NULL, so the
+      -- id = parent_id join can never match there. No block is its own parent
+      -- (parent_id is a FK to blocks.id; a self-reference would be a cycle), so
+      -- no explicit id <> parent_id guard is needed. A schema/hard-fork change
+      -- that ever self-references a block would loop here — see the matching
+      -- note in getZkappsWithPendingEventsQuery.
       INNER JOIN pending_chain ON b.id = pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
-  ), 
+  ),
   full_chain AS (
     SELECT
       DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height, last_vrf_output
@@ -41,15 +47,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
           pending_chain
         WHERE 1=1
           ${
-    // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
-    // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
-    fromAsNum
-      ? db_client`AND height >= ${fromAsNum} AND height < ${toAsNum!}`
-      : db_client`AND height >= (
+            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+            fromAsNum
+              ? db_client`AND height >= ${fromAsNum} AND height < ${toAsNum!}`
+              : db_client`AND height >= (
                 SELECT MAX(height)
                 FROM pending_chain
             ) - ${BLOCK_RANGE_SIZE}`
-    }
+          }
         UNION ALL
         SELECT
           id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, last_vrf_output
@@ -58,15 +64,15 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
         WHERE
           chain_status = 'canonical'
           ${
-    // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
-    // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
-    fromAsNum
-      ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
-      : db_client`AND b.height >= (
+            // If fromAsNum is not undefined, then we have also set toAsNum and can safely query the range
+            // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
+            fromAsNum
+              ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
+              : db_client`AND b.height >= (
                 SELECT MAX(b2.height)
                 FROM blocks b2
             ) - ${BLOCK_RANGE_SIZE}`
-    }
+          }
       ) AS full_chain
   )
   `;
@@ -116,9 +122,10 @@ function blocksAccessedCTE(db_client: postgres.Sql, status: BlockStatusFilter) {
     INNER JOIN full_chain b ON aa.block_id = b.id
   WHERE
     1 = 1
-    ${status === BlockStatusFilter.all
-      ? db_client``
-      : db_client`AND chain_status = ${status.toLowerCase()}`
+    ${
+      status === BlockStatusFilter.all
+        ? db_client``
+        : db_client`AND chain_status = ${status.toLowerCase()}`
     }
   )`;
 }
@@ -400,7 +407,11 @@ export function getActionsQuery(
   ${blocksAccessedCTE(db_client, status)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedActionsCTE(db_client)},
-  ${emittedActionStateCTE(db_client, fromActionStateHeight, endActionStateHeight)}
+  ${emittedActionStateCTE(
+    db_client,
+    fromActionStateHeight,
+    endActionStateHeight
+  )}
   SELECT *
   FROM emitted_action_state
   `;
@@ -488,8 +499,10 @@ export function resolveActionStateBoundary(
     UNION ALL
     SELECT b.id, b.parent_id, b.chain_status
     FROM blocks b
+      -- Same invariant as fullChainCTE: genesis has parent_id = NULL, and no
+      -- block is its own parent, so an explicit id <> parent_id guard never
+      -- excludes a row.
       INNER JOIN pending_chain ON b.id = pending_chain.parent_id
-      AND pending_chain.id <> pending_chain.parent_id
       AND pending_chain.chain_status <> 'canonical'
   ),
   bounds AS (
@@ -497,8 +510,8 @@ export function resolveActionStateBoundary(
       fromAsNum !== null
         ? db_client`${fromAsNum}::bigint`
         : toAsNum !== null
-          ? db_client`${toAsNum - BLOCK_RANGE_SIZE}::bigint`
-          : db_client`(SELECT max(height) FROM blocks) - ${BLOCK_RANGE_SIZE}::bigint`
+        ? db_client`${toAsNum - BLOCK_RANGE_SIZE}::bigint`
+        : db_client`(SELECT max(height) FROM blocks) - ${BLOCK_RANGE_SIZE}::bigint`
     } AS window_start
   ),
   target AS (
@@ -569,12 +582,14 @@ export function getZkappsWithPendingEventsQuery(db_client: postgres.Sql) {
   UNION ALL
 
   -- walk back until we re-join the canonical branch
+  -- The id <> parent_id guard was dropped here for the same reason as in
+  -- fullChainCTE: no block is its own parent, so it never excludes a row, and
+  -- the walk terminates on genesis's NULL parent_id regardless.
   SELECT b.id, b.parent_id, b.chain_status
     FROM blocks b
     JOIN pending_chain pc
       ON b.id = pc.parent_id
-   WHERE pc.id <> pc.parent_id
-     AND pc.chain_status <> 'canonical'
+   WHERE pc.chain_status <> 'canonical'
 )
 SELECT DISTINCT
   pk.value AS public_key
