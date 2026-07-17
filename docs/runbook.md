@@ -4,6 +4,14 @@ How to run, observe, and troubleshoot the Archive Node API in production. Pairs
 with [`docs/security.md`](./security.md) (deployment contract) and
 [`deploy/`](../deploy/) (reference manifests).
 
+> **Applies to 1.0.0 and later.** Much of what follows — `/readiness`, `/metrics`
+> and the `http_*` series, `PG_STATEMENT_TIMEOUT` / `PG_MAX_CONNECTIONS`,
+> `RATE_LIMIT_MAX`, and the graceful drain on SIGTERM — does not exist on `0.0.x`
+> images: `/readiness` 404s, the tuning knobs are no-ops, and SIGTERM exits
+> immediately without draining. **Check your running version before following any
+> procedure here mid-incident**, or you'll be diagnosing against endpoints and
+> settings your build doesn't have.
+
 ## Service summary
 
 - **What it is:** a stateless, read-only GraphQL server over an archive-node
@@ -53,17 +61,20 @@ All from the Prometheus `/metrics` endpoint unless noted:
 - **Scale out** by adding replicas — they're stateless (see the HPA in
   [`deploy/kubernetes.yaml`](../deploy/kubernetes.yaml)). Rate limiting is
   per-instance, so the effective global limit ≈ replicas × `RATE_LIMIT_MAX`.
-- **The real ceiling is Postgres.** Add read replicas and point `PG_CONN` at them
-  before scaling the API further; a larger API fleet against one DB just moves
-  the bottleneck.
+- **The real ceiling is Postgres.** A larger API fleet against one DB just moves
+  the bottleneck. Note that listing replicas in `PG_CONN` does **not** spread
+  reads across them — that buys failover only (see below). To add read capacity,
+  put a balancer (PgBouncer, HAProxy, a managed reader endpoint) in front of
+  Postgres and point `PG_CONN` at it.
 - Tune `PG_MAX_CONNECTIONS` so `replicas × PG_MAX_CONNECTIONS` stays within the
   database's `max_connections` (leave headroom for other clients).
 
 ## Multi-host Postgres & failover
 
 `PG_CONN` accepts multiple hosts (`postgres://host1:5432,host2:5432/archive`).
-The `postgres` client connects to an available host and re-establishes
-connections as hosts come and go, so a replica dropping out is tolerated without
+This is **failover, not load balancing**: every connection starts at the first
+host and only moves to the next when its attempt fails, so extra hosts buy
+redundancy rather than read throughput. A host dropping out is tolerated without
 a restart. Validate the exact behaviour for your topology before relying on it
 for HA (an automated failover test is a tracked follow-up).
 
@@ -80,7 +91,8 @@ Recovery semantics to expect:
 | ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `/readiness` 503, `/healthcheck` 200     | Postgres unreachable                            | check DB health/network; pods recover automatically when it returns                          |
 | p99 latency climbing, `in_flight` rising | slow/expensive queries or DB CPU                | check DB load; review slow queries; confirm `PG_STATEMENT_TIMEOUT` is set                    |
-| Many 429s                                | a client over the rate limit, or limits too low | confirm `X-Forwarded-For` is set by the gateway; adjust `RATE_LIMIT_MAX`                     |
+| Many 429s, across unrelated clients      | `TRUST_PROXY` unset behind a gateway, so every client shares one bucket | set `TRUST_PROXY` to the gateway's hop count (`1` behind a single LB); the app logs a warning on startup when it sees `X-Forwarded-For` with `TRUST_PROXY=0` |
+| Many 429s, one client                    | a client over the rate limit, or limits too low | confirm the gateway sets `X-Forwarded-For`; adjust `RATE_LIMIT_MAX`                          |
 | Connection-pool exhaustion errors        | `PG_MAX_CONNECTIONS` × replicas > DB capacity   | lower pool size or raise DB `max_connections`                                                |
 | Memory growth / OOM kills                | heavy result sets or a leak                     | lower `BLOCK_RANGE_SIZE`; inspect heap metrics; cap container memory                         |
 | Startup exits immediately                | invalid config                                  | read the startup error — config is validated fail-fast (missing `PG_CONN`, bad `PORT`, etc.) |
