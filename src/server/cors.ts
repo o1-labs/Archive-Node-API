@@ -1,4 +1,4 @@
-export { resolveCorsOptions };
+export { resolveCorsOptions, warnIfCorsDisabled };
 export type { CorsResult };
 
 const CORS_METHODS = ['GET', 'POST'];
@@ -39,4 +39,25 @@ function resolveCorsOptions(
   if (origins.length === 0) return false;
 
   return { origin: origins, methods: CORS_METHODS };
+}
+
+/**
+ * Announce the secure default at startup.
+ *
+ * When CORS is disabled, a browser client's requests fail in the browser — the
+ * server answers normally and logs nothing, so the only symptom is a blank page
+ * on someone else's screen. Saying so once at boot turns that into a glance at
+ * the logs. Kept separate from `resolveCorsOptions` so that stays pure.
+ */
+function warnIfCorsDisabled(
+  cors: CorsResult,
+  warn: (message: string) => void = console.warn
+): void {
+  if (cors !== false) return;
+  warn(
+    '[cors] CORS_ORIGIN is unset — cross-origin browser requests are blocked ' +
+      '(same-origin only), and they will fail silently from this server\'s side. ' +
+      'Set CORS_ORIGIN to your frontend origin(s), or to "*" for a public API ' +
+      'any browser may call.'
+  );
 }

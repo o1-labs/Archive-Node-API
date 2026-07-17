@@ -4,7 +4,7 @@ import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
 import { useReadiness } from './readiness.js';
-import { resolveCorsOptions } from './cors.js';
+import { resolveCorsOptions, warnIfCorsDisabled } from './cors.js';
 
 export {
   BLOCK_RANGE_SIZE,
@@ -19,6 +19,8 @@ const ENABLE_BLOCK_TRANSACTION_DETAILS =
   process.env.ENABLE_BLOCK_TRANSACTION_DETAILS === 'true';
 
 function buildYoga(context: GraphQLContext, plugins: Plugin[]) {
+  const cors = resolveCorsOptions();
+
   return createYoga<GraphQLContext>({
     schema,
     logging: LOG_LEVEL,
@@ -34,11 +36,12 @@ function buildYoga(context: GraphQLContext, plugins: Plugin[]) {
     // Readiness (DB reachable) is prepended so probes short-circuit before any
     // other request hook (e.g. rate limiting) can interfere with them.
     plugins: [useReadiness(context.db_client), ...plugins],
-    cors: resolveCorsOptions(),
+    cors,
     context,
   });
 }
 
 function buildServer(context: GraphQLContext, plugins: Plugin[]) {
+  warnIfCorsDisabled(resolveCorsOptions());
   return createServer(buildYoga(context, plugins));
 }
