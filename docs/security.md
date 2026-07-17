@@ -47,13 +47,16 @@ application itself speaks plain HTTP on `PORT` and does not terminate TLS.
 
 Requirements:
 
-- **TLS at the gateway.** Never expose the plain-HTTP app port to the internet.
 - **Set `X-Forwarded-For` and `TRUST_PROXY` together.** A gateway should append
-  `X-Forwarded-For`, and the API derives the rate-limit client from the
-  configured trusted-proxy hop count. `TRUST_PROXY` has no default; while it is
-  unset, rate limiting is disabled with a startup warning. Use `TRUST_PROXY=0`
-  only for a directly exposed server. Behind a gateway, set it to the real hop
-  count for that topology.
+  `X-Forwarded-For`, and the API derives the rate-limit client from that header
+  only as far as `TRUST_PROXY` allows: it names how many proxy hops sit in front
+  of the API, and the client is read that many entries from the *right* of the
+  header — the part your own proxies appended. `TRUST_PROXY` has no default;
+  while it is unset, rate limiting is disabled with a startup warning. Use
+  `TRUST_PROXY=0` only for a directly exposed server. Behind a gateway, set the
+  real hop count for that topology (a GCP external Application Load Balancer
+  commonly needs `2`). Too low collapses clients onto a proxy address; too high
+  can trust caller-prepended entries.
 - **Keep Postgres private.** The database must not be reachable from the public
   internet — only from the API instances.
 
@@ -67,12 +70,33 @@ the [configuration](./getting-started.md#configuration):
 | Per-IP **rate limiting** | on once `TRUST_PROXY` is set | Bounds request volume per client; disabled with a startup warning while `TRUST_PROXY` is unset |
 | GraphQL **query-cost limits** (depth / aliases / tokens / cost) | on | Rejects expensive/abusive query shapes before execution |
 | Postgres **statement timeout** & pool limits | on | Caps how long/much a single query can consume |
-| **CORS** | same-origin only | Cross-origin browser access is opt-in, not default |
+| **CORS** | same-origin only | Cross-origin browser access is opt-in — see the caveat below before locking it down |
 | **Introspection** | off | Schema introspection disabled unless explicitly enabled |
 | Field-suggestion blocking | on | Error messages don't leak schema shape |
 
+> **These controls arrive in 1.0.0.** On `0.0.x` releases they are absent or
+> default-open — notably `CORS_ORIGIN` defaults to `*` there, so cross-origin
+> access is wide open rather than opt-in. Check your running version before
+> relying on any row above.
+
 Tune these to your traffic; see the configuration table for the exact
 environment variables and defaults.
+
+### CORS and browser clients
+
+Cross-origin browser clients **cannot reach this API unless their web origin is
+allowlisted in `CORS_ORIGIN`** — and when they fail, they fail silently from the
+server's point of view: the browser blocks the response and the server logs stay
+clean. This catches people out, so decide deliberately:
+
+- **A genuinely public read API** that any browser may call — including the
+  [mina-explorer](https://github.com/o1-labs/mina-explorer) and third-party
+  dashboards — wants `CORS_ORIGIN=*`. That is the correct setting here, not a
+  lapse in hardening: the data is already public, and CORS is not an access
+  control (it constrains browsers, not `curl` or a server-side client).
+- **A deployment with a known, fixed set of front-ends** wants those origins
+  listed explicitly. This only limits which *browser pages* may read responses;
+  it does not restrict anyone else.
 
 ## Least-privilege database access
 
@@ -111,7 +135,9 @@ the credentials cannot modify or delete data.
 - [ ] Postgres reachable only from the API, not the public internet
 - [ ] API uses a **read-only** Postgres role
 - [ ] Rate-limit and query-cost limits reviewed for your expected traffic
-- [ ] `CORS_ORIGIN` set to an explicit allowlist (or left unset) — not `*`
+- [ ] `CORS_ORIGIN` matches your clients: `*` for a public API any browser may
+      call, or an explicit allowlist if your front-ends are known and fixed —
+      leaving it unset blocks all cross-origin browser clients
 - [ ] `ENABLE_GRAPHIQL` and `ENABLE_INTROSPECTION` off (unless intentionally public)
 - [ ] Secrets injected via env / secret manager; SSL to Postgres where applicable
 
