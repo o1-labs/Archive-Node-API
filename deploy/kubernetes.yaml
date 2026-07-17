@@ -3,6 +3,12 @@
 # This is a starting point, not a turnkey production deploy — review the image
 # tag, replica count, resource sizing, and secret management for your cluster.
 # See deploy/README.md and docs/security.md for the full deployment contract.
+#
+# REQUIRES image >= 1.0.0. The readiness probe below targets /readiness, which
+# earlier images do not serve: on 0.0.x the probe 404s forever, no pod ever goes
+# Ready, and the Service is left with zero endpoints — a total outage. The
+# /metrics scrape annotations need >= 1.0.0 for the same reason. The image is
+# pinned accordingly; do not move it back to :latest.
 ---
 apiVersion: v1
 kind: Secret
@@ -40,8 +46,8 @@ spec:
           type: RuntimeDefault
       containers:
         - name: archive-node-api
-          # Pin a specific version in production rather than :latest.
-          image: ghcr.io/o1-labs/archive-node-api:latest
+          # Pinned, not :latest — see the version requirement at the top.
+          image: ghcr.io/o1-labs/archive-node-api:1.0.0
           ports:
             - containerPort: 8080
           env:
@@ -52,10 +58,23 @@ spec:
                 secretKeyRef:
                   name: archive-node-api
                   key: PG_CONN
-            # Restrict cross-origin access (see docs/security.md). Leave unset for
-            # same-origin only, or set an explicit allowlist.
-            # - name: CORS_ORIGIN
-            #   value: 'https://app.example.com'
+            # Browser clients are cross-origin and CANNOT reach this API unless
+            # their origin is allowed here — and they fail silently, with nothing
+            # in the server logs. Set this deliberately (see docs/security.md):
+            #   '*'                       public API any browser may call
+            #   'https://app.example.com' known, fixed front-ends (comma-separate)
+            # Unset means same-origin only, which blocks every browser client.
+            - name: CORS_ORIGIN
+              value: '*'
+            # Must be < terminationGracePeriodSeconds below, so the app finishes
+            # draining before the kubelet sends SIGKILL.
+            - name: SHUTDOWN_TIMEOUT_MS
+              value: '10000'
+            # Number of proxy hops in front of the API. Rate limiting keys on the
+            # socket address while this is 0, so every client behind an ingress
+            # shares one bucket; set it to the real hop count.
+            - name: TRUST_PROXY
+              value: '1'
           resources:
             requests:
               cpu: '250m'
@@ -84,8 +103,8 @@ spec:
             capabilities:
               drop:
                 - ALL
-      # Give in-flight requests time to drain on rollout (matches the app's
-      # graceful-shutdown window).
+      # Must exceed the app's own SHUTDOWN_TIMEOUT_MS (10s above) so the drain,
+      # trace flush, and pool close all complete before SIGKILL.
       terminationGracePeriodSeconds: 30
 ---
 apiVersion: v1

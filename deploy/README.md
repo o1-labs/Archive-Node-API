@@ -6,6 +6,11 @@ secret management for your environment. Read [`docs/security.md`](../docs/securi
 first for the deployment contract (TLS gateway, read-only DB role, private
 Postgres).
 
+> **These manifests require image `>= 1.0.0`** and are pinned to it. The
+> readiness probe and `/metrics` scrape target endpoints that `0.0.x` images do
+> not serve — on an older image the readiness probe 404s forever, no pod goes
+> Ready, and the Service ends up with no endpoints at all.
+
 ## Kubernetes — [`kubernetes.yaml`](./kubernetes.yaml)
 
 A `Deployment` + `Service` + `HorizontalPodAutoscaler` (and a placeholder
@@ -18,15 +23,19 @@ A `Deployment` + `Service` + `HorizontalPodAutoscaler` (and a placeholder
 - Hardened pod: non-root, `readOnlyRootFilesystem`, `allowPrivilegeEscalation:
 false`, all capabilities dropped, `RuntimeDefault` seccomp.
 - Prometheus scrape annotations pointing at `/metrics`.
-- `terminationGracePeriodSeconds: 30` to match the app's graceful-shutdown drain.
+- `terminationGracePeriodSeconds: 30`, comfortably above the app's own 10s
+  `SHUTDOWN_TIMEOUT_MS`, so the drain completes before SIGKILL.
 
 ```sh
-# edit the Secret's PG_CONN (use a read-only role) and the image tag first
+# edit the Secret's PG_CONN (use a read-only role) first
 kubectl apply -f deploy/kubernetes.yaml
 ```
 
-Put a TLS-terminating Ingress/gateway in front (it must set `X-Forwarded-For`
-for per-client rate limiting) — see [`docs/security.md`](../docs/security.md).
+Put a TLS-terminating Ingress/gateway in front and set **`TRUST_PROXY` to the
+number of hops** it adds. The gateway must set `X-Forwarded-For`, but the API
+ignores that header while `TRUST_PROXY=0` (the safe default for a directly
+exposed server), so leaving it unset behind an ingress collapses every client
+into a single rate-limit bucket. See [`docs/security.md`](../docs/security.md).
 
 ## Docker Compose — [`docker-compose.prod.yml`](./docker-compose.prod.yml)
 
@@ -40,6 +49,10 @@ PG_CONN='postgres://archive_api_ro:...@db:5432/archive' \
 
 ## Sizing
 
-The bottleneck is Postgres, not this server; point `PG_CONN` at read replicas for
-throughput. See the benchmark note in the root [`README.md`](../README.md#hardware-requirements)
-and use `npm run benchmark` to size your own deployment.
+The bottleneck is Postgres, not this server. Note that listing several hosts in
+`PG_CONN` gives you **failover, not read throughput** — the client sticks to the
+first host and only moves on when the connection fails. To spread reads across
+replicas, put a load balancer (PgBouncer, HAProxy, a managed reader endpoint) in
+front of Postgres and point `PG_CONN` at it. See the benchmark note in the root
+[`README.md`](../README.md#hardware-requirements) and use `npm run benchmark` to
+size your own deployment.

@@ -4,8 +4,8 @@
 # external, read-only archive database. See deploy/README.md and docs/security.md.
 services:
   archive-node-api:
-    # Pin a specific version in production rather than :latest.
-    image: ghcr.io/o1-labs/archive-node-api:latest
+    # Pinned, not :latest. Readiness/metrics endpoints require >= 1.0.0.
+    image: ghcr.io/o1-labs/archive-node-api:1.0.0
     restart: unless-stopped
     ports:
       - '8080:8080'
@@ -13,8 +13,16 @@ services:
       # Required. Point at a read-only Postgres role (see docs/security.md).
       PG_CONN: ${PG_CONN:?set PG_CONN to your archive-node Postgres connection string}
       PORT: '8080'
-      # Restrict cross-origin access — leave unset for same-origin only.
-      # CORS_ORIGIN: 'https://app.example.com'
+      # Browser clients are cross-origin and CANNOT reach this API unless their
+      # origin is allowed here — and they fail silently, with nothing in the
+      # server logs. Set this deliberately (see docs/security.md):
+      #   '*'                       public API any browser may call
+      #   'https://app.example.com' known, fixed front-ends (comma-separate)
+      # Unset means same-origin only, which blocks every browser client.
+      CORS_ORIGIN: '*'
+      # Proxy hops in front of the API. Rate limiting keys on the socket address
+      # while this is 0, so every client behind a proxy shares one bucket.
+      TRUST_PROXY: '0'
     # Resource caps (Compose v2).
     cpus: 1.0
     mem_limit: 512m
