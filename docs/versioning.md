@@ -19,7 +19,15 @@ Given `MAJOR.MINOR.PATCH`:
 GraphQL schema:
 
 - Removing or renaming a type, field, enum value, or argument.
-- Changing a field's type, or a nullable field/argument to non-null.
+- Changing a field's type.
+- **Output fields:** making a non-null field nullable (`String!` → `String`).
+  Clients written against the guarantee may now receive `null` where they
+  cannot handle it. The reverse — `String` → `String!` — only strengthens the
+  guarantee and is safe.
+- **Arguments and input fields:** making a nullable argument non-null
+  (`String` → `String!`), which rejects callers that were legitimately omitting
+  it. Here the reverse is the safe direction — the mirror image of output
+  fields, because the client is the one supplying the value.
 - Adding a required (non-null, no-default) argument to an existing field.
 
 Operational contract:
@@ -31,6 +39,28 @@ Operational contract:
 
 Additive counterparts of the above (new optional field, new nullable argument,
 new env var with a safe default) are **minor**, not breaking.
+
+## Flag-gating behaviour changes
+
+Changes that alter **default response shape or content**, or the **set of exposed
+queries**, ship **disabled by default behind an environment flag** — the practice
+this repo already follows with `ENABLE_BLOCK_TRANSACTION_DETAILS` (gates
+block-detail output) and `ENABLED_QUERIES` (allowlists the exposed query
+surface).
+
+- A flagged, default-off change is **minor**.
+- Flipping such a default on — or removing the flag so the new behaviour is
+  unconditional — changes what existing clients receive out of the box, and is
+  **major**.
+
+This is what lets consumers survive upgrades. The
+[mina-explorer](https://github.com/o1-labs/mina-explorer) fires fallback query
+chains and degrades on the exact `"Cannot query field"` validation error, so it
+tolerates a field it doesn't know about — but not a *default response* that
+quietly changes shape. An unflagged change there doesn't error; it blanks
+Explorer pages while every health check stays green. That failure mode is why
+this is a rule rather than a convention: the schema checker cannot catch it,
+because nothing about the schema is technically breaking.
 
 ## Deprecation policy
 
