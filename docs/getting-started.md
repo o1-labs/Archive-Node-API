@@ -175,7 +175,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PG_CONN` | *(required)* | Postgres connection string for the archive-node DB |
-| `PG_MAX_CONNECTIONS` | `10` | Max pooled Postgres connections (per host) |
+| `PG_MAX_CONNECTIONS` | `10` | Max pooled Postgres connections (total, not per host) |
 | `PG_IDLE_TIMEOUT` | `30` | Seconds an idle connection is kept before closing |
 | `PG_CONNECT_TIMEOUT` | `30` | Seconds to wait for a new connection before failing |
 | `PG_STATEMENT_TIMEOUT` | `30000` | Server-side query timeout in ms; a longer query is cancelled. `0` disables |

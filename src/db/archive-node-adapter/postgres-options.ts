@@ -11,7 +11,11 @@ export type { PostgresPoolConfig };
  * publicly out of the box, and every value is tunable via the environment.
  */
 interface PostgresPoolConfig {
-  /** Maximum number of pooled connections (per host). */
+  /**
+   * Maximum pooled connections in total, not per host: a multi-host `PG_CONN`
+   * fails over to the first reachable host rather than fanning out, so the pool
+   * only ever points at one host at a time.
+   */
   max: number;
   /** Seconds a connection may sit idle before it is closed. */
   idleTimeout: number;
