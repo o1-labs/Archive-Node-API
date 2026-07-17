@@ -52,6 +52,26 @@ describe('Error masking', () => {
       body: JSON.stringify({ query: '{ thisFieldDoesNotExist }' }),
     });
     const body = await response.json();
+    // The mina-explorer keys its field-fallback chains on this exact substring,
+    // silently degrading to the daemon on a match. Asserting the contract text
+    // rather than the field name makes this a regression guard for that client:
+    // masking, or a future yoga bump, rewording it would blank Explorer pages.
+    assert.match(body.errors[0].message, /Cannot query field/);
     assert.match(body.errors[0].message, /thisFieldDoesNotExist/);
+  });
+
+  test('validation errors return HTTP 200 for a client sending no Accept header', async () => {
+    // The Explorer's client throws on any non-2xx before it ever reads the
+    // GraphQL body, so a 400 here would break its fallbacks outright. Yoga only
+    // switches to 400 under `Accept: application/graphql-response+json`, which
+    // that client never sends — an implicit content-negotiation default worth
+    // pinning, since a future upgrade could flip it unnoticed.
+    const yoga = buildYoga(throwingContext(), []);
+    const response = await yoga.fetch('http://localhost/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query: '{ thisFieldDoesNotExist }' }),
+    });
+    assert.strictEqual(response.status, 200);
   });
 });
