@@ -16,8 +16,21 @@ DB_DIR="db"
 PG_DUMP="archive.sql"
 BASE_URL="https://storage.googleapis.com/mina-archive-dumps"
 
-# Stop docker containers 
-docker-compose stop postgres
+# Pick whichever Compose is installed. The docs tell users to run
+# `docker compose up` (Compose v2), but this script hardcoded the v1
+# `docker-compose` binary, which is EOL since 2023 and absent on v2-only hosts —
+# so the documented setup failed here with "command not found".
+if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+  DOCKER_COMPOSE=(docker compose)
+elif command -v docker-compose &> /dev/null; then
+  DOCKER_COMPOSE=(docker-compose)
+else
+  echo "Error: neither 'docker compose' (v2) nor 'docker-compose' (v1) found" >&2
+  exit 1
+fi
+
+# Stop docker containers
+"${DOCKER_COMPOSE[@]}" stop postgres
 
 # clear db and data directories
 rm -rf "$DB_DIR"
