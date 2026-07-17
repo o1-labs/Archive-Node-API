@@ -44,6 +44,26 @@ describe('validateConfig', () => {
     assert.match(errors[0], /PG_CONN is required/);
   });
 
+  test('accepts multi-host HA connection strings', () => {
+    // The HA form documented in docs/getting-started.md. PG_CONN is
+    // deliberately only checked for non-emptiness: a stricter URL parser here
+    // would reject this and break every HA deployment, so this test exists to
+    // make a future "hardening" of the check fail loudly rather than silently.
+    assert.deepStrictEqual(
+      validateConfig({ PG_CONN: 'postgres://host1:5432,host2:5432/archive' }),
+      []
+    );
+  });
+
+  test('accepts a connection string with credentials and query params', () => {
+    assert.deepStrictEqual(
+      validateConfig({
+        PG_CONN: 'postgres://user:pw@host1:5432,host2:5432/archive?sslmode=require',
+      }),
+      []
+    );
+  });
+
   test('flags a non-boolean boolean var', () => {
     const errors = validateConfig({ ...valid, ENABLE_JAEGER: 'sometimes' });
     assert.ok(errors.some((e) => /ENABLE_JAEGER must be a boolean/.test(e)));
