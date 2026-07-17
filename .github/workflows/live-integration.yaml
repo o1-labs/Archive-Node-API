@@ -51,4 +51,7 @@ jobs:
         if: steps.endpoint.outputs.skip != 'true'
         env:
           STAGING_GRAPHQL_ENDPOINT: ${{ steps.endpoint.outputs.url }}
+          # Lets the suite skip cases pinned to another network's fixtures while
+          # still running every network-agnostic check here.
+          LIVE_API_NETWORK: ${{ matrix.network }}
         run: npm run test:live-api
