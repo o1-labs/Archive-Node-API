@@ -216,6 +216,68 @@ describe('Query Resolvers', async () => {
     })) as NetworkQueryResult;
   }
 
+  /**
+   * The archive node ingests blocks into Postgres asynchronously, so a
+   * transaction the daemon already reports as included is not necessarily
+   * queryable yet. Re-run `runQuery` until the archive reports more blocks for
+   * the address than it did before the emit.
+   *
+   * The predicate is deliberately independent of what the tests assert — it
+   * waits for "a new block is visible", not "the count matches what we expect".
+   * Polling on the expected value would make the assertions tautological and
+   * would turn a genuine wrong-count regression into an opaque timeout instead
+   * of a clean assertion diff.
+   */
+  async function waitForNewBlock<T>(
+    runQuery: () => Promise<T>,
+    countBlocks: (result: T) => number,
+    blocksBefore: number,
+    { attempts = 30, delayMs = 1000 } = {}
+  ): Promise<T> {
+    let result = await runQuery();
+    for (let attempt = 1; attempt < attempts; attempt++) {
+      if (countBlocks(result) > blocksBefore) return result;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      result = await runQuery();
+    }
+    if (countBlocks(result) > blocksBefore) return result;
+    throw new Error(
+      `Archive did not index a new block within ${
+        (attempts * delayMs) / 1000
+      }s (still ${blocksBefore} block(s) for this address). The daemon reported ` +
+        `the transaction as included, so this is either archive lag beyond the ` +
+        `timeout or a transaction that produced no block entry.`
+    );
+  }
+
+  async function emitAndQueryEvents(
+    address: string,
+    emit: () => Promise<void>
+  ): Promise<EventQueryResult> {
+    const blocksBefore = (await executeEventsQuery({ address })).data.events
+      .length;
+    await emit();
+    return waitForNewBlock(
+      () => executeEventsQuery({ address }),
+      (result) => result.data.events.length,
+      blocksBefore
+    );
+  }
+
+  async function emitAndQueryActions(
+    address: string,
+    emit: () => Promise<void>
+  ): Promise<ActionQueryResult> {
+    const blocksBefore = (await executeActionsQuery({ address })).data.actions
+      .length;
+    await emit();
+    return waitForNewBlock(
+      () => executeActionsQuery({ address }),
+      (result) => result.data.actions.length,
+      blocksBefore
+    );
+  }
+
   before(async () => {
     try {
       setNetworkConfig();
@@ -368,10 +430,9 @@ describe('Query Resolvers', async () => {
 
     describe('After emitting an event with a single field once', async () => {
       before(async () => {
-        await emitSingleEvent(zkApp, senderKeypair);
-        results = await executeEventsQuery({
-          address: zkApp.address.toBase58(),
-        });
+        results = await emitAndQueryEvents(zkApp.address.toBase58(), () =>
+          emitSingleEvent(zkApp, senderKeypair)
+        );
         eventsResponse = results.data.events;
         lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
@@ -388,10 +449,9 @@ describe('Query Resolvers', async () => {
       let results: EventQueryResult;
       const numberOfEmits = 3;
       before(async () => {
-        await emitSingleEvent(zkApp, senderKeypair, { numberOfEmits });
-        results = await executeEventsQuery({
-          address: zkApp.address.toBase58(),
-        });
+        results = await emitAndQueryEvents(zkApp.address.toBase58(), () =>
+          emitSingleEvent(zkApp, senderKeypair, { numberOfEmits })
+        );
         eventsResponse = results.data.events;
         lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
@@ -410,15 +470,9 @@ describe('Query Resolvers', async () => {
       let results: EventQueryResult;
       const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvent(
-          zkApp,
-          senderKeypair,
-          undefined,
-          baseStruct
+        results = await emitAndQueryEvents(zkApp.address.toBase58(), () =>
+          emitMultipleFieldsEvent(zkApp, senderKeypair, undefined, baseStruct)
         );
-        results = await executeEventsQuery({
-          address: zkApp.address.toBase58(),
-        });
         eventsResponse = results.data.events;
         lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
@@ -440,15 +494,14 @@ describe('Query Resolvers', async () => {
       const numberOfEmits = 3;
       const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvent(
-          zkApp,
-          senderKeypair,
-          { numberOfEmits },
-          baseStruct
+        results = await emitAndQueryEvents(zkApp.address.toBase58(), () =>
+          emitMultipleFieldsEvent(
+            zkApp,
+            senderKeypair,
+            { numberOfEmits },
+            baseStruct
+          )
         );
-        results = await executeEventsQuery({
-          address: zkApp.address.toBase58(),
-        });
         eventsResponse = results.data.events;
         lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
@@ -472,15 +525,14 @@ describe('Query Resolvers', async () => {
       const numberOfEmits = 3;
       const baseStruct = randomStruct();
       before(async () => {
-        await emitMultipleFieldsEvents(
-          zkApp,
-          senderKeypair,
-          { numberOfEmits },
-          baseStruct
+        results = await emitAndQueryEvents(zkApp.address.toBase58(), () =>
+          emitMultipleFieldsEvents(
+            zkApp,
+            senderKeypair,
+            { numberOfEmits },
+            baseStruct
+          )
         );
-        results = await executeEventsQuery({
-          address: zkApp.address.toBase58(),
-        });
         eventsResponse = results.data.events;
         lastBlockEvents = eventsResponse[eventsResponse.length - 1].eventData!;
       });
@@ -581,10 +633,9 @@ describe('Query Resolvers', async () => {
         structs: [s1, s2, s3],
       };
       before(async () => {
-        await emitAction(zkApp, senderKeypair, undefined, testStructArray);
-        results = await executeActionsQuery({
-          address: zkApp.address.toBase58(),
-        });
+        results = await emitAndQueryActions(zkApp.address.toBase58(), () =>
+          emitAction(zkApp, senderKeypair, undefined, testStructArray)
+        );
         actionsResponse = results.data.actions;
         lastBlockActions =
           actionsResponse[actionsResponse.length - 1].actionData!;
@@ -616,10 +667,9 @@ describe('Query Resolvers', async () => {
         structs: [s1, s2, s3],
       };
       before(async () => {
-        await emitAction(zkApp, senderKeypair, { numberOfEmits }, testStructs);
-        results = await executeActionsQuery({
-          address: zkApp.address.toBase58(),
-        });
+        results = await emitAndQueryActions(zkApp.address.toBase58(), () =>
+          emitAction(zkApp, senderKeypair, { numberOfEmits }, testStructs)
+        );
         actionsResponse = results.data.actions;
         lastBlockActions =
           actionsResponse[actionsResponse.length - 1].actionData!;
