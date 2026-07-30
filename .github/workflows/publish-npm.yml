@@ -32,9 +32,11 @@ jobs:
         with:
           node-version: '20'
 
-      # Ensure npm 11.5.1 or later is installed
+      # Trusted publishing needs npm 11.5.1 or later. Pin the major rather than
+      # tracking `latest`: npm 12 requires Node >= 22.22.2, so `npm@latest`
+      # fails EBADENGINE against the Node 20 pinned above.
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
       - run: npm ci
       - run: npm run build --if-present
 
