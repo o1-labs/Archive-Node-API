@@ -269,6 +269,9 @@ async function sendTransaction(transaction: Mina.Transaction<any, any>) {
     await pendingTx.wait({ maxAttempts: 90 });
   } catch (error) {
     console.error('Transaction rejected or failed to finalize:', error);
+    // Rethrow: swallowing this surfaces later as an unrelated assertion failure
+    // on a stale block, far away from the transaction that actually failed.
+    throw error;
   }
 }
 
@@ -283,6 +286,7 @@ async function sendTransactions(transactions: Mina.Transaction<any, any>[]) {
       console.log(`Success! Transaction sent. Txn hash: ${tx.hash}`);
     } catch (error) {
       console.error('Transaction rejected or failed to finalize:', error);
+      throw error;
     }
   }
 }
