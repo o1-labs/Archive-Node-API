@@ -208,9 +208,9 @@ describe('Actions: endActionState', () => {
 
 describe('Actions: the action state must belong to the requested account', () => {
   test('an action state of a different account is rejected', async () => {
-    // Today `checkActionState` only asks whether the value exists anywhere in
-    // `zkapp_field`. It does not check the account, so the server answers with
-    // data that has no relation to the request.
+    // The old `checkActionState` only asked whether the value existed anywhere
+    // in `zkapp_field`. It did not check the account, so the server answered
+    // with data that had no relation to the request.
     await assert.rejects(
       () =>
         actionsService.getActions(
@@ -246,30 +246,80 @@ describe('Actions: the action state must belong to the requested account', () =>
     );
   });
 
-  test(
-    'a checkpoint older than the queried block range is rejected',
-    // Decision D2 in the action plan is open: reject, or widen the window, or
-    // answer with a warning. Silently answering with a truncated list is what
-    // made the original incident invisible, so this must not stay as it is.
-    { todo: 'pending decision D2 — see ACTION-PLAN.md' },
-    async () => {
-      const account = fixture.accounts.control;
-      await assert.rejects(
-        () =>
-          actionsService.getActions(
-            {
-              address: account.address,
-              fromActionState: account.states[0].value, // block 27
-              from: 29,
-              to: 31,
-            },
-            nullOptions
-          ),
-        (err: { extensions?: { code?: string } }) => {
-          assert.strictEqual(err.extensions?.code, 'ACTION_STATE_NOT_FOUND');
-          return true;
-        }
-      );
-    }
-  );
+});
+
+describe('Actions: a checkpoint below the queried block range', () => {
+  // Being below the window does not by itself make the answer wrong. What
+  // matters is whether the account emitted actions between the checkpoint and
+  // the start of the window. Only then is the answer incomplete.
+
+  test('is rejected when actions were emitted in between', async () => {
+    const account = fixture.accounts.control;
+    // Checkpoint S1 is at block 27, the window starts at 29, and the action in
+    // block 28 falls in the gap. Any list we could return would be missing it.
+    await assert.rejects(
+      () =>
+        actionsService.getActions(
+          {
+            address: account.address,
+            fromActionState: account.states[0].value,
+            from: 29,
+            to: 31,
+          },
+          nullOptions
+        ),
+      (err: { extensions?: { code?: string }; message?: string }) => {
+        assert.strictEqual(err.extensions?.code, 'ACTION_STATE_OUT_OF_RANGE');
+        assert.match(
+          String(err.message),
+          /from: 27/,
+          'the error must name the `from` value that makes the query answerable'
+        );
+        return true;
+      }
+    );
+  });
+
+  test('is answered normally when nothing was emitted in between', async () => {
+    const account = fixture.accounts.control;
+    // Checkpoint S1 is at block 27 and the window starts at 28. Nothing lies
+    // strictly between them, so every action in the window is the complete
+    // answer. Rejecting here would break the common case of a quiet zkApp
+    // folding from its genesis action state — the default o1js path, since o1js
+    // sends no from/to.
+    const actions = await actionsService.getActions(
+      {
+        address: account.address,
+        fromActionState: account.states[0].value,
+        from: 28,
+        to: 31,
+      },
+      nullOptions
+    );
+    assert.deepStrictEqual(heightsOf(actions), [28, 29, 30]);
+    assertActionChainIsLinked(actions, 'checkpoint below window, nothing missed');
+  });
+
+  test('endActionState below the range is rejected, with no such exception', async () => {
+    // `endActionState` bounds the request from above, so a checkpoint below the
+    // window puts the whole requested span below the window. An empty answer
+    // would be silently wrong.
+    const account = fixture.accounts.control;
+    await assert.rejects(
+      () =>
+        actionsService.getActions(
+          {
+            address: account.address,
+            endActionState: account.states[0].value, // block 27
+            from: 29,
+            to: 31,
+          },
+          nullOptions
+        ),
+      (err: { extensions?: { code?: string } }) => {
+        assert.strictEqual(err.extensions?.code, 'ACTION_STATE_OUT_OF_RANGE');
+        return true;
+      }
+    );
+  });
 });
