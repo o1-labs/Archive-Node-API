@@ -1,0 +1,75 @@
+name: Nightly Devnet Dump Tests
+
+# Runs the suites that need a real archive dump. They are deliberately kept off
+# pull requests: the dump is downloaded from GCS and loaded into PostgreSQL,
+# which takes minutes, and the data changes every hour, so it is not a stable
+# gate for a pull request.
+#
+# The per-PR gate for action-state ordering is the deterministic fixture suite
+# in tests/integration/action-state-ordering.test.ts, which needs no download.
+# This job answers a different question: do the same invariants hold on real
+# data, whose shapes a fixture does not model?
+#
+# It asserts invariants only — no expected values are written down — so it needs
+# no upkeep as the dump rotates. See tests/devnet-dump/README.md.
+
+on:
+  schedule:
+    # 03:30 UTC daily, away from the hourly dump upload.
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    inputs:
+      sample_accounts:
+        description: 'Accounts to check in the action-state invariant suite'
+        required: false
+        default: '25'
+
+permissions:
+  contents: read
+
+jobs:
+  devnet-dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        # Matches the PostgreSQL major version the production dumps are taken
+        # from. An older server rejects statements the newer pg_dump emits.
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Free disk space
+        # Archive dumps are large. The default runner image ships several GB of
+        # toolchains this job never uses.
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run devnet dump tests
+        env:
+          PG_TEST_HOST: localhost
+          PG_TEST_PORT: '5432'
+          PG_TEST_USER: postgres
+          PG_TEST_PASSWORD: postgres
+          ACTION_STATE_SAMPLE_ACCOUNTS: ${{ github.event.inputs.sample_accounts || '25' }}
+        run: npm run test:devnet-dump
