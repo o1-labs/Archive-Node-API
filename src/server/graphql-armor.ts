@@ -12,7 +12,7 @@ export type { ArmorConfig };
  * deeply-nested, heavily-aliased, or otherwise expensive query can be turned into
  * a denial-of-service against the backing Postgres. The limits are deliberately
  * conservative — they comfortably allow every query this API legitimately serves
- * (the deepest is ~5 levels) while rejecting abusive shapes before execution — and
+ * (the deepest known downstream probe is 7 levels) while rejecting abusive shapes before execution — and
  * each is tunable via the environment.
  */
 interface ArmorConfig {
@@ -27,7 +27,11 @@ interface ArmorConfig {
 }
 
 const ARMOR_DEFAULTS: ArmorConfig = {
-  maxDepth: 10,
+  // Deepest query in production use is 7 (mina-explorer's SearchTransaction
+  // FULL-tier probe). Keep the default comfortably above that: an armor depth
+  // rejection aborts validation before clients see the `Cannot query field`
+  // message they use for schema-tier fallback.
+  maxDepth: 12,
   maxAliases: 15,
   maxTokens: 1000,
   maxCost: 5000,

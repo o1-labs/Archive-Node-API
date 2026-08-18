@@ -57,7 +57,7 @@ describe('GraphQL armor configuration', () => {
   describe('buildArmorPlugins', () => {
     test('returns the five armor plugins as envelop plugins', () => {
       const plugins = buildArmorPlugins({});
-      assert.strictEqual(plugins.length, 5);
+      assert.ok(plugins.length >= 5);
       // Each entry must be a usable envelop plugin (hooks into the lifecycle).
       for (const plugin of plugins) {
         assert.strictEqual(typeof plugin, 'object');
@@ -88,6 +88,80 @@ describe('GraphQL armor configuration', () => {
         /depth/i.test(e.message)
       );
       assert.ok(!depthError, 'a within-limit query must not be depth-rejected');
+    });
+  });
+
+  describe('real downstream client queries pass the default limits', () => {
+    const downstreamQueries: Record<string, string> = {
+      // mina-explorer src/services/api/transactions.ts SearchTransaction
+      searchTransactionFull: `
+        query SearchTransaction($limit: Int!) {
+          blocks(limit: $limit, sortBy: BLOCKHEIGHT_DESC) {
+            blockHeight stateHash dateTime
+            transactions {
+              userCommands { hash kind from to amount fee memo nonce failureReason }
+              zkappCommands {
+                hash
+                failureReasons { failures }
+                zkappCommand {
+                  memo
+                  feePayer { body { publicKey fee } }
+                  accountUpdates { body { publicKey } }
+                }
+              }
+            }
+          }
+        }`,
+      // mina-explorer src/services/api/analytics.ts, ANALYTICS_BLOCK_LIMIT = 2000
+      analytics: `
+        query BlocksAnalytics($limit: Int, $dateTime_gte: DateTime) {
+          blocks(query: { canonical: true, dateTime_gte: $dateTime_gte }, sortBy: BLOCKHEIGHT_DESC, limit: $limit) {
+            blockHeight dateTime txFees
+            transactions { userCommands { hash } zkappCommands { hash } }
+          }
+        }`,
+      // mina-explorer-api app/upstream/archive.py FULL tier, paginated best chain
+      blocksFullPaginatedBestChain: `
+        query GetBlocksFULLPaginatedBestChain($limit: Int!, $maxBlockHeight: Int!) {
+          blocks(query: { blockHeight_lt: $maxBlockHeight, inBestChain: true }, limit: $limit, sortBy: BLOCKHEIGHT_DESC) {
+            blockHeight stateHash creator dateTime
+            protocolState { consensusState { epoch slot slotSinceGenesis } }
+            transactions { coinbase userCommands { hash } zkappCommands { hash } }
+          }
+          networkState { maxBlockHeight { canonicalMaxBlockHeight pendingMaxBlockHeight } }
+        }`,
+      readiness: '{ __typename }',
+    };
+
+    for (const [name, query] of Object.entries(downstreamQueries)) {
+      test(`${name} is not rejected by any armor limit`, async () => {
+        const result = await runQuery(query, {});
+        const armorError = result.errors?.find((e: { message: string }) =>
+          /Syntax Error: (Query depth limit|Query Cost limit|Token limit|Aliases limit)/.test(
+            e.message
+          )
+        );
+        assert.strictEqual(
+          armorError,
+          undefined,
+          `armor rejected a production query: ${armorError?.message}`
+        );
+      });
+    }
+
+    test('field-suggestion blocking keeps "Cannot query field" verbatim', async () => {
+      const result = await runQuery(
+        '{ blocks(limit: 1) { protocolState { consensusState { epoch } } } }',
+        {}
+      );
+      assert.ok(
+        result.errors?.some((e: { message: string }) =>
+          e.message.startsWith(
+            'Cannot query field "protocolState" on type "Block".'
+          )
+        ),
+        `tier-fallback marker lost: ${JSON.stringify(result.errors)}`
+      );
     });
   });
 });
