@@ -2,6 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { createYoga } from 'graphql-yoga';
 import { createMetrics, useMetrics } from '../../src/server/metrics.js';
+import { buildPlugins } from '../../src/server/plugins.js';
 import { schema } from '../../src/resolvers.js';
 
 function serverWithFreshMetrics() {
@@ -21,15 +22,53 @@ async function graphql(yoga: ReturnType<typeof serverWithFreshMetrics>) {
   });
 }
 
+async function serverWithBuiltPlugins() {
+  return createYoga({
+    schema,
+    graphqlEndpoint: '/',
+    plugins: await buildPlugins(),
+  });
+}
+
+function restoreEnv(variable: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[variable];
+  } else {
+    process.env[variable] = value;
+  }
+}
+
 describe('Prometheus metrics', () => {
+  test('buildPlugins gates /metrics behind ENABLE_METRICS', async () => {
+    const previousMetrics = process.env.ENABLE_METRICS;
+    const previousLogging = process.env.ENABLE_LOGGING;
+    try {
+      delete process.env.ENABLE_METRICS;
+      delete process.env.ENABLE_LOGGING;
+
+      const disabled = await serverWithBuiltPlugins();
+      const disabledBody = await (
+        await disabled.fetch('http://localhost/metrics')
+      ).text();
+      assert.doesNotMatch(disabledBody, /http_requests_total/);
+
+      process.env.ENABLE_METRICS = 'true';
+
+      const enabled = await serverWithBuiltPlugins();
+      const response = await enabled.fetch('http://localhost/metrics');
+      assert.strictEqual(response.status, 200);
+      assert.match(await response.text(), /http_requests_total/);
+    } finally {
+      restoreEnv('ENABLE_METRICS', previousMetrics);
+      restoreEnv('ENABLE_LOGGING', previousLogging);
+    }
+  });
+
   test('serves the exposition format at /metrics', async () => {
     const yoga = serverWithFreshMetrics();
     const response = await yoga.fetch('http://localhost/metrics');
     assert.strictEqual(response.status, 200);
-    assert.match(
-      response.headers.get('content-type') ?? '',
-      /text\/plain/
-    );
+    assert.match(response.headers.get('content-type') ?? '', /text\/plain/);
     const body = await response.text();
     assert.match(body, /http_requests_total/);
     assert.match(body, /http_request_duration_seconds/);

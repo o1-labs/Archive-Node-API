@@ -13,8 +13,10 @@ async function buildPlugins() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
 
-  // Prometheus /metrics endpoint + RED metrics for every request.
-  plugins.push(useMetrics());
+  if (process.env.ENABLE_METRICS === 'true') {
+    // Prometheus /metrics endpoint + RED metrics for every request.
+    plugins.push(useMetrics());
+  }
 
   plugins.push(useGraphQlJit());
 

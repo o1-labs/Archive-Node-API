@@ -48,6 +48,7 @@ PG_CONN='postgres://postgres:postgres@localhost:5432/archive' \
 | `ENABLE_GRAPHIQL` | `false` | Serve the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | Allow GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
+| `ENABLE_METRICS` | `false` | Expose Prometheus metrics at `/metrics` |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
 
