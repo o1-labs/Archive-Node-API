@@ -62,7 +62,7 @@ describe('Postgres pool options', () => {
       assert.strictEqual(options.connect_timeout, 7);
       // statement_timeout is sent as a startup connection parameter.
       assert.deepStrictEqual(options.connection, {
-        statement_timeout: 20000,
+        statement_timeout: '20000',
       });
     });
   });

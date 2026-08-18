@@ -87,4 +87,17 @@ describe('Postgres statement timeout', () => {
       await sql.end();
     }
   });
+
+  test('PG_STATEMENT_TIMEOUT=0 sends an explicit session-level disable', async () => {
+    const sql = postgres(
+      connectionString,
+      buildPostgresOptions({ PG_STATEMENT_TIMEOUT: '0' })
+    );
+    try {
+      const [row] = await sql<{ t: string }[]>`SHOW statement_timeout`;
+      assert.strictEqual(row.t, '0');
+    } finally {
+      await sql.end();
+    }
+  });
 });

@@ -32,7 +32,7 @@ const POOL_DEFAULTS: PostgresPoolConfig = {
   max: 10,
   idleTimeout: 30,
   connectTimeout: 30,
-  statementTimeout: 30_000,
+  statementTimeout: 15_000,
 };
 
 /**
@@ -80,7 +80,11 @@ function buildPostgresOptions(
     connect_timeout: config.connectTimeout,
     connection: {
       // Sent as a startup connection parameter, so it applies to every query.
-      statement_timeout: config.statementTimeout,
+      // Stringified deliberately: postgres.js drops falsy startup parameters,
+      // so numeric 0 would be omitted instead of explicitly disabling it.
+      // Its type narrows this specific key to number, but the startup-packet
+      // implementation serialises strings and the index signature allows them.
+      statement_timeout: String(config.statementTimeout) as unknown as number,
     },
   };
 }
