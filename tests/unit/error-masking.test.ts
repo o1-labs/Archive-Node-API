@@ -7,6 +7,29 @@ import type { GraphQLContext } from '../../src/context.js';
 // the kind of message that must never reach a client.
 const SENSITIVE = 'connection to server failed: password=topsecret';
 
+const VALIDATION_CASES: Array<[string, string, RegExp]> = [
+  [
+    'Cannot query field',
+    '{ blocks(query: { blockHeight_lt: 10 }, limit: 1) { protocolState { consensusState { epoch } } } }',
+    /^Cannot query field "protocolState" on type "Block"\./,
+  ],
+  [
+    'unknown input field for inBestChain detection',
+    '{ blocks(query: { inBestChainX: true }, limit: 1) { blockHeight } }',
+    /Field "inBestChainX" is not defined by type "BlockQueryInput"\./,
+  ],
+  [
+    'Unknown argument',
+    '{ blocks(query: { blockHeight_lt: 10 }, limit: 1, bogus: 3) { blockHeight } }',
+    /^Unknown argument "bogus" on field "Query\.blocks"\./,
+  ],
+  [
+    'Unknown type',
+    'query Q($x: NoSuchInput!) { blocks(query: { blockHeight_lt: 10 }, limit: 1) { blockHeight } }',
+    /^Unknown type "NoSuchInput"\./,
+  ],
+];
+
 function throwingContext(): GraphQLContext {
   const fail = async () => {
     throw new Error(SENSITIVE);
@@ -43,8 +66,52 @@ describe('Error masking', () => {
     assert.ok(!text.includes('password'), 'must not leak connection details');
   });
 
+  test('masks unexpected errors without dev extensions under NODE_ENV=development', async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'development';
+
+      const yoga = buildYoga(throwingContext(), []);
+      const response = await yoga.fetch('http://localhost/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          query: '{ events(input: { address: "B62" }) { eventData { data } } }',
+        }),
+      });
+
+      const text = await response.text();
+      const body = JSON.parse(text);
+      assert.strictEqual(body.errors[0].message, 'Unexpected error.');
+      assert.ok(!text.includes('topsecret'), 'must not leak the raw error');
+      assert.ok(!text.includes('originalError'), 'must not leak dev details');
+      assert.ok(!text.includes('stack'), 'must not leak stack traces');
+    } finally {
+      if (previousNodeEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = previousNodeEnv;
+      }
+    }
+  });
+
+  for (const [name, query, expected] of VALIDATION_CASES) {
+    test(`validation error reaches the client verbatim: ${name}`, async () => {
+      // Masking must not hide client-facing GraphQL errors. These are the
+      // marker strings downstream consumers use for schema fallback behavior.
+      const yoga = buildYoga(throwingContext(), []);
+      const response = await yoga.fetch('http://localhost/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const body = await response.json();
+      assert.strictEqual(response.status, 200);
+      assert.match(body.errors[0].message, expected);
+    });
+  }
+
   test('still surfaces ordinary GraphQL validation errors verbatim', async () => {
-    // Masking must not hide client-facing GraphQL errors (e.g. unknown field).
     const yoga = buildYoga(throwingContext(), []);
     const response = await yoga.fetch('http://localhost/', {
       method: 'POST',

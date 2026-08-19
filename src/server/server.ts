@@ -27,9 +27,9 @@ function buildYoga(context: GraphQLContext, plugins: Plugin[]) {
     healthCheckEndpoint: '/healthcheck',
     graphiql: process.env.ENABLE_GRAPHIQL === 'true' ? true : false,
     // Mask unexpected (non-GraphQLError) errors so internal details — SQL,
-    // connection strings, stack traces — never reach clients. Explicit rather
-    // than relying on the default, so it can't be silently turned off.
-    maskedErrors: true,
+    // connection strings, stack traces — never reach clients. `isDev: false`
+    // keeps Envelop from attaching original errors when NODE_ENV=development.
+    maskedErrors: { isDev: false },
     // Readiness (DB reachable) is prepended so probes short-circuit before any
     // other request hook (e.g. rate limiting) can interfere with them.
     plugins: [useReadiness(context.db_client), ...plugins],
