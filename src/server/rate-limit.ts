@@ -26,17 +26,25 @@ interface RateLimitConfig {
   /** Length of the fixed window in milliseconds. */
   windowMs: number;
   /**
-   * Number of trusted proxy hops in front of this server. `0` (the default)
-   * ignores forwarding headers entirely and keys on the socket address, which
-   * is the only safe reading when the server is directly exposed.
+   * Number of trusted proxy hops in front of this server. `0` ignores
+   * forwarding headers entirely and keys on the socket address, which is the
+   * only safe reading when the server is directly exposed.
    */
   trustProxy: number;
+  /**
+   * Whether TRUST_PROXY was explicitly and validly set. No default is correct
+   * for both topologies: socket-keying behind a load balancer puts every client
+   * in one bucket, while trusting X-Forwarded-For without a hop count lets any
+   * caller mint a fresh bucket.
+   */
+  trustProxyConfigured: boolean;
 }
 
 const RATE_LIMIT_DEFAULTS: RateLimitConfig = {
   max: 600,
   windowMs: 60_000,
   trustProxy: 0,
+  trustProxyConfigured: false,
 };
 
 type EnvSource = Record<string, string | undefined>;
@@ -53,14 +61,28 @@ function intFromEnv(value: string | undefined, fallback: number): number {
   return parsed;
 }
 
+/**
+ * Parse TRUST_PROXY strictly. Missing or malformed means "not configured", not
+ * "directly exposed", so a typo cannot turn into a global shared bucket behind
+ * a load balancer.
+ */
+function hopsFromEnv(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim() === '') return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) return undefined;
+  return parsed;
+}
+
 function resolveRateLimitConfig(env: EnvSource = process.env): RateLimitConfig {
+  const hops = hopsFromEnv(env.TRUST_PROXY);
   return {
     max: intFromEnv(env.RATE_LIMIT_MAX, RATE_LIMIT_DEFAULTS.max),
     windowMs: Math.max(
       1,
       intFromEnv(env.RATE_LIMIT_WINDOW_MS, RATE_LIMIT_DEFAULTS.windowMs)
     ),
-    trustProxy: intFromEnv(env.TRUST_PROXY, RATE_LIMIT_DEFAULTS.trustProxy),
+    trustProxy: hops ?? RATE_LIMIT_DEFAULTS.trustProxy,
+    trustProxyConfigured: hops !== undefined,
   };
 }
 
@@ -173,6 +195,20 @@ function useRateLimit(
   const config = resolveRateLimitConfig(env);
   if (config.max <= 0) return {};
 
+  if (!config.trustProxyConfigured) {
+    warn(
+      '[rate-limit] TRUST_PROXY is not set — rate limiting is DISABLED. No ' +
+        'default is safe: keying on the socket address behind a load balancer ' +
+        'puts every client in one bucket, and trusting X-Forwarded-For without ' +
+        'a hop count lets any caller bypass the limit. Set TRUST_PROXY=0 for ' +
+        'a directly-exposed server, or to the number of proxy hops in front of ' +
+        'this API. NOTE: a GCP external Application Load Balancer appends TWO ' +
+        'entries (client IP, then forwarding-rule IP), so a bare GCP LB is 2, ' +
+        'plus 1 per extra in-cluster proxy. Set RATE_LIMIT_MAX=0 to silence this.'
+    );
+    return {};
+  }
+
   const limiter = createRateLimiter(config);
 
   // TRUST_PROXY=0 is the safe default, but it's wrong for the expected
@@ -181,13 +217,15 @@ function useRateLimit(
   // once on the first forwarded request rather than per request.
   let warnedAboutProxy = config.trustProxy > 0;
   const warnIfProxied = (request: Request) => {
-    if (warnedAboutProxy || !request.headers.has('x-forwarded-for')) return;
+    const chain = request.headers.get('x-forwarded-for');
+    if (warnedAboutProxy || chain === null) return;
     warnedAboutProxy = true;
+    const hops = chain.split(',').filter((part) => part.trim()).length;
     warn(
       '[rate-limit] TRUST_PROXY=0 but requests carry X-Forwarded-For — every ' +
         'client behind the proxy shares one rate-limit bucket. Set TRUST_PROXY ' +
-        'to the number of proxy hops in front of this API (e.g. 1 behind a load ' +
-        'balancer) to bucket clients individually.'
+        `to the number of proxy hops in front of this API (observed chain ` +
+        `length: ${hops}) to bucket clients individually.`
     );
   };
   // Periodically reclaim memory from expired buckets; unref'd so it never keeps
@@ -198,6 +236,10 @@ function useRateLimit(
   return {
     onRequest({ request, serverContext, url, endResponse, fetchAPI }) {
       if (url.pathname === HEALTHCHECK_PATH) return;
+      // Yoga's CORS plugin answers OPTIONS before user-land plugins today, but
+      // keep the exemption local too: a throttled preflight is an opaque browser
+      // CORS error rather than a useful 429.
+      if (request.method === 'OPTIONS') return;
       warnIfProxied(request);
 
       const result = limiter.check(

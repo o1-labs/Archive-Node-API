@@ -182,7 +182,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
 | `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window length in milliseconds |
-| `TRUST_PROXY` | `0` | Number of trusted proxy hops in front of the API. `0` ignores `X-Forwarded-For` and keys the rate limit on the socket address |
+| `TRUST_PROXY` | _(unset)_ | Number of trusted proxy hops in front of the API. Required when `RATE_LIMIT_MAX > 0`: the limiter stays disabled until it is set. `0` ignores `X-Forwarded-For` and keys on the socket address |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
@@ -200,9 +200,9 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 
 ### Notes on rate limiting
 
-- The limit is keyed on the client IP. By default (`TRUST_PROXY=0`) that is the socket address, and forwarding headers are ignored — the only safe reading for a directly-exposed server, since `X-Forwarded-For` is client-supplied and trusting it lets a single source rotate the header to get a fresh allowance per request.
-- **Behind a proxy or load balancer, set `TRUST_PROXY` to the number of hops in front of the API** (`1` for a single ingress/LB). The client is then read as the Nth entry from the *right* of `X-Forwarded-For` — the part your own proxies appended — so anything the caller prepended is ignored. This is what keeps NAT'd and LB-fronted users in their own buckets rather than sharing one; leaving it at `0` behind an LB collapses every client onto the LB's address.
-- Set it to the actual hop count: too high and requests fall back to the socket address; too low and you key on an attacker-controlled entry.
+- `TRUST_PROXY` has no default. With `RATE_LIMIT_MAX > 0` and `TRUST_PROXY` unset, the limiter logs a warning and stays disabled because neither reading is safe to assume: socket-keying behind a load balancer collapses every client into one bucket, and trusting `X-Forwarded-For` without a hop count lets any caller mint a fresh bucket per request.
+- Set `TRUST_PROXY=0` only for a directly-exposed server. Behind a proxy, set it to the number of hops your own infrastructure appends; the client is then read as the Nth entry from the *right* of `X-Forwarded-For`, so anything the caller prepended is ignored.
+- Counting the hops: a GCP external Application Load Balancer appends two entries — the client IP, then the forwarding-rule IP — so a bare GCP LB is `TRUST_PROXY=2`, plus one for each additional in-cluster proxy. Getting this wrong fails silently in both directions: too high falls back to the socket address, too low keys on your own proxy's IP and collapses every client into one bucket. The `TRUST_PROXY=0` warning reports the observed chain length; use it to confirm.
 - The counter is in-memory and **per-instance**: with N replicas the effective limit is roughly N × `RATE_LIMIT_MAX`. A shared store (e.g. Redis) for exact cross-replica limits is tracked as deployment hardening.
 - Health checks (`/healthcheck`) are never rate-limited.
 

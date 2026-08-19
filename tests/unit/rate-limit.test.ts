@@ -22,12 +22,13 @@ describe('Rate limiting', () => {
           RATE_LIMIT_WINDOW_MS: '5000',
           TRUST_PROXY: '2',
         }),
-        { max: 100, windowMs: 5000, trustProxy: 2 }
+        { max: 100, windowMs: 5000, trustProxy: 2, trustProxyConfigured: true }
       );
     });
 
     test('trusts no proxy hops by default', () => {
       assert.strictEqual(resolveRateLimitConfig({}).trustProxy, 0);
+      assert.strictEqual(resolveRateLimitConfig({}).trustProxyConfigured, false);
     });
 
     test('allows max=0 to disable, but never a zero-length window', () => {
@@ -46,6 +47,18 @@ describe('Rate limiting', () => {
           TRUST_PROXY: 'yes',
         }),
         RATE_LIMIT_DEFAULTS
+      );
+    });
+
+    test('an unset TRUST_PROXY is not the same as an explicit 0', () => {
+      assert.strictEqual(resolveRateLimitConfig({}).trustProxyConfigured, false);
+      assert.strictEqual(
+        resolveRateLimitConfig({ TRUST_PROXY: '0' }).trustProxyConfigured,
+        true
+      );
+      assert.strictEqual(
+        resolveRateLimitConfig({ TRUST_PROXY: 'yes' }).trustProxyConfigured,
+        false
       );
     });
   });
@@ -94,11 +107,14 @@ describe('Rate limiting', () => {
         schema,
         graphqlEndpoint: '/',
         plugins: [
-          useRateLimit({
-            RATE_LIMIT_MAX: '2',
-            RATE_LIMIT_WINDOW_MS: '10000',
-            TRUST_PROXY: trustProxy,
-          }),
+          useRateLimit(
+            {
+              RATE_LIMIT_MAX: '2',
+              RATE_LIMIT_WINDOW_MS: '10000',
+              TRUST_PROXY: trustProxy,
+            },
+            () => {}
+          ),
         ],
       });
       return (forwardedFor?: string) =>
@@ -154,6 +170,72 @@ describe('Rate limiting', () => {
       assert.strictEqual((await request('1.1.1.1')).status, 200);
       assert.strictEqual((await request('2.2.2.2')).status, 200);
       assert.strictEqual((await request('3.3.3.3')).status, 429);
+    });
+
+    test('stays inert until TRUST_PROXY states the topology', async () => {
+      const warnings: string[] = [];
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        plugins: [
+          useRateLimit({ RATE_LIMIT_MAX: '1' }, (message) =>
+            warnings.push(message)
+          ),
+        ],
+      });
+      const request = () =>
+        yoga.fetch('http://localhost/', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query: '{ __typename }' }),
+        });
+
+      for (let i = 0; i < 5; i++) {
+        assert.strictEqual((await request()).status, 200);
+      }
+      assert.strictEqual(warnings.length, 1);
+      assert.match(
+        warnings[0],
+        /TRUST_PROXY is not set .* rate limiting is DISABLED/
+      );
+    });
+
+    test('never counts CORS preflight requests', async () => {
+      const origin = 'https://explorer.example.com';
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        cors: { origin, methods: ['GET', 'POST'] },
+        plugins: [useRateLimit({ RATE_LIMIT_MAX: '2', TRUST_PROXY: '1' })],
+      });
+      const preflight = () =>
+        yoga.fetch('http://localhost/', {
+          method: 'OPTIONS',
+          headers: {
+            origin,
+            'x-forwarded-for': '8.8.8.8',
+            'access-control-request-method': 'POST',
+            'access-control-request-headers': 'content-type',
+          },
+        });
+
+      for (let i = 0; i < 5; i++) {
+        assert.strictEqual((await preflight()).status, 204);
+      }
+
+      const post = () =>
+        yoga.fetch('http://localhost/', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            origin,
+            'x-forwarded-for': '8.8.8.8',
+          },
+          body: JSON.stringify({ query: '{ __typename }' }),
+        });
+      assert.strictEqual((await post()).status, 200);
+      assert.strictEqual((await post()).status, 200);
+      assert.strictEqual((await post()).status, 429);
     });
 
     test('the 429 still carries CORS headers', async () => {
