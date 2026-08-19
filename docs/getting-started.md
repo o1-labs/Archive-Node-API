@@ -210,6 +210,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 
 - Secure by default: when unset, the server sends no permissive CORS headers, so browsers can only call it same-origin. Server-to-server clients and `curl` are unaffected.
 - To allow browser apps on other origins, set an explicit allowlist: `CORS_ORIGIN=https://app.example.com,https://www.example.com`.
+- Allowlist entries must be exact `scheme://host[:port]` origins: no trailing slash, no wildcard subdomains, and no path.
 - `CORS_ORIGIN=*` opens the API to any origin — convenient for a fully public read API, but make it a deliberate choice rather than a default.
 
 ---

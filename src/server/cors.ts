@@ -2,12 +2,31 @@ export { resolveCorsOptions, warnIfCorsDisabled };
 export type { CorsResult };
 
 const CORS_METHODS = ['GET', 'POST'];
+// Pinned rather than echoed from Access-Control-Request-Headers: echoing makes
+// the adapter drop Vary: Origin on preflight responses while ACAO is per-origin.
+const CORS_HEADERS = ['content-type'];
 
 /**
  * Either a Yoga CORS configuration object or `false` to disable CORS entirely
  * (no `Access-Control-Allow-Origin` header → same-origin only).
  */
-type CorsResult = false | { origin: string | string[]; methods: string[] };
+type CorsResult =
+  | false
+  | {
+      origin: string | string[];
+      methods: string[];
+      allowedHeaders: string[];
+      // This API takes no cookies or Authorization header. Leaving this
+      // undefined makes the adapter send Access-Control-Allow-Credentials: true
+      // alongside an echoed origin.
+      credentials: false;
+    };
+
+const corsBase = {
+  methods: CORS_METHODS,
+  allowedHeaders: CORS_HEADERS,
+  credentials: false,
+} as const;
 
 /**
  * Resolve the Yoga `cors` option from `CORS_ORIGIN`.
@@ -27,7 +46,7 @@ function resolveCorsOptions(
 ): CorsResult {
   const raw = env.CORS_ORIGIN?.trim();
   if (!raw) return false;
-  if (raw === '*') return { origin: '*', methods: CORS_METHODS };
+  if (raw === '*') return { origin: '*', ...corsBase };
 
   const origins = raw
     .split(',')
@@ -38,7 +57,22 @@ function resolveCorsOptions(
   // back to the secure default rather than an empty, surprising allowlist.
   if (origins.length === 0) return false;
 
-  return { origin: origins, methods: CORS_METHODS };
+  for (const origin of origins) {
+    if (
+      origin.endsWith('/') ||
+      origin !== origin.toLowerCase() ||
+      origin.includes('*')
+    ) {
+      console.warn(
+        `[cors] CORS_ORIGIN entry "${origin}" is unlikely to ever match: ` +
+          "origins are compared byte-for-byte against the browser's Origin " +
+          'header, which is lowercase scheme://host[:port] with no trailing ' +
+          'slash. Wildcard subdomains are not supported.'
+      );
+    }
+  }
+
+  return { origin: origins, ...corsBase };
 }
 
 /**
@@ -47,7 +81,7 @@ function resolveCorsOptions(
  * When CORS is disabled, a browser client's requests fail in the browser — the
  * server answers normally and logs nothing, so the only symptom is a blank page
  * on someone else's screen. Saying so once at boot turns that into a glance at
- * the logs. Kept separate from `resolveCorsOptions` so that stays pure.
+ * the logs.
  */
 function warnIfCorsDisabled(
   cors: CorsResult,
