@@ -102,4 +102,32 @@ describe('Prometheus metrics', () => {
       'the /metrics scrape must not be counted'
     );
   });
+
+  test('in-flight gauge is balanced for short-circuited requests', async () => {
+    const metrics = createMetrics({ collectDefault: false });
+    const yoga = createYoga({
+      schema,
+      graphqlEndpoint: '/',
+      healthCheckEndpoint: '/healthcheck',
+      cors: { origin: '*', methods: ['GET', 'POST'] },
+      plugins: [useMetrics(metrics)],
+    });
+
+    await yoga.fetch('http://localhost/healthcheck');
+    await yoga.fetch('http://localhost/', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://explorer.test',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type',
+      },
+    });
+    await graphql(yoga);
+
+    const body = await (await yoga.fetch('http://localhost/metrics')).text();
+    const line = body
+      .split('\n')
+      .find((l) => l.startsWith('http_requests_in_flight '));
+    assert.strictEqual(line, 'http_requests_in_flight 0');
+  });
 });

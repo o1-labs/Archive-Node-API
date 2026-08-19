@@ -87,7 +87,6 @@ function useMetrics(metrics: Metrics = createMetrics()): Plugin {
       const route = routeOf(request.url);
       if (route === METRICS_PATH) return;
 
-      metrics.inFlight.dec();
       const labels = {
         method: request.method,
         route,
@@ -95,9 +94,11 @@ function useMetrics(metrics: Metrics = createMetrics()): Plugin {
       };
       metrics.requestsTotal.inc(labels);
       const start = startTimes.get(request);
-      if (start !== undefined) {
-        metrics.requestDuration.observe(labels, (Date.now() - start) / 1000);
-      }
+      if (start === undefined) return;
+
+      startTimes.delete(request);
+      metrics.inFlight.dec();
+      metrics.requestDuration.observe(labels, (Date.now() - start) / 1000);
     },
   };
 }
