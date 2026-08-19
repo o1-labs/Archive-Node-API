@@ -13,6 +13,7 @@ services:
       # Required. Point at a read-only Postgres role (see docs/security.md).
       PG_CONN: ${PG_CONN:?set PG_CONN to your archive-node Postgres connection string}
       PORT: '8080'
+      NODE_OPTIONS: '--max-old-space-size=768'
       # Browser clients are cross-origin and CANNOT reach this API unless their
       # origin is allowed here — and they fail silently, with nothing in the
       # server logs. Set this deliberately (see docs/security.md):
@@ -20,11 +21,12 @@ services:
       #   'https://app.example.com' known, fixed front-ends (comma-separate)
       # Unset means same-origin only, which blocks every browser client.
       CORS_ORIGIN: '*'
+      ENABLE_METRICS: 'true'
       # Proxy hops in front of the API. Rate limiting keys on the socket address
       # while this is 0, so every client behind a proxy shares one bucket.
       TRUST_PROXY: '0'
-    # Resource caps (Compose v2).
-    cpus: 1.0
-    mem_limit: 512m
-    # The image ships a HEALTHCHECK against /healthcheck; Compose surfaces it as
-    # the container health status.
+      RATE_LIMIT_MAX: '1200'
+    # Memory cap (Compose v2). NODE_OPTIONS keeps V8 below this container limit.
+    mem_limit: 1g
+    # Images >= 1.0.0 ship a HEALTHCHECK against /healthcheck; Compose surfaces
+    # it as the container health status.

@@ -13,21 +13,31 @@ Postgres).
 
 ## Kubernetes — [`kubernetes.yaml`](./kubernetes.yaml)
 
-A `Deployment` + `Service` + `HorizontalPodAutoscaler` (and a placeholder
-`Secret`) with the production defaults baked in:
+A `Deployment` + `Service` + `HorizontalPodAutoscaler` +
+`PodDisruptionBudget` with production defaults baked in. Create the Postgres
+`Secret` separately so routine `kubectl apply` runs never overwrite a real
+connection string with the example placeholder.
 
 - **Liveness** probe on `/healthcheck` (process up) and **readiness** probe on
   `/readiness` (database reachable) — a node with a dead DB stops receiving
-  traffic without being restarted.
-- **Resource** requests/limits and a 2→6 replica HPA on CPU.
-- Hardened pod: non-root, `readOnlyRootFilesystem`, `allowPrivilegeEscalation:
-false`, all capabilities dropped, `RuntimeDefault` seccomp.
-- Prometheus scrape annotations pointing at `/metrics`.
-- `terminationGracePeriodSeconds: 30`, comfortably above the app's own 10s
-  `SHUTDOWN_TIMEOUT_MS`, so the drain completes before SIGKILL.
+  traffic without being restarted. Readiness tolerates up to 60s of database
+  slowness before removing endpoints.
+- **Resource** requests/limits and a 2 to 6 replica HPA on CPU; the HPA owns the
+  replica count.
+- Hardened pod: non-root, `readOnlyRootFilesystem`,
+  `allowPrivilegeEscalation: false`, all capabilities dropped, `RuntimeDefault`
+  seccomp, no mounted service account token, and a scratch `emptyDir` mounted at
+  `/tmp`.
+- Prometheus scrape annotations pointing at `/metrics`, with
+  `ENABLE_METRICS=true`.
+- `preStop` sleeps 15s before SIGTERM, then `terminationGracePeriodSeconds: 45`
+  leaves room for the app's own 10s `SHUTDOWN_TIMEOUT_MS` drain before SIGKILL.
 
 ```sh
-# edit the Secret's PG_CONN (use a read-only role) first
+# once, with your real connection string (never committed):
+kubectl create secret generic archive-node-api \
+  --from-literal=PG_CONN='postgres://archive_api_ro:...@postgres:5432/archive'
+
 kubectl apply -f deploy/kubernetes.yaml
 ```
 
@@ -41,6 +51,8 @@ into a single rate-limit bucket. See [`docs/security.md`](../docs/security.md).
 
 Runs only the published image against an external Postgres (contrast with the
 repo-root `docker-compose.yml`, which is for local dev with a bundled DB).
+Compose surfaces the image's `/healthcheck` as container health for images
+`>= 1.0.0`; this is a liveness check, not database-aware readiness.
 
 ```sh
 PG_CONN='postgres://archive_api_ro:...@db:5432/archive' \

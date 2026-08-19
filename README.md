@@ -9,9 +9,20 @@ A GraphQL server that exposes [Mina archive-node](https://docs.minaprotocol.com/
 ```graphql
 query {
   events(input: { address: "B62..." }) {
-    blockInfo { height stateHash timestamp chainStatus }
-    eventData { data }
-    transactionInfo { status hash memo }
+    blockInfo {
+      height
+      stateHash
+      timestamp
+      chainStatus
+    }
+    eventData {
+      data
+    }
+    transactionInfo {
+      status
+      hash
+      memo
+    }
   }
 }
 ```
@@ -22,11 +33,11 @@ The full surface lives in [`schema.graphql`](./schema.graphql).
 
 Pick the path that matches your situation. Each one is fully covered in [`docs/getting-started.md`](./docs/getting-started.md).
 
-| Path | When to use it |
-| --- | --- |
-| **[npm](./docs/getting-started.md#path-a--npm-bring-your-own-database)** | You already have an archive-node Postgres reachable. Lightest weight. |
+| Path                                                                                                         | When to use it                                                         |
+| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **[npm](./docs/getting-started.md#path-a--npm-bring-your-own-database)**                                     | You already have an archive-node Postgres reachable. Lightest weight.  |
 | **[Prebuilt Docker image](./docs/getting-started.md#path-b--prebuilt-docker-image-bring-your-own-database)** | You have a Postgres reachable but don't want a Node toolchain locally. |
-| **[Docker Compose + DB snapshot](./docs/getting-started.md#path-c--docker-compose-with-database-snapshot)** | No archive-node DB available — Compose stands one up from a snapshot. |
+| **[Docker Compose + DB snapshot](./docs/getting-started.md#path-c--docker-compose-with-database-snapshot)**  | No archive-node DB available — Compose stands one up from a snapshot.  |
 
 ```sh
 # the 30-second taste (Path A)
@@ -41,31 +52,31 @@ PG_CONN='postgres://postgres:postgres@localhost:5432/archive' \
 
 `PG_CONN` is the only required environment variable. The most common knobs:
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `PG_CONN` | *(required)* | Postgres connection string for the archive-node DB |
-| `PORT` | `8080` | Port the GraphQL server listens on |
-| `ENABLE_GRAPHIQL` | `false` | Serve the GraphiQL playground at `/` |
-| `ENABLE_INTROSPECTION` | `false` | Allow GraphQL schema introspection |
-| `ENABLE_LOGGING` | `false` | Enable request logging |
-| `ENABLE_METRICS` | `false` | Expose Prometheus metrics at `/metrics` |
-| `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
-| `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
+| Variable               | Default      | Description                                        |
+| ---------------------- | ------------ | -------------------------------------------------- |
+| `PG_CONN`              | _(required)_ | Postgres connection string for the archive-node DB |
+| `PORT`                 | `8080`       | Port the GraphQL server listens on                 |
+| `ENABLE_GRAPHIQL`      | `false`      | Serve the GraphiQL playground at `/`               |
+| `ENABLE_INTROSPECTION` | `false`      | Allow GraphQL schema introspection                 |
+| `ENABLE_LOGGING`       | `false`      | Enable request logging                             |
+| `ENABLE_METRICS`       | `false`      | Expose Prometheus metrics at `/metrics`            |
+| `ENABLE_JAEGER`        | `false`      | Emit traces to a Jaeger collector                  |
+| `JAEGER_ENDPOINT`      | —            | e.g. `http://localhost:14268/api/traces`           |
 
 Full reference, including HA / multi-host `PG_CONN` syntax, in [`docs/getting-started.md#configuration`](./docs/getting-started.md#configuration).
 
 ## Development
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Run the server with hot reload (reads `.env`) |
-| `npm run build` | Compile TypeScript to `build/` |
-| `npm run start` | Run the compiled server |
-| `npm run lint` | ESLint over `*.ts` |
-| `npm run test:unit` | Unit tests (no DB required) |
-| `npm run test` | Full test suite — needs a running [Lightnet](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet) |
-| `npm run codegen` | Regenerate `src/resolvers-types.ts` from `schema.graphql` |
-| `npm run benchmark` | Artillery load test against a running server |
+| Command             | What it does                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `npm run dev`       | Run the server with hot reload (reads `.env`)                                                              |
+| `npm run build`     | Compile TypeScript to `build/`                                                                             |
+| `npm run start`     | Run the compiled server                                                                                    |
+| `npm run lint`      | ESLint over `*.ts`                                                                                         |
+| `npm run test:unit` | Unit tests (no DB required)                                                                                |
+| `npm run test`      | Full test suite — needs a running [Lightnet](https://docs.minaprotocol.com/zkapps/testing-zkapps-lightnet) |
+| `npm run codegen`   | Regenerate `src/resolvers-types.ts` from `schema.graphql`                                                  |
+| `npm run benchmark` | Artillery load test against a running server                                                               |
 
 Running the full suite requires Lightnet plus a populated DB:
 
