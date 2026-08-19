@@ -6,11 +6,11 @@ with [`docs/security.md`](./security.md) (deployment contract) and
 
 > **Applies to 1.0.0 and later.** Much of what follows — `/readiness`, `/metrics`
 > and the `http_*` series, `PG_STATEMENT_TIMEOUT` / `PG_MAX_CONNECTIONS`,
-> `RATE_LIMIT_MAX`, and the graceful drain on SIGTERM — does not exist on `0.0.x`
-> images: `/readiness` 404s, the tuning knobs are no-ops, and SIGTERM exits
-> immediately without draining. **Check your running version before following any
-> procedure here mid-incident**, or you'll be diagnosing against endpoints and
-> settings your build doesn't have.
+> `RATE_LIMIT_MAX`, fail-fast config validation, and the graceful drain on
+> SIGTERM — does not exist on `0.0.x` images: `/readiness` 404s, the tuning knobs
+> are no-ops, and SIGTERM exits immediately without draining. **Check your
+> running version before following any procedure here mid-incident**, or you'll
+> be diagnosing against endpoints and settings your build doesn't have.
 
 ## Service summary
 
@@ -37,7 +37,8 @@ on query shape and DB sizing.
 
 ## What to watch
 
-All from the Prometheus `/metrics` endpoint unless noted:
+All from the Prometheus `/metrics` endpoint unless noted. `/metrics` requires
+`ENABLE_METRICS=true`; it is off by default.
 
 | Signal       | Metric / source                                 | Watch for                                        |
 | ------------ | ----------------------------------------------- | ------------------------------------------------ |
@@ -87,20 +88,22 @@ Recovery semantics to expect:
 
 ## Common incidents
 
-| Symptom                                  | Likely cause                                    | Action                                                                                       |
-| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `/readiness` 503, `/healthcheck` 200     | Postgres unreachable                            | check DB health/network; pods recover automatically when it returns                          |
-| p99 latency climbing, `in_flight` rising | slow/expensive queries or DB CPU                | check DB load; review slow queries; confirm `PG_STATEMENT_TIMEOUT` is set                    |
+| Symptom                                  | Likely cause                                                            | Action                                                                                                                                                       |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/readiness` 503, `/healthcheck` 200     | Postgres unreachable                                                    | check DB health/network; pods recover automatically when it returns                                                                                          |
+| p99 latency climbing, `in_flight` rising | slow/expensive queries or DB CPU                                        | check DB load; review slow queries; confirm `PG_STATEMENT_TIMEOUT` is set; known consumers give up after 20s, so treat that as the practical latency ceiling |
 | Many 429s, across unrelated clients      | `TRUST_PROXY` unset behind a gateway, so every client shares one bucket | set `TRUST_PROXY` to the gateway's hop count (`1` behind a single LB); the app logs a warning on startup when it sees `X-Forwarded-For` with `TRUST_PROXY=0` |
-| Many 429s, one client                    | a client over the rate limit, or limits too low | confirm the gateway sets `X-Forwarded-For`; adjust `RATE_LIMIT_MAX`                          |
-| Connection-pool exhaustion errors        | `PG_MAX_CONNECTIONS` × replicas > DB capacity   | lower pool size or raise DB `max_connections`                                                |
-| Memory growth / OOM kills                | heavy result sets or a leak                     | lower `BLOCK_RANGE_SIZE`; inspect heap metrics; cap container memory                         |
-| Startup exits immediately                | invalid config                                  | read the startup error — config is validated fail-fast (missing `PG_CONN`, bad `PORT`, etc.) |
+| Many 429s, one client                    | a client over the rate limit, or limits too low                         | confirm the gateway sets `X-Forwarded-For`; adjust `RATE_LIMIT_MAX`                                                                                          |
+| Connection-pool exhaustion errors        | `PG_MAX_CONNECTIONS` × replicas > DB capacity                           | lower pool size or raise DB `max_connections`                                                                                                                |
+| Memory growth / OOM kills                | heavy result sets or a leak                                             | lower `BLOCK_RANGE_SIZE`; inspect heap metrics; cap container memory                                                                                         |
+| Startup exits immediately                | invalid config                                                          | read the startup error — config is validated fail-fast (missing `PG_CONN`, bad `PORT`, etc.)                                                                 |
 
 ## Deploys & rollback
 
 - Rolling update; `terminationGracePeriodSeconds: 30` lets in-flight requests
   drain (the app shuts down gracefully on SIGTERM and flushes traces).
 - Readiness gates traffic to new pods until they can reach the DB.
-- Roll back by redeploying the previous image tag — the service is stateless and
-  carries no migrations, so rollback is safe at any time.
+- Roll back within the 1.0.x line — the service is stateless and carries no
+  migrations. Do **not** roll back to a 0.0.x image while readiness targets
+  `/readiness`: that path 404s, no pod goes Ready, and the Service loses all
+  endpoints.
