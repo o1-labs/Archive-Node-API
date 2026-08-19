@@ -18,6 +18,9 @@ const BOOLEAN_VARS = [
 /** Env vars that, when set, must be positive integers. */
 const POSITIVE_INT_VARS = ['PORT', 'BLOCK_RANGE_SIZE'] as const;
 
+/** Root query fields in schema.graphql — keep in sync. */
+const KNOWN_QUERIES = ['events', 'actions', 'networkState', 'blocks'] as const;
+
 /**
  * Parse a boolean environment value. Recognises `true/false`, `1/0`, `yes/no`,
  * `on/off` (case-insensitive). Anything unrecognised — including the empty
@@ -55,10 +58,12 @@ function validateConfig(env: EnvSource = process.env): string[] {
 
   for (const name of BOOLEAN_VARS) {
     const value = env[name];
-    if (value !== undefined && value.trim() !== '' && !isRecognisedBoolean(value)) {
-      errors.push(
-        `${name} must be a boolean (true/false), got "${value}".`
-      );
+    if (
+      value !== undefined &&
+      value.trim() !== '' &&
+      !isRecognisedBoolean(value)
+    ) {
+      errors.push(`${name} must be a boolean (true/false), got "${value}".`);
     }
   }
 
@@ -69,6 +74,30 @@ function validateConfig(env: EnvSource = process.env): string[] {
       if (!Number.isInteger(parsed) || parsed <= 0) {
         errors.push(`${name} must be a positive integer, got "${value}".`);
       }
+    }
+  }
+
+  const enabledQueries = env.ENABLED_QUERIES;
+  if (enabledQueries !== undefined) {
+    const names = enabledQueries
+      .split(',')
+      .map((query) => query.trim())
+      .filter((query) => query !== '');
+    if (names.length === 0) {
+      errors.push(
+        'ENABLED_QUERIES is set but lists no queries; unset it to expose all of ' +
+          `${KNOWN_QUERIES.join(', ')}.`
+      );
+    }
+
+    const unknown = names.filter(
+      (name) => !(KNOWN_QUERIES as readonly string[]).includes(name)
+    );
+    if (unknown.length > 0) {
+      errors.push(
+        `ENABLED_QUERIES contains unknown queries: ${unknown.join(', ')}. ` +
+          `Known queries: ${KNOWN_QUERIES.join(', ')}.`
+      );
     }
   }
 

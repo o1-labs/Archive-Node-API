@@ -58,7 +58,8 @@ describe('validateConfig', () => {
   test('accepts a connection string with credentials and query params', () => {
     assert.deepStrictEqual(
       validateConfig({
-        PG_CONN: 'postgres://user:pw@host1:5432,host2:5432/archive?sslmode=require',
+        PG_CONN:
+          'postgres://user:pw@host1:5432,host2:5432/archive?sslmode=require',
       }),
       []
     );
@@ -78,6 +79,29 @@ describe('validateConfig', () => {
         ENABLE_METRICS: 'off',
       }),
       []
+    );
+  });
+
+  test('accepts a valid ENABLED_QUERIES subset', () => {
+    assert.deepStrictEqual(
+      validateConfig({ ...valid, ENABLED_QUERIES: 'blocks, networkState' }),
+      []
+    );
+  });
+
+  test('rejects a typo in ENABLED_QUERIES that would delete a root field', () => {
+    const errors = validateConfig({
+      ...valid,
+      ENABLED_QUERIES: 'blocks,event',
+    });
+    assert.ok(errors.some((e) => /unknown queries: event/.test(e)));
+  });
+
+  test('rejects an empty ENABLED_QUERIES list', () => {
+    assert.ok(
+      validateConfig({ ...valid, ENABLED_QUERIES: '' }).some((e) =>
+        /ENABLED_QUERIES/.test(e)
+      )
     );
   });
 

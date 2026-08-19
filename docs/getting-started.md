@@ -170,9 +170,9 @@ JAEGER_ENDPOINT=http://localhost:14268/api/traces
 
 ## Configuration
 
-The server reads config from environment variables. `PG_CONN` is the only required one. Configuration is validated at startup — a missing `PG_CONN`, a non-numeric `PORT`, or a mistyped boolean makes the server exit immediately with a clear message rather than booting into a broken state.
+The server reads config from environment variables. `PG_CONN` is the only required one. Configuration is validated at startup — a missing `PG_CONN`, a non-numeric `PORT`, a mistyped boolean, or an invalid `ENABLED_QUERIES` value makes the server exit immediately with a clear message rather than booting into a broken state.
 
-Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `on`/`off` (case-insensitive); `false` reliably means off.
+Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `on`/`off` (case-insensitive); `false` reliably means off. Any other non-empty spelling now aborts startup instead of being interpreted inconsistently. `ENABLE_LOGGING`, `ENABLE_INTROSPECTION`, and `ENABLE_JAEGER` previously treated any non-empty value as on; `ENABLE_GRAPHIQL` and `ENABLE_BLOCK_TRANSACTION_DETAILS` previously only accepted the literal string `true` as on.
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -195,10 +195,11 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `GRAPHQL_MAX_COST` | `5000` | Max estimated query cost (depth/field heuristic) |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
-| `ENABLE_LOGGING` | `false` | Enable request logging |
+| `ENABLE_LOGGING` | `false` | Enable OpenTelemetry request tracing |
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
+| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,networkState,blocks` to expose; omitted fields are removed from the schema |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
@@ -294,9 +295,20 @@ This query returns the latest indexed block height — compare it with [MinaScan
 ```graphql
 query GetEvents {
   events(input: { address: "B62..." }) {
-    blockInfo { height stateHash timestamp chainStatus }
-    eventData { data }
-    transactionInfo { status hash memo }
+    blockInfo {
+      height
+      stateHash
+      timestamp
+      chainStatus
+    }
+    eventData {
+      data
+    }
+    transactionInfo {
+      status
+      hash
+      memo
+    }
   }
 }
 ```
@@ -307,14 +319,14 @@ Replace `B62...` with the address of the zkApp whose events you want.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `An error occurred: AggregateError [ECONNREFUSED]` | `PG_CONN` host/port wrong or DB not running | Verify with `psql "$PG_CONN" -c 'SELECT 1'` |
-| `relation "..." does not exist` on startup | Postgres reachable but not an archive-node schema | Point `PG_CONN` at an actual archive-node DB |
-| `/` returns 404 in the browser | `ENABLE_GRAPHIQL` not set | Set `ENABLE_GRAPHIQL=true` and restart |
-| `EADDRINUSE: address already in use :::8080` | Port already taken | `PORT=<free port>` and restart |
+| Symptom                                                    | Likely cause                                      | Fix                                                      |
+| ---------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `An error occurred: AggregateError [ECONNREFUSED]`         | `PG_CONN` host/port wrong or DB not running       | Verify with `psql "$PG_CONN" -c 'SELECT 1'`              |
+| `relation "..." does not exist` on startup                 | Postgres reachable but not an archive-node schema | Point `PG_CONN` at an actual archive-node DB             |
+| `/` returns 404 in the browser                             | `ENABLE_GRAPHIQL` not set                         | Set `ENABLE_GRAPHIQL=true` and restart                   |
+| `EADDRINUSE: address already in use :::8080`               | Port already taken                                | `PORT=<free port>` and restart                           |
 | Compose: API starts but logs `relation ... does not exist` | Snapshot still loading into Postgres on first run | Wait for the `postgres` container to finish initialising |
-| Compose: snapshot download script fails | Network or storage limit | Re-run `./scripts/download_db.sh`; check disk space |
+| Compose: snapshot download script fails                    | Network or storage limit                          | Re-run `./scripts/download_db.sh`; check disk space      |
 
 ---
 
