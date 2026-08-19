@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import pino from 'pino';
 import type { LogLevel } from 'graphql-yoga';
 
@@ -55,7 +56,11 @@ function createLogger(
   const level = resolveLogLevel(env);
   return pino({
     level,
-    base: { service: env.JAEGER_SERVICE_NAME ?? 'archive-api' },
+    base: {
+      pid: process.pid,
+      hostname: hostname(),
+      service: env.JAEGER_SERVICE_NAME ?? 'archive-api',
+    },
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: {
       // Log the level name ("info") instead of its numeric code.

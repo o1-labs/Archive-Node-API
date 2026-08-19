@@ -47,7 +47,7 @@ npx @o1-labs/mina-archive-node-graphql
 export PG_CONN='postgresql://postgres:postgres@localhost:5432/archive'
 export ENABLE_GRAPHIQL=true        # optional, exposes GraphiQL UI at /
 mina-archive-node-graphql
-# → Server is running on port: 8080
+# → {"level":"info",...,"port":"8080","msg":"server started"}
 ```
 
 Or via a `.env` file (Node 20+ supports `--env-file` natively):
@@ -89,7 +89,7 @@ docker run --rm \
   -e PG_CONN='postgresql://postgres:postgres@host.docker.internal:5432/archive' \
   -e ENABLE_GRAPHIQL=true \
   ghcr.io/o1-labs/archive-node-api:latest
-# → Server is running on port: 8080
+# → {"level":"info",...,"port":"8080","msg":"server started"}
 ```
 
 Notes:
@@ -147,7 +147,7 @@ Compose will:
 - start Jaeger for tracing
 - build and start the API on port `8080`
 
-Once you see `Server is running on port: 8080` in the logs, you're up.
+Once you see a `server started` log line with `"port":"8080"`, you're up.
 
 ### Variant: only Postgres + Jaeger (use when iterating on the API itself)
 
@@ -228,13 +228,14 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 
 - Logs are emitted as **structured JSON** (one object per line) to stdout, ready for aggregation — independent of the optional Jaeger tracing (`ENABLE_LOGGING`).
 - Each request is assigned a correlation id (honouring an inbound `X-Request-Id` header) and logged once with method, path, status, and duration. GraphQL execution errors are logged with the same `requestId`.
+- Inbound `X-Request-Id` values are capped and sanitized before logging; blank or fully unsafe values are replaced with a generated UUID.
 - Probe endpoints (`/healthcheck`, `/readiness`) are not access-logged, to avoid noise from orchestrator health checks.
 
 ---
 
 ## Verification
 
-Once the server prints `Server is running on port: 8080`:
+Once the server prints a `server started` log line:
 
 ```sh
 # liveness probe — process is up (does not check the DB)

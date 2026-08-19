@@ -2,6 +2,7 @@ import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
+import type { GraphQLError } from 'graphql';
 
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
@@ -70,7 +71,14 @@ async function buildPlugins() {
             {
               requestId: request ? requestIdFor(request) : undefined,
               variables: args?.args?.variableValues,
-              errors: args.result.errors,
+              errors: args.result.errors.map((error: GraphQLError) => ({
+                message: error.message,
+                path: error.path,
+                locations: error.locations,
+                stack: error.originalError?.stack ?? error.stack,
+                code: (error.originalError as { code?: string } | undefined)
+                  ?.code,
+              })),
             },
             'graphql execution errors'
           );

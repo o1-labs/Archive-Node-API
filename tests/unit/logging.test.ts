@@ -77,24 +77,60 @@ describe('useRequestLogging', () => {
     assert.strictEqual(entries[0].obj.requestId, 'trace-123');
   });
 
-  test('rejects oversized inbound X-Request-Id values', async () => {
+  test('caps and sanitises an inbound X-Request-Id', async () => {
     const entries: Entry[] = [];
     const yoga = serverWith(entries);
-    const oversized = 'x'.repeat(129);
-
     await yoga.fetch('http://localhost/', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-request-id': oversized,
+        'x-request-id': `bad"\\\u0007id${'A'.repeat(500)}`,
       },
       body: JSON.stringify({ query: '{ __typename }' }),
     });
 
-    const requestId = entries[0].obj.requestId;
-    assert.strictEqual(typeof requestId, 'string');
-    assert.notStrictEqual(requestId, oversized);
-    assert.ok((requestId as string).length <= 128);
+    const id = entries[0].obj.requestId as string;
+    assert.strictEqual(id.length, 128);
+    assert.match(id, /^[\x20-\x7e]+$/);
+    assert.ok(!id.includes('"'));
+    assert.ok(!id.includes('\\'));
+  });
+
+  test('generates an id when the inbound X-Request-Id is blank', async () => {
+    const entries: Entry[] = [];
+    const yoga = serverWith(entries);
+    await yoga.fetch('http://localhost/', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-request-id': '   ' },
+      body: JSON.stringify({ query: '{ __typename }' }),
+    });
+
+    assert.match(entries[0].obj.requestId as string, /^[0-9a-f-]{36}$/);
+  });
+
+  test('backfills request metadata for CORS preflight responses', async () => {
+    const entries: Entry[] = [];
+    const origin = 'https://explorer.example.com';
+    const yoga = createYoga({
+      schema,
+      graphqlEndpoint: '/',
+      cors: { origin, methods: ['GET', 'POST'] },
+      plugins: [useRequestLogging(captureLogger(entries))],
+    });
+    await yoga.fetch('http://localhost/', {
+      method: 'OPTIONS',
+      headers: {
+        origin,
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type',
+      },
+    });
+
+    assert.strictEqual(entries.length, 1);
+    assert.strictEqual(entries[0].obj.method, 'OPTIONS');
+    assert.strictEqual(entries[0].obj.status, 204);
+    assert.strictEqual(typeof entries[0].obj.requestId, 'string');
+    assert.strictEqual(typeof entries[0].obj.durationMs, 'number');
   });
 
   test('does not access-log probe endpoints', async () => {
