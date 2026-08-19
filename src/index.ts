@@ -6,7 +6,28 @@ import { buildPlugins } from './server/plugins.js';
 import { createGracefulShutdown } from './server/graceful-shutdown.js';
 
 const PORT = process.env.PORT || 8080;
-const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000;
+const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 20000;
+
+function withTimeout(
+  label: string,
+  ms: number,
+  run: () => Promise<unknown>
+): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    run(),
+    new Promise<void>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms}ms`)),
+        ms
+      );
+    }),
+  ])
+    .then(() => undefined)
+    .finally(() => {
+      if (timer !== undefined) clearTimeout(timer);
+    });
+}
 
 (async function main() {
   try {
@@ -30,12 +51,16 @@ const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000;
           server.closeIdleConnections();
         }),
       closers: [
-        // Flush any buffered OpenTelemetry spans before exit.
-        async () => {
-          if (provider) await provider.shutdown();
-        },
-        // Close the Postgres connection pool.
-        () => context.db_client.close(),
+        // Flush buffered spans without letting an unreachable collector consume
+        // the whole shutdown budget.
+        () =>
+          withTimeout('trace flush', 3000, async () => {
+            if (provider) await provider.shutdown();
+          }),
+        // Close the Postgres pool. postgres.js waits forever by default for
+        // open connections, so bound the wait and let the force timer handle any
+        // still-running queries.
+        () => withTimeout('pg pool close', 5000, () => context.db_client.close()),
       ],
     });
 

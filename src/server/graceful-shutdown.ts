@@ -55,7 +55,6 @@ function createGracefulShutdown(options: GracefulShutdownOptions) {
       log('Graceful shutdown timed out; forcing exit.');
       exitOnce(1);
     }, timeoutMs);
-    if (typeof forceTimer.unref === 'function') forceTimer.unref();
 
     try {
       await closeServer();
