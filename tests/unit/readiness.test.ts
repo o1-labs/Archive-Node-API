@@ -18,6 +18,7 @@ describe('Readiness probe', () => {
     const response = await yoga.fetch(`http://localhost${READINESS_PATH}`);
     assert.strictEqual(response.status, 200);
     assert.deepStrictEqual(await response.json(), { status: 'ready' });
+    assert.strictEqual(response.headers.get('cache-control'), 'no-store');
   });
 
   test('returns 503 and "not ready" when the database is unreachable', async () => {
@@ -25,6 +26,44 @@ describe('Readiness probe', () => {
     const response = await yoga.fetch(`http://localhost${READINESS_PATH}`);
     assert.strictEqual(response.status, 503);
     assert.deepStrictEqual(await response.json(), { status: 'not ready' });
+  });
+
+  test('reports not-ready when the ping exceeds its timeout', async () => {
+    const originalWarn = console.warn;
+    console.warn = () => {};
+    const yoga = createYoga({
+      schema,
+      graphqlEndpoint: '/',
+      plugins: [
+        useReadiness({ ping: () => new Promise<boolean>(() => {}) }, 20),
+      ],
+    });
+    try {
+      const response = await yoga.fetch(`http://localhost${READINESS_PATH}`);
+      assert.strictEqual(response.status, 503);
+      assert.deepStrictEqual(await response.json(), { status: 'not ready' });
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
+
+  test('reports not-ready, not 500, when the ping rejects, and leaks nothing', async () => {
+    const yoga = serverWith(async () => {
+      throw new Error('connect ECONNREFUSED 10.0.0.5:5432');
+    });
+    const response = await yoga.fetch(`http://localhost${READINESS_PATH}`);
+    assert.strictEqual(response.status, 503);
+    const body = await response.text();
+    assert.deepStrictEqual(JSON.parse(body), { status: 'not ready' });
+    assert.ok(!body.includes('ECONNREFUSED'));
+    assert.ok(!body.includes('5432'));
+  });
+
+  test('accepts a trailing slash on the readiness path', async () => {
+    const yoga = serverWith(async () => true);
+    const response = await yoga.fetch(`http://localhost${READINESS_PATH}/`);
+    assert.strictEqual(response.status, 200);
+    assert.deepStrictEqual(await response.json(), { status: 'ready' });
   });
 
   test('does not intercept non-readiness requests', async () => {
