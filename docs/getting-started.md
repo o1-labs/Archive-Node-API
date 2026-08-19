@@ -76,7 +76,7 @@ Use this when you already have an archive-node Postgres reachable but don't want
 docker pull ghcr.io/o1-labs/archive-node-api:latest
 
 # or pin a specific version (recommended for production)
-docker pull ghcr.io/o1-labs/archive-node-api:0.0.6
+docker pull ghcr.io/o1-labs/archive-node-api:1.0.0
 ```
 
 ### 2. Run
