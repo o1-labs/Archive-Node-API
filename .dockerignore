@@ -4,6 +4,7 @@ coverage
 .git
 .github
 .memsearch
+.env*
 db
 data
 *.log
