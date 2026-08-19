@@ -47,16 +47,17 @@ application itself speaks plain HTTP on `PORT` and does not terminate TLS.
 
 Requirements:
 
-- **Set `X-Forwarded-For` and `TRUST_PROXY` together.** A gateway should append
-  `X-Forwarded-For`, and the API derives the rate-limit client from that header
-  only as far as `TRUST_PROXY` allows: it names how many proxy hops sit in front
-  of the API, and the client is read that many entries from the *right* of the
-  header — the part your own proxies appended. `TRUST_PROXY` has no default;
-  while it is unset, rate limiting is disabled with a startup warning. Use
-  `TRUST_PROXY=0` only for a directly exposed server. Behind a gateway, set the
-  real hop count for that topology (a GCP external Application Load Balancer
-  commonly needs `2`). Too low collapses clients onto a proxy address; too high
-  can trust caller-prepended entries.
+- **TLS at the gateway.** Never expose the plain-HTTP app port to the internet.
+- **Set `X-Forwarded-For` and `TRUST_PROXY` together (from 1.0.0).** A gateway
+  should append `X-Forwarded-For`, and the API derives the rate-limit client
+  from that header only as far as `TRUST_PROXY` allows: it names how many proxy
+  hops sit in front of the API, and the client is read that many entries from the
+  *right* of the header — the part your own proxies appended. `TRUST_PROXY` has
+  no default; while it is unset, rate limiting is disabled with a startup
+  warning. Use `TRUST_PROXY=0` only for a directly exposed server. Behind a
+  gateway, set the real hop count for that topology (a GCP external Application
+  Load Balancer commonly needs `2`). Too low collapses clients onto a proxy
+  address; too high can trust caller-prepended entries.
 - **Keep Postgres private.** The database must not be reachable from the public
   internet — only from the API instances.
 
@@ -72,12 +73,14 @@ the [configuration](./getting-started.md#configuration):
 | Postgres **statement timeout** & pool limits | on | Caps how long/much a single query can consume |
 | **CORS** | same-origin only | Cross-origin browser access is opt-in — see the caveat below before locking it down |
 | **Introspection** | off | Schema introspection disabled unless explicitly enabled |
-| Field-suggestion blocking | on | Error messages don't leak schema shape |
+| Field-suggestion blocking | on | Hides `Did you mean ...?` suggestions while preserving GraphQL validation text |
 
 > **These controls arrive in 1.0.0.** On `0.0.x` releases they are absent or
-> default-open — notably `CORS_ORIGIN` defaults to `*` there, so cross-origin
-> access is wide open rather than opt-in. Check your running version before
-> relying on any row above.
+> default-open, or have older env parsing — notably `CORS_ORIGIN` defaults to
+> `*` there, so cross-origin access is wide open rather than opt-in.
+> Introspection disabling already exists on `0.0.x`, but any non-empty
+> `ENABLE_INTROSPECTION` value, including `false`, enables it. Check your
+> running version before relying on any row above.
 
 Tune these to your traffic; see the configuration table for the exact
 environment variables and defaults.
@@ -138,7 +141,9 @@ the credentials cannot modify or delete data.
 - [ ] `CORS_ORIGIN` matches your clients: `*` for a public API any browser may
       call, or an explicit allowlist if your front-ends are known and fixed —
       leaving it unset blocks all cross-origin browser clients
-- [ ] `ENABLE_GRAPHIQL` and `ENABLE_INTROSPECTION` off (unless intentionally public)
+- [ ] `ENABLE_GRAPHIQL` and `ENABLE_INTROSPECTION` off (unless intentionally
+      public) — on `0.0.x`, leave them unset; any non-empty value, including
+      `false`, enables introspection
 - [ ] Secrets injected via env / secret manager; SSL to Postgres where applicable
 
 ## Scope
