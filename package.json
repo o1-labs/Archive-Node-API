@@ -50,6 +50,9 @@
   ],
   "author": "O(1) Labs <build@o1labs.org>",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.1",
     "@graphql-codegen/typescript": "^5.0.2",
