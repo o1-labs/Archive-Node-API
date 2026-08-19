@@ -6,7 +6,7 @@ updates:
     directory: '/'
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       production-dependencies:
         dependency-type: production
@@ -18,9 +18,15 @@ updates:
     directory: '/'
     schedule:
       interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - '*'
 
   # Keep the pinned base-image digest in the Dockerfile fresh.
   - package-ecosystem: docker
     directory: '/'
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
