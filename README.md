@@ -81,14 +81,19 @@ Tagged commits trigger CI to publish:
 - npm (public): [`@o1-labs/mina-archive-node-graphql`](https://www.npmjs.com/package/@o1-labs/mina-archive-node-graphql)
 - Docker (GHCR): `ghcr.io/o1-labs/archive-node-api`
 
-To cut a release:
+Normal releases after `1.0.0` are cut with:
 
 ```sh
 npm version <major|minor|patch>
 git push --follow-tags
 ```
 
-CI builds, publishes the npm package with provenance, and pushes Docker tags `1.2.3`, `1.2`, `1`, `latest`.
+For the initial `1.0.0` tag and current npm trusted-publishing caveat, see
+the [versioning & schema stability policy](./docs/versioning.md#releasing).
+
+CI builds, publishes the npm package with provenance once npm trusted
+publishing is configured, and pushes Docker tags `1.2.3`, `1.2`, `1`,
+`latest`.
 
 From 1.0.0 the GraphQL schema, HTTP endpoints, and configuration are a versioned public contract — see the [versioning & schema stability policy](./docs/versioning.md) for what counts as a breaking change and how deprecations work.
 
