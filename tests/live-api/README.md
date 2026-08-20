@@ -36,7 +36,32 @@ STAGING_GRAPHQL_ENDPOINT=http://localhost:4000 LIVE_API_TESTS=true npm test
 
 # Include pending-chain tests (requires DB access)
 PG_CONN=postgresql://user:pass@host:5432/archive LIVE_API_TESTS=true npm test
+
+# Run just the live-api suite directly against an endpoint
+STAGING_GRAPHQL_ENDPOINT=https://my-archive-api npm run test:live-api
 ```
+
+## Nightly multi-network runs (CI)
+
+The [`Live Integration`](../../.github/workflows/live-integration.yaml) workflow
+runs this suite nightly against **devnet, mainnet, and mesa** to catch schema or
+query drift against each network's real data without slowing the PR loop.
+
+Each network's endpoint is read from a repository variable; a network with no
+configured URL is skipped (so the job stays green until it's set):
+
+| Repo variable | Network |
+|---------------|---------|
+| `DEVNET_ARCHIVE_API_URL`  | devnet |
+| `MAINNET_ARCHIVE_API_URL` | mainnet |
+| `MESA_ARCHIVE_API_URL`    | mesa |
+
+Set them under **Settings → Secrets and variables → Actions → Variables**, or
+trigger the workflow manually from the Actions tab.
+
+> Note: `actions.test.ts` is still a placeholder — it needs a known mainnet/mesa
+> zkApp with actions to snapshot fixtures against. Filling that in (and adding a
+> successful-`zkappCommands` fixture) is the remaining piece of test coverage.
 
 ## Fixtures
 
