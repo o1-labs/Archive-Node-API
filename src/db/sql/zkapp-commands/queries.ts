@@ -144,6 +144,66 @@ function blockRangeCte(
   `;
 }
 
+function accountUpdateFilterCtes(
+  dbClient: postgres.Sql,
+  accountPublicKey?: string,
+  tokenId?: string
+) {
+  if (!accountPublicKey && !tokenId) {
+    return dbClient``;
+  }
+
+  return dbClient`
+    ,
+    matching_account_identifiers AS (
+      SELECT ai.id
+      FROM account_identifiers ai
+      JOIN public_keys pk ON ai.public_key_id = pk.id
+      JOIN tokens t ON ai.token_id = t.id
+      WHERE 1 = 1
+        ${
+          accountPublicKey
+            ? dbClient`AND pk.value = ${accountPublicKey}`
+            : dbClient``
+        }
+        ${tokenId ? dbClient`AND t.value = ${tokenId}` : dbClient``}
+    ),
+    target_account_updates AS (
+      SELECT zkau.id AS account_update_id
+      FROM matching_account_identifiers mai
+      JOIN zkapp_account_update_body zkub
+        ON zkub.account_identifier_id = mai.id
+      JOIN zkapp_account_update zkau ON zkau.body_id = zkub.id
+    )
+  `;
+}
+
+function accountUpdateRowsJoin(
+  dbClient: postgres.Sql,
+  accountPublicKey?: string,
+  tokenId?: string
+) {
+  if (!accountPublicKey && !tokenId) {
+    return dbClient`
+      JOIN LATERAL unnest(zkc.zkapp_account_updates_ids)
+        WITH ORDINALITY AS account_update_ids(account_update_id, account_update_order) ON true
+      JOIN zkapp_account_update zkau ON zkau.id = account_update_ids.account_update_id
+    `;
+  }
+
+  return dbClient`
+    JOIN target_account_updates tau
+      ON tau.account_update_id = ANY(zkc.zkapp_account_updates_ids)
+    JOIN LATERAL (
+      SELECT account_update_ids.account_update_id, account_update_ids.account_update_order
+      FROM unnest(zkc.zkapp_account_updates_ids)
+        WITH ORDINALITY AS account_update_ids(account_update_id, account_update_order)
+      WHERE account_update_ids.account_update_id = tau.account_update_id
+    ) account_update_ids ON true
+    JOIN zkapp_account_update zkau ON zkau.id = tau.account_update_id
+  `;
+}
+
 export function getZkappCommandsQuery(
   dbClient: postgres.Sql,
   status: BlockStatusFilter,
@@ -154,6 +214,7 @@ export function getZkappCommandsQuery(
 ) {
   return dbClient<ZkappCommandDatabaseRow[]>`
     WITH ${blockRangeCte(dbClient, status, to, from)}
+    ${accountUpdateFilterCtes(dbClient, accountPublicKey, tokenId)}
     SELECT
       b.id AS block_id,
       b.state_hash,
@@ -195,9 +256,7 @@ export function getZkappCommandsQuery(
     JOIN zkapp_commands zkc ON bzkc.zkapp_command_id = zkc.id
     JOIN zkapp_fee_payer_body fpb ON zkc.zkapp_fee_payer_body_id = fpb.id
     JOIN public_keys fee_payer_pk ON fpb.public_key_id = fee_payer_pk.id
-    JOIN LATERAL unnest(zkc.zkapp_account_updates_ids)
-      WITH ORDINALITY AS account_update_ids(account_update_id, account_update_order) ON true
-    JOIN zkapp_account_update zkau ON zkau.id = account_update_ids.account_update_id
+    ${accountUpdateRowsJoin(dbClient, accountPublicKey, tokenId)}
     JOIN zkapp_account_update_body zkub ON zkau.body_id = zkub.id
     JOIN account_identifiers ai ON zkub.account_identifier_id = ai.id
     JOIN public_keys account_update_pk
@@ -334,26 +393,14 @@ export function getZkappCommandAccountUpdateCountQuery(
 
   return dbClient<{ count: string }[]>`
     WITH ${blockRangeCte(dbClient, status, to, from)}
+    ${accountUpdateFilterCtes(dbClient, accountPublicKey, tokenId)}
     SELECT COUNT(*) AS count
     FROM block_range b
     JOIN blocks_zkapp_commands bzkc
       ON b.id = bzkc.block_id
       AND bzkc.status <> 'failed'
     JOIN zkapp_commands zkc ON bzkc.zkapp_command_id = zkc.id
-    JOIN LATERAL unnest(zkc.zkapp_account_updates_ids)
-      WITH ORDINALITY AS account_update_ids(account_update_id, account_update_order) ON true
-    JOIN zkapp_account_update zkau ON zkau.id = account_update_ids.account_update_id
-    JOIN zkapp_account_update_body zkub ON zkau.body_id = zkub.id
-    JOIN account_identifiers ai ON zkub.account_identifier_id = ai.id
-    JOIN public_keys account_update_pk
-      ON ai.public_key_id = account_update_pk.id
-      ${
-        accountPublicKey
-          ? dbClient`AND account_update_pk.value = ${accountPublicKey}`
-          : dbClient``
-      }
-    JOIN tokens t
-      ON ai.token_id = t.id
-      ${tokenId ? dbClient`AND t.value = ${tokenId}` : dbClient``}
+    JOIN target_account_updates tau
+      ON tau.account_update_id = ANY(zkc.zkapp_account_updates_ids);
   `;
 }
