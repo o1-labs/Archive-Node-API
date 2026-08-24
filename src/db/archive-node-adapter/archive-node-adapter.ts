@@ -22,6 +22,12 @@ import { INetworkService } from '../../services/network-service/network-service.
 import { BlocksService } from '../../services/blocks-service/blocks-service.js';
 import { IBlocksService } from '../../services/blocks-service/blocks-service.interface.js';
 
+/**
+ * Connect deadline for the readiness pinger, in seconds. Kept short so a probe
+ * fails fast rather than hanging for the driver's 30s default.
+ */
+const PING_CONNECT_TIMEOUT_S = 2;
+
 export class ArchiveNodeAdapter implements DatabaseAdapter {
   /**
    * Connections are created lazily once a query is created.
@@ -30,6 +36,12 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
    * `postgres.Sql` instance across the adapter is safe.
    */
   private client: postgres.Sql;
+  /**
+   * Dedicated single-connection client for readiness pings. postgres.js queues
+   * onto busy connections, so using the main pool can make a merely-busy DB look
+   * unreachable while long GraphQL queries are running.
+   */
+  private pingClient: postgres.Sql;
   private eventsService: IEventsService;
   private actionsService: IActionsService;
   private networkService: INetworkService;
@@ -41,6 +53,11 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
         'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
       );
     this.client = postgres(connectionString);
+    this.pingClient = postgres(connectionString, {
+      max: 1,
+      idle_timeout: 60,
+      connect_timeout: PING_CONNECT_TIMEOUT_S,
+    });
     this.eventsService = new EventsService(this.client);
     this.actionsService = new ActionsService(this.client);
     this.networkService = new NetworkService(this.client);
@@ -95,7 +112,21 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     }
   }
 
+  async ping(): Promise<boolean> {
+    try {
+      await this.pingClient`SELECT 1`;
+      return true;
+    } catch (error) {
+      console.warn(
+        `[readiness] database ping failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      return false;
+    }
+  }
+
   async close() {
-    return this.client.end();
+    await Promise.all([this.client.end(), this.pingClient.end()]);
   }
 }

@@ -178,6 +178,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `PORT` | `8080` | Port the GraphQL server listens on |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
 | `CORS_ORIGIN` | `*` | CORS allowed origin |
+| `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
@@ -199,13 +200,36 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 Once the server prints `Server is running on port: 8080`:
 
 ```sh
-# health probe — should return OK
+# liveness probe — process is up (does not check the DB)
 curl -fsS http://localhost:8080/healthcheck && echo
+
+# readiness probe — returns 200 only when Postgres is reachable, else 503
+curl -fsS http://localhost:8080/readiness && echo
 
 # sanity GraphQL query
 curl -fsS http://localhost:8080/ \
   -H 'Content-Type: application/json' \
   -d '{"query":"{ __typename }"}'
+```
+
+Use `/healthcheck` as the Kubernetes **liveness** probe and `/readiness` as the **readiness** probe: a node whose database is unreachable reports not-ready (so it stops receiving traffic) while staying live (so it isn't needlessly restarted).
+
+Suggested probe settings — readiness should tolerate a brief database blip because every replica usually shares one Postgres:
+
+```yaml
+livenessProbe:
+  httpGet: { path: /healthcheck, port: 8080 }
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+readinessProbe:
+  httpGet: { path: /readiness, port: 8080 }
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3 # > READINESS_PING_TIMEOUT_MS
+  failureThreshold: 3
+  successThreshold: 1
 ```
 
 If you set `ENABLE_GRAPHIQL=true`, open <http://localhost:8080/> in a browser for the in-page query explorer.

@@ -20,4 +20,9 @@ export interface DatabaseAdapter {
     sortBy: BlockSortByInput | null | undefined,
     options: unknown
   ): Promise<Blocks>;
+  /**
+   * Lightweight connectivity check for readiness probes. Resolves `true` when the
+   * database answers a trivial query, `false` otherwise. Never throws.
+   */
+  ping(): Promise<boolean>;
 }
