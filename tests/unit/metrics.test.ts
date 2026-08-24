@@ -23,10 +23,11 @@ async function graphql(yoga: ReturnType<typeof serverWithFreshMetrics>) {
 }
 
 async function serverWithBuiltPlugins() {
+  const built = await buildPlugins();
   return createYoga({
     schema,
     graphqlEndpoint: '/',
-    plugins: await buildPlugins(),
+    plugins: built.plugins,
   });
 }
 
