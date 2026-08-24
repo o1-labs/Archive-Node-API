@@ -1,11 +1,17 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
+import type { Sql } from 'postgres';
 import {
   ZkappCommandsService,
   assertZkappCommandAccountUpdateLimit,
   normalizeZkappCommandRange,
 } from '../../../src/services/zkapp-commands-service/zkapp-commands-service.js';
 import type { ZkappCommandDatabaseRow } from '../../../src/db/sql/zkapp-commands/types.js';
+import {
+  getZkappCommandAccountUpdateCountQuery,
+  getZkappCommandsQuery,
+} from '../../../src/db/sql/zkapp-commands/queries.js';
+import { BlockStatusFilter } from '../../../src/blockchain/types.js';
 import {
   ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT,
   ZKAPP_COMMAND_RANGE_SIZE,
@@ -51,6 +57,15 @@ function makeRow(
     network_precondition_global_slot_upper_bound: 300,
     ...overrides,
   };
+}
+
+function makeSqlTextClient(): Sql<{}> {
+  return ((strings: TemplateStringsArray, ...values: unknown[]) =>
+    strings.reduce(
+      (query, part, index) =>
+        query + part + (index < values.length ? String(values[index]) : ''),
+      ''
+    )) as unknown as Sql<{}>;
 }
 
 describe('ZkappCommandsService', () => {
@@ -166,6 +181,68 @@ describe('ZkappCommandsService', () => {
       assert.strictEqual(result.length, 2);
       assert.strictEqual(result[0].blockInfo.stateHash, 'block_1');
       assert.strictEqual(result[1].blockInfo.stateHash, 'block_2');
+    });
+  });
+
+  describe('SQL account-update limit preflight', () => {
+    test('filtered count query pre-resolves target updates without range-wide unnest', () => {
+      const query = getZkappCommandAccountUpdateCountQuery(
+        makeSqlTextClient(),
+        BlockStatusFilter.all,
+        1000,
+        0,
+        'B62missing',
+        '1'
+      ) as unknown as string;
+
+      assert.match(query, /matching_account_identifiers/);
+      assert.match(query, /target_account_updates/);
+      assert.match(
+        query,
+        /tau\.account_update_id = ANY\(zkc\.zkapp_account_updates_ids\)/
+      );
+      assert.doesNotMatch(
+        query,
+        /JOIN LATERAL unnest\(zkc\.zkapp_account_updates_ids\)/
+      );
+    });
+
+    test('filtered data query joins target updates before recovering ordinality', () => {
+      const query = getZkappCommandsQuery(
+        makeSqlTextClient(),
+        BlockStatusFilter.all,
+        1000,
+        0,
+        'B62account',
+        '1'
+      ) as unknown as string;
+
+      const targetJoinIndex = query.indexOf('JOIN target_account_updates tau');
+      const unnestIndex = query.indexOf(
+        'FROM unnest(zkc.zkapp_account_updates_ids)'
+      );
+
+      assert.notStrictEqual(targetJoinIndex, -1);
+      assert.ok(unnestIndex > targetJoinIndex);
+      assert.match(
+        query,
+        /WHERE account_update_ids\.account_update_id = tau\.account_update_id/
+      );
+    });
+
+    test('unfiltered count query keeps the cardinality shortcut', () => {
+      const query = getZkappCommandAccountUpdateCountQuery(
+        makeSqlTextClient(),
+        BlockStatusFilter.all,
+        1000,
+        0
+      ) as unknown as string;
+
+      assert.match(
+        query,
+        /SUM\(cardinality\(zkc\.zkapp_account_updates_ids\)\)/
+      );
+      assert.doesNotMatch(query, /target_account_updates/);
     });
   });
 });
