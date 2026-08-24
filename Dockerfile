@@ -1,16 +1,21 @@
 # Stage 1: Build the TypeScript code
 # Pinned by digest for reproducible, tamper-evident builds; Dependabot's docker
 # ecosystem keeps it current. Bump both stages together.
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS build
+FROM node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019 AS build
 WORKDIR /app
+
+# Artillery pulls Playwright for benchmark tooling, but Docker builds only need
+# the TypeScript server artifacts.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 COPY src ./src
 COPY tsconfig.json ./
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
+FROM node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019
 WORKDIR /app
 
 # tini as PID 1: forwards SIGTERM to node (so graceful shutdown runs) and reaps zombies.
