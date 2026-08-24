@@ -94,7 +94,8 @@ describe('Postgres statement timeout', () => {
       buildPostgresOptions({ PG_STATEMENT_TIMEOUT: '0' })
     );
     try {
-      const [row] = await sql<{ t: string }[]>`SHOW statement_timeout`;
+      const [row] =
+        await sql<{ t: string }[]>`SELECT current_setting('statement_timeout') AS t`;
       assert.strictEqual(row.t, '0');
     } finally {
       await sql.end();
