@@ -52,12 +52,13 @@ Requirements:
   should append `X-Forwarded-For`, and the API derives the rate-limit client
   from that header only as far as `TRUST_PROXY` allows: it names how many proxy
   hops sit in front of the API, and the client is read that many entries from the
-  *right* of the header — the part your own proxies appended. `TRUST_PROXY` has
+  _right_ of the header — the part your own proxies appended. `TRUST_PROXY` has
   no default; while it is unset, rate limiting is disabled with a startup
   warning. Use `TRUST_PROXY=0` only for a directly exposed server. Behind a
-  gateway, set the real hop count for that topology (a GCP external Application
-  Load Balancer commonly needs `2`). Too low collapses clients onto a proxy
-  address; too high can trust caller-prepended entries.
+  gateway, set the real hop count for your topology. A generic single reverse
+  proxy is often `1`; a GCP external Application Load Balancer commonly needs
+  `2` because it appends two `X-Forwarded-For` entries. Too low collapses
+  clients onto a proxy address; too high can trust caller-prepended entries.
 - **Keep Postgres private.** The database must not be reachable from the public
   internet — only from the API instances.
 
@@ -66,14 +67,14 @@ Requirements:
 The service ships with abuse controls that are safe by default and tunable via
 the [configuration](./getting-started.md#configuration):
 
-| Protection | Default | Purpose |
-| --- | --- | --- |
-| Per-IP **rate limiting** | on once `TRUST_PROXY` is set | Bounds request volume per client; disabled with a startup warning while `TRUST_PROXY` is unset |
-| GraphQL **query-cost limits** (depth / aliases / tokens / cost) | on | Rejects expensive/abusive query shapes before execution |
-| Postgres **statement timeout** & pool limits | on | Caps how long/much a single query can consume |
-| **CORS** | same-origin only | Cross-origin browser access is opt-in — see the caveat below before locking it down |
-| **Introspection** | off | Schema introspection disabled unless explicitly enabled |
-| Field-suggestion blocking | on | Hides `Did you mean ...?` suggestions while preserving GraphQL validation text |
+| Protection                                                      | Default                         | Purpose                                                                                                      |
+| --------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Per-IP **rate limiting**                                        | on once `TRUST_PROXY` is set    | Bounds request volume per client; disabled with a startup warning while `TRUST_PROXY` is unset               |
+| GraphQL **query-cost limits** (depth / aliases / tokens / cost) | on                              | Rejects expensive/abusive query shapes before execution                                                      |
+| Postgres **statement timeout** & pool limits                    | on                              | Caps how long/much a single query can consume                                                                |
+| **CORS**                                                        | same-origin only                | Cross-origin browser access is opt-in — see the caveat below before locking it down                          |
+| **Introspection**                                               | off                             | Schema introspection disabled unless explicitly enabled                                                      |
+| Field-suggestion blocking                                       | on                              | Hides `Did you mean ...?` suggestions while preserving GraphQL validation text                                |
 
 > **These controls arrive in 1.0.0.** On `0.0.x` releases they are absent or
 > default-open, or have older env parsing — notably `CORS_ORIGIN` defaults to
@@ -98,7 +99,7 @@ clean. This catches people out, so decide deliberately:
   lapse in hardening: the data is already public, and CORS is not an access
   control (it constrains browsers, not `curl` or a server-side client).
 - **A deployment with a known, fixed set of front-ends** wants those origins
-  listed explicitly. This only limits which *browser pages* may read responses;
+  listed explicitly. This only limits which _browser pages_ may read responses;
   it does not restrict anyone else.
 
 ## Least-privilege database access
@@ -148,7 +149,7 @@ the credentials cannot modify or delete data.
 
 ## Scope
 
-This document covers deploying *this service* securely. It does not cover
+This document covers deploying _this service_ securely. It does not cover
 securing the upstream Mina archive node or its Postgres ingest pipeline. Broader
 production-readiness work (observability, readiness probes, supply-chain
 scanning, runbooks) is tracked in the
