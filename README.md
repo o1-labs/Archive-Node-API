@@ -94,6 +94,8 @@ CI builds, publishes the npm package with provenance, and pushes Docker tags `1.
 
 The bottleneck is the Postgres database, not this server. For production load, point `PG_CONN` at multiple read replicas — the server fans queries across them and recovers automatically as hosts come and go. A recent benchmark on a 12-core / 32 GB box (API + Postgres co-located) sustained ~800 req/s with p99 latency of 39 ms. Use `npm run benchmark` to size your own deployment.
 
+For SLOs, capacity guidance, what to monitor, and incident response, see the [operations runbook](./docs/runbook.md).
+
 ## Contributing
 
 - AI coding agents: read [`AGENTS.md`](./AGENTS.md) first.
