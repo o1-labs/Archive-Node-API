@@ -5,12 +5,19 @@ import { useOpenTelemetry } from '@envelop/opentelemetry';
 import { inspect } from 'node:util';
 
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
+import { useMetrics } from './metrics.js';
 
 export { buildPlugins };
 
 async function buildPlugins() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
+
+  if (process.env.ENABLE_METRICS === 'true') {
+    // Prometheus /metrics endpoint + RED metrics for every request.
+    plugins.push(useMetrics());
+  }
+
   plugins.push(useGraphQlJit());
 
   if (process.env.ENABLE_LOGGING) {

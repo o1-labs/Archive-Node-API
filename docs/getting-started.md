@@ -182,6 +182,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
+| `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
@@ -233,6 +234,16 @@ readinessProbe:
 ```
 
 If you set `ENABLE_GRAPHIQL=true`, open <http://localhost:8080/> in a browser for the in-page query explorer.
+
+### Metrics
+
+Set `ENABLE_METRICS=true` to expose Prometheus metrics at `/metrics` — RED metrics (`http_requests_total`, `http_request_duration_seconds`, `http_requests_in_flight`) plus standard Node process metrics.
+
+`/metrics` shares the API port and is unauthenticated. Restrict it to your Prometheus scrapers at the ingress or load balancer.
+
+```sh
+curl -fsS http://localhost:8080/metrics | head
+```
 
 ### Confirm the DB is wired up
 
