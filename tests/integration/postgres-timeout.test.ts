@@ -11,10 +11,49 @@ import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert';
 import postgres from 'postgres';
 import { buildPostgresOptions } from '../../src/db/archive-node-adapter/postgres-options.js';
-import { setupTestDatabase, teardownTestDatabase, connectionString } from './setup.js';
+import {
+  setupTestDatabase,
+  teardownTestDatabase,
+  connectionString,
+} from './setup.js';
 
 /** Postgres SQLSTATE for "canceling statement due to statement timeout". */
 const QUERY_CANCELED = '57014';
+const TEST_DATABASE = decodeURIComponent(
+  new URL(connectionString).pathname.slice(1)
+);
+
+function quoteIdentifier(identifier: string): string {
+  return `"${identifier.replaceAll('"', '""')}"`;
+}
+
+function quoteLiteral(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+async function setDatabaseStatementTimeout(value: string): Promise<void> {
+  const sql = postgres(connectionString, { max: 1 });
+  try {
+    await sql.unsafe(
+      `ALTER DATABASE ${quoteIdentifier(
+        TEST_DATABASE
+      )} SET statement_timeout = ${quoteLiteral(value)}`
+    );
+  } finally {
+    await sql.end();
+  }
+}
+
+async function resetDatabaseStatementTimeout(): Promise<void> {
+  const sql = postgres(connectionString, { max: 1 });
+  try {
+    await sql.unsafe(
+      `ALTER DATABASE ${quoteIdentifier(TEST_DATABASE)} RESET statement_timeout`
+    );
+  } finally {
+    await sql.end();
+  }
+}
 
 describe('Postgres statement timeout', () => {
   before(async () => {
@@ -89,16 +128,19 @@ describe('Postgres statement timeout', () => {
   });
 
   test('PG_STATEMENT_TIMEOUT=0 sends an explicit session-level disable', async () => {
+    await setDatabaseStatementTimeout('1s');
     const sql = postgres(
       connectionString,
       buildPostgresOptions({ PG_STATEMENT_TIMEOUT: '0' })
     );
     try {
-      const [row] =
-        await sql<{ t: string }[]>`SELECT current_setting('statement_timeout') AS t`;
+      const [row] = await sql<
+        { t: string }[]
+      >`SELECT current_setting('statement_timeout') AS t`;
       assert.strictEqual(row.t, '0');
     } finally {
       await sql.end();
+      await resetDatabaseStatementTimeout();
     }
   });
 });
