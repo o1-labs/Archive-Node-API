@@ -8,8 +8,8 @@ export {
 };
 export type { RateLimitConfig };
 
-/** Health probes must never be throttled, so orchestrators keep working. */
-const HEALTHCHECK_PATH = '/healthcheck';
+/** Probes must never be throttled, so orchestrators keep working. */
+const EXEMPT_PATHS = new Set(['/healthcheck', '/readiness']);
 
 /**
  * Global, per-client-IP request rate limiting. A public GraphQL endpoint with no
@@ -235,7 +235,7 @@ function useRateLimit(
 
   return {
     onRequest({ request, serverContext, url, endResponse, fetchAPI }) {
-      if (url.pathname === HEALTHCHECK_PATH) return;
+      if (EXEMPT_PATHS.has(url.pathname)) return;
       // Yoga's CORS plugin answers OPTIONS before user-land plugins today, but
       // keep the exemption local too: a throttled preflight is an opaque browser
       // CORS error rather than a useful 429.

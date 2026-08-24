@@ -330,5 +330,20 @@ describe('Rate limiting', () => {
         assert.notStrictEqual((await probe()).status, 429);
       }
     });
+
+    test('never rate-limits the readiness probe', async () => {
+      const yoga = createYoga({
+        schema,
+        graphqlEndpoint: '/',
+        plugins: [useRateLimit({ RATE_LIMIT_MAX: '1', TRUST_PROXY: '1' })],
+      });
+      const probe = () =>
+        yoga.fetch('http://localhost/readiness', {
+          headers: { 'x-forwarded-for': '4.4.4.4' },
+        });
+      for (let i = 0; i < 5; i++) {
+        assert.notStrictEqual((await probe()).status, 429);
+      }
+    });
   });
 });
