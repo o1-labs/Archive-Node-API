@@ -21,6 +21,7 @@ import {
   teardownTestDatabase,
   createTestClient,
 } from './setup.js';
+import { describeActionStateInvariants } from './action-state-invariants.js';
 
 const nullOptions = { tracingState: new TracingState(undefined as any) };
 
@@ -514,3 +515,10 @@ describe('Schema validation (devnet dump)', () => {
     console.log(`  Total blocks in dump: ${count}`);
   });
 });
+
+// ─── Action-state invariants ────────────────────────────────────────
+//
+// Registered from this file, rather than living in a file of its own, so that
+// the dump is downloaded and loaded once per run. Loading it takes minutes, and
+// node:test gives each test file its own process, and so its own load.
+describeActionStateInvariants(() => ({ client, actionsService }));

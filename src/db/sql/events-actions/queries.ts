@@ -256,8 +256,8 @@ function emittedActionsCTE(db_client: postgres.Sql) {
 
 function emittedActionStateCTE(
   db_client: postgres.Sql,
-  fromActionState?: string,
-  endActionState?: string
+  fromActionStateHeight?: string,
+  endActionStateHeight?: string
 ) {
   return db_client`
   emitted_action_state AS (
@@ -308,14 +308,28 @@ function emittedActionStateCTE(
       INNER JOIN zkapp_field zkf4 ON zkf4.id = zks.element4
     WHERE
       1 = 1
+    -- Filter on the position of the checkpoint ON THE CHAIN, resolved by
+    -- resolveActionStateBoundary() before this query runs.
+    --
+    -- This used to compare zkf0.id against the id of the requested action state.
+    -- zkapp_field is the interning table for every field value in the archive,
+    -- and its id records when a value was FIRST WRITTEN, not where it sits on
+    -- the chain. Any archive filled out of chain order — a bulk import, a
+    -- hard-fork migration, a bootstrap — breaks that assumption, and the filter
+    -- then silently dropped real actions or returned actions from before the
+    -- checkpoint. See tests/integration/action-state-ordering.test.ts.
+    --
+    -- Greater-or-equal keeps the checkpoint's own block in the answer. o1js
+    -- removes it in createActionsList by comparing actionStateOne with the
+    -- requested value, so excluding it here would change what clients receive.
     ${
-      fromActionState
-        ? db_client`AND zkf0.id >= (SELECT id FROM zkapp_field WHERE field = ${fromActionState})`
+      fromActionStateHeight
+        ? db_client`AND emitted_actions.height >= ${fromActionStateHeight}`
         : db_client``
     }
     ${
-      endActionState
-        ? db_client`AND zkf0.id <= (SELECT id FROM zkapp_field WHERE field = ${endActionState})`
+      endActionStateHeight
+        ? db_client`AND emitted_actions.height <= ${endActionStateHeight}`
         : db_client``
     }
   )`;
@@ -378,17 +392,17 @@ export function getActionsQuery(
   status: BlockStatusFilter,
   to?: string,
   from?: string,
-  fromActionState?: string,
-  endActionState?: string
+  fromActionStateHeight?: string,
+  endActionStateHeight?: string
 ) {
   return db_client<ArchiveNodeDatabaseRow[]>`
-  WITH 
+  WITH
   ${fullChainCTE(db_client, from, to)},
   ${accountIdentifierCTE(db_client, address, tokenId)},
   ${blocksAccessedCTE(db_client, status)},
   ${emittedZkAppCommandsCTE(db_client)},
   ${emittedActionsCTE(db_client)},
-  ${emittedActionStateCTE(db_client, fromActionState, endActionState)}
+  ${emittedActionStateCTE(db_client, fromActionStateHeight, endActionStateHeight)}
   SELECT *
   FROM emitted_action_state
   `;
@@ -412,9 +426,111 @@ JOIN max_heights mh
   `;
 }
 
-export function checkActionState(db_client: postgres.Sql, actionState: string) {
-  return db_client`
-  SELECT field FROM zkapp_field WHERE field = ${actionState}
+export type ActionStateBoundaryRow = {
+  boundary_height: string | null;
+  window_start: string | null;
+  /**
+   * true  — the account still held the requested action state when the window
+   *         began, so nothing was missed before it.
+   * false — the state had already moved on, so actions are missing.
+   * null  — the account was never accessed below the window, which means the
+   *         checkpoint itself is inside it.
+   */
+  state_entering_window: boolean | null;
+};
+
+/**
+ * Resolves an action state to its position on the chain, for one account.
+ *
+ * This replaces the old `checkActionState`, which only asked whether the value
+ * existed anywhere in `zkapp_field`. That accepted any field value in the whole
+ * database — action data, app state, another account's action state — so the
+ * server answered with data that had nothing to do with the request instead of
+ * raising an error.
+ *
+ * The lookup is deliberately NOT limited to the queried block range. A checkpoint
+ * is a position, not data: resolving it does not need its block to be inside the
+ * window. Restricting it to the window would make an out-of-range checkpoint
+ * resolve to nothing, and `height >= NULL` selects no rows — the server would
+ * then answer with an empty list, which a reducer reads as "no actions to fold".
+ *
+ * Returns one row:
+ *
+ *   boundary_height        the lowest block height at which this account's action
+ *                          state was the requested value, over the canonical chain
+ *                          plus the current pending chain. NULL means the value is
+ *                          not an action state of this account at all.
+ *   window_start           the first block height this query covers, derived the
+ *                          same way as fullChainCTE.
+ *   state_entering_window  this account's action state at its last accessed block
+ *                          below window_start, or NULL if it was never accessed
+ *                          below it. If this still equals the requested value, no
+ *                          action was missed between the checkpoint and the start
+ *                          of the window, so the answer is complete even though the
+ *                          checkpoint itself lies outside it.
+ */
+export function resolveActionStateBoundary(
+  db_client: postgres.Sql,
+  address: string,
+  tokenId: string,
+  actionState: string,
+  from?: string,
+  to?: string
+) {
+  const fromAsNum = from ? Number(from) : null;
+  const toAsNum = to ? Number(to) : null;
+
+  return db_client<ActionStateBoundaryRow[]>`
+  WITH RECURSIVE pending_chain AS (
+    (
+      SELECT id, parent_id, chain_status
+      FROM blocks
+      WHERE height = (SELECT max(height) FROM blocks)
+    )
+    UNION ALL
+    SELECT b.id, b.parent_id, b.chain_status
+    FROM blocks b
+      INNER JOIN pending_chain ON b.id = pending_chain.parent_id
+      AND pending_chain.id <> pending_chain.parent_id
+      AND pending_chain.chain_status <> 'canonical'
+  ),
+  bounds AS (
+    SELECT ${
+      fromAsNum !== null
+        ? db_client`${fromAsNum}::bigint`
+        : toAsNum !== null
+          ? db_client`${toAsNum - BLOCK_RANGE_SIZE}::bigint`
+          : db_client`(SELECT max(height) FROM blocks) - ${BLOCK_RANGE_SIZE}::bigint`
+    } AS window_start
+  ),
+  target AS (
+    SELECT id FROM zkapp_field WHERE field = ${actionState}
+  ),
+  account_action_states AS (
+    SELECT b.height, zks.element0 AS state_field_id
+    FROM accounts_accessed aa
+      INNER JOIN blocks b ON b.id = aa.block_id
+      INNER JOIN zkapp_accounts zkacc ON zkacc.id = aa.zkapp_id
+      INNER JOIN zkapp_action_states zks ON zks.id = zkacc.action_state_id
+    WHERE aa.account_identifier_id = (
+        SELECT ai.id FROM account_identifiers ai
+        WHERE ai.public_key_id = (SELECT id FROM public_keys WHERE value = ${address})
+          AND ai.token_id = (SELECT id FROM tokens WHERE value = ${tokenId})
+      )
+      AND (b.chain_status = 'canonical' OR b.id IN (SELECT id FROM pending_chain))
+  )
+  SELECT
+    (
+      SELECT min(height) FROM account_action_states
+      WHERE state_field_id = (SELECT id FROM target)
+    ) AS boundary_height,
+    (SELECT window_start FROM bounds) AS window_start,
+    (
+      SELECT state_field_id FROM account_action_states
+      WHERE height < (SELECT window_start FROM bounds)
+      ORDER BY height DESC
+      LIMIT 1
+    ) = (SELECT id FROM target) AS state_entering_window
   `;
 }
 

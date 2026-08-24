@@ -73,3 +73,49 @@ Run the tests to verify everything still works. You may need to update expected 
 | Schema | 1 | All required tables exist |
 
 The current dump has no successful zkapp transactions, so events/actions queries return empty arrays. This still validates the full SQL query pipeline runs without errors. For richer event/action testing, regenerate the dump from a network that has successful zkapp deployments.
+
+## Action-state ordering tests
+
+`action-state-ordering.test.ts` is a separate suite with its own database
+(`archive_node_api_action_state_test`) and its own setup module
+(`action-state-setup.ts`). It loads the base dump plus a generated fixture,
+`fixtures/action_state_order_inversion.sql`. The database is separate because
+the fixture adds six blocks, which would change the block counts and maximum
+heights that `integration.test.ts` asserts on.
+
+It exists because `getActionsQuery` filters `fromActionState` and
+`endActionState` on `zkapp_field.id` — the *interning* key of the value, which
+records when the value was first written, not where it sits on the chain. When
+an archive is filled out of chain order (bulk import, hard-fork migration,
+bootstrap), the two orders disagree, and the filter then silently drops real
+actions or returns actions from before the checkpoint.
+
+**A local network writes blocks in chain order and cannot reproduce this.** The
+fixture therefore inverts the interning order on purpose. It holds three
+accounts that dispatch identical actions in identical blocks and differ only in
+that order:
+
+| Account | Interning order | Purpose |
+|---|---|---|
+| `inverted` | id(S3) < id(S2) < id(S4) < id(S1) | strong inversion |
+| `control` | id(S1) < id(S2) < id(S3) < id(S4) | natural order — **must pass before and after any fix** |
+| `adjacent` | id(S1) < id(S3) < id(S2) < id(S4) | the exact shape measured on mesa-rc-1 |
+
+The `control` account is what makes the suite trustworthy. If a change makes the
+other two accounts pass by weakening the expectations, `control` fails as well.
+
+The suite uses `assertActionChainIsLinked` from `tests/test-helpers.ts`. That
+helper checks `actionStateOne[i] === actionStateTwo[i+1]` over the returned
+list. Prefer it over fixed entry counts: it keeps working when the fixture
+changes, and it finds drops, duplicates, and out-of-range entries alike.
+
+### Regenerating the fixture
+
+```bash
+node tests/integration/fixtures/generate-action-state-fixture.mjs
+```
+
+This writes both `action_state_order_inversion.sql` and
+`action_state_order_inversion.json`. The tests read the `.json` for their
+expected values, so the fixture and the expectations cannot drift apart. Do not
+edit either generated file by hand.
