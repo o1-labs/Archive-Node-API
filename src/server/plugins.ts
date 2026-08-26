@@ -29,7 +29,10 @@ async function buildPlugins() {
           variables: true, // Includes the operation variables values as part of the metadata collected
           result: true, // Includes execution result object as part of the metadata collected
         },
-        provider
+        // BasicTracerProvider satisfies the TracerProvider interface; the cast
+        // bridges duplicate @opentelemetry/api copies across packages by
+        // targeting the exact parameter type useOpenTelemetry expects.
+        provider as unknown as Parameters<typeof useOpenTelemetry>[1]
       )
     );
   }

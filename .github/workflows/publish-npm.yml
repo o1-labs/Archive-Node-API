@@ -30,11 +30,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Trusted publishing needs npm 11.5.1 or later. Pin the major rather than
-      # tracking `latest`: npm 12 requires Node >= 22.22.2, so `npm@latest`
-      # fails EBADENGINE against the Node 20 pinned above.
+      # tracking `latest` so a future npm major cannot change publish semantics
+      # or raise its Node floor out from under the version pinned above.
       - name: Update npm
         run: npm install -g npm@11
       - run: npm ci
