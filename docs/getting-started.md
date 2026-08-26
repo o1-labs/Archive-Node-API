@@ -176,6 +176,7 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | --- | --- | --- |
 | `PG_CONN` | *(required)* | Postgres connection string for the archive-node DB |
 | `PORT` | `8080` | Port the GraphQL server listens on |
+| `SHUTDOWN_TIMEOUT_MS` | `20000` | Max ms to drain in-flight requests on SIGTERM before forcing exit. Keep Kubernetes `terminationGracePeriodSeconds` above this value |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
 | `CORS_ORIGIN` | `*` | CORS allowed origin |
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
