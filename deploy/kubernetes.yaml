@@ -1,0 +1,175 @@
+# Reference Kubernetes manifest for the Archive Node API.
+#
+# This is a starting point, not a turnkey production deploy — review the image
+# tag, resource sizing, and secret management for your cluster. Create the
+# archive-node-api Secret separately; see deploy/secret.example.yaml and
+# deploy/README.md.
+#
+# REQUIRES image >= 1.0.0. The readiness probe below targets /readiness, which
+# earlier images do not serve: on 0.0.x the probe 404s forever, no pod ever goes
+# Ready, and the Service is left with zero endpoints — a total outage. The
+# /metrics scrape annotations need >= 1.0.0 for the same reason. The image is
+# pinned accordingly; do not move it back to :latest.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archive-node-api
+  labels:
+    app: archive-node-api
+spec:
+  selector:
+    matchLabels:
+      app: archive-node-api
+  template:
+    metadata:
+      labels:
+        app: archive-node-api
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8080'
+        prometheus.io/path: /metrics
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      automountServiceAccountToken: false
+      containers:
+        - name: archive-node-api
+          # Pinned, not :latest — see the version requirement at the top.
+          image: ghcr.io/o1-labs/archive-node-api:1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: '8080'
+            - name: PG_CONN
+              valueFrom:
+                secretKeyRef:
+                  name: archive-node-api
+                  key: PG_CONN
+            - name: NODE_OPTIONS
+              # Keep V8 below limits.memory so large responses fail in-process
+              # before the kernel OOM-kills the pod mid-request.
+              value: '--max-old-space-size=768'
+            # Browser clients are cross-origin and CANNOT reach this API unless
+            # their origin is allowed here — and they fail silently, with nothing
+            # in the server logs. Set this deliberately (see docs/security.md):
+            #   '*'                       public API any browser may call
+            #   'https://app.example.com' known, fixed front-ends (comma-separate)
+            # Unset means same-origin only, which blocks every browser client.
+            - name: CORS_ORIGIN
+              value: '*'
+            - name: ENABLE_METRICS
+              value: 'true'
+            # Must be < terminationGracePeriodSeconds below, so the app finishes
+            # draining before the kubelet sends SIGKILL.
+            - name: SHUTDOWN_TIMEOUT_MS
+              value: '10000'
+            # Number of proxy hops in front of the API. Rate limiting keys on the
+            # socket address while this is 0, so every client behind an ingress
+            # shares one bucket; set it to the real hop count.
+            - name: TRUST_PROXY
+              value: '1'
+            - name: RATE_LIMIT_MAX
+              # Per client IP per 60s, counted per replica. The HPA moves
+              # replicas 2 to 6, so the effective global ceiling varies with scale.
+              value: '1200'
+          resources:
+            requests:
+              cpu: '500m'
+              memory: '512Mi'
+            limits:
+              # No CPU limit: CFS throttling hurts Node.js p99 latency. The CPU
+              # request above is the scheduling guarantee.
+              memory: '1Gi'
+          lifecycle:
+            preStop:
+              # Endpoint removal is async and concurrent with SIGTERM. Give
+              # kube-proxy/ingress time to stop routing here before Node closes.
+              exec:
+                command: ['/bin/sh', '-c', 'sleep 15']
+          # Liveness: process is up. Readiness: the database is reachable.
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+            successThreshold: 1
+          startupProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            periodSeconds: 3
+            failureThreshold: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      # 15s preStop + SHUTDOWN_TIMEOUT_MS + margin before SIGKILL.
+      terminationGracePeriodSeconds: 45
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: archive-node-api
+  labels:
+    app: archive-node-api
+spec:
+  type: ClusterIP
+  selector:
+    app: archive-node-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: archive-node-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: archive-node-api
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: archive-node-api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: archive-node-api

@@ -1,0 +1,32 @@
+# Production-shaped Compose for the Archive Node API alone (bring your own
+# Postgres). Unlike the repo-root docker-compose.yml — which stands up Postgres +
+# Jaeger for local development — this runs only the published image against an
+# external, read-only archive database. See deploy/README.md and docs/security.md.
+services:
+  archive-node-api:
+    # Pinned, not :latest. Readiness/metrics endpoints require >= 1.0.0.
+    image: ghcr.io/o1-labs/archive-node-api:1.0.0
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      # Required. Point at a read-only Postgres role (see docs/security.md).
+      PG_CONN: ${PG_CONN:?set PG_CONN to your archive-node Postgres connection string}
+      PORT: '8080'
+      NODE_OPTIONS: '--max-old-space-size=768'
+      # Browser clients are cross-origin and CANNOT reach this API unless their
+      # origin is allowed here — and they fail silently, with nothing in the
+      # server logs. Set this deliberately (see docs/security.md):
+      #   '*'                       public API any browser may call
+      #   'https://app.example.com' known, fixed front-ends (comma-separate)
+      # Unset means same-origin only, which blocks every browser client.
+      CORS_ORIGIN: '*'
+      ENABLE_METRICS: 'true'
+      # Proxy hops in front of the API. Rate limiting keys on the socket address
+      # while this is 0, so every client behind a proxy shares one bucket.
+      TRUST_PROXY: '0'
+      RATE_LIMIT_MAX: '1200'
+    # Memory cap (Compose v2). NODE_OPTIONS keeps V8 below this container limit.
+    mem_limit: 1g
+    # Images >= 1.0.0 ship a HEALTHCHECK against /healthcheck; Compose surfaces
+    # it as the container health status.
