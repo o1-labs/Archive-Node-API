@@ -18,6 +18,7 @@ import { EventsService } from '../../src/services/events-service/events-service.
 import { ActionsService } from '../../src/services/actions-service/actions-service.js';
 import { NetworkService } from '../../src/services/network-service/network-service.js';
 import { BlocksService } from '../../src/services/blocks-service/blocks-service.js';
+import { VerificationKeyUpdatesService } from '../../src/services/verification-key-updates-service/verification-key-updates-service.js';
 import { BlockStatusFilter } from '../../src/blockchain/types.js';
 import { DEFAULT_TOKEN_ID } from '../../src/blockchain/constants.js';
 import { TracingState } from '../../src/tracing/tracer.js';
@@ -399,6 +400,27 @@ describe('ActionsService (integration)', () => {
   });
 });
 
+// ─── Verification Key Updates Service ───────────────────────────────
+
+describe('VerificationKeyUpdatesService (integration)', () => {
+  test('executes against the archive schema and excludes failed commands', async () => {
+    const service = new VerificationKeyUpdatesService(client);
+    const updates = await service.getVerificationKeyUpdates(
+      {
+        verificationKeyHash:
+          '330109536550383627416201330124291596191867681867265169258470531313815097966',
+        from: 0,
+        to: 30,
+      },
+      nullOptions
+    );
+
+    // The fixture contains this verification key, but all of its zkApp
+    // commands failed. A failed deployment must never be discoverable.
+    assert.deepStrictEqual(updates, []);
+  });
+});
+
 // ─── SQL Schema Validation ───────────────────────────────────────────
 
 describe('Schema validation (integration)', () => {
@@ -419,6 +441,7 @@ describe('Schema validation (integration)', () => {
       'zkapp_events',
       'zkapp_field_array',
       'zkapp_field',
+      'zkapp_updates',
       'zkapp_accounts',
       'zkapp_action_states',
     ];

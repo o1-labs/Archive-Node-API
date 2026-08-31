@@ -1,7 +1,31 @@
 import type { BlockInfo, TransactionInfo, Event, Action } from './types.js';
 import type { ArchiveNodeDatabaseRow } from '../db/sql/events-actions/types.js';
 
-export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
+type BlockInfoRow = Pick<
+  ArchiveNodeDatabaseRow,
+  | 'height'
+  | 'state_hash'
+  | 'parent_hash'
+  | 'ledger_hash'
+  | 'chain_status'
+  | 'timestamp'
+  | 'global_slot_since_hard_fork'
+  | 'global_slot_since_genesis'
+  | 'distance_from_max_block_height'
+  | 'last_vrf_output'
+>;
+
+type TransactionInfoRow = Pick<
+  ArchiveNodeDatabaseRow,
+  | 'status'
+  | 'hash'
+  | 'memo'
+  | 'authorization_kind'
+  | 'sequence_number'
+  | 'zkapp_account_updates_ids'
+>;
+
+export function createBlockInfo(row: BlockInfoRow): BlockInfo {
   return {
     height: Number(row.height),
     stateHash: row.state_hash,
@@ -17,7 +41,7 @@ export function createBlockInfo(row: ArchiveNodeDatabaseRow): BlockInfo {
 }
 
 export function createTransactionInfo(
-  row: ArchiveNodeDatabaseRow
+  row: TransactionInfoRow
 ): TransactionInfo {
   return {
     status: row.status,

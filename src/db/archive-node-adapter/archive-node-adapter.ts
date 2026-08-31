@@ -4,6 +4,7 @@ import type {
   Events,
   NetworkState,
   Blocks,
+  VerificationKeyUpdates,
 } from '../../blockchain/types.js';
 import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
@@ -11,6 +12,7 @@ import type {
   EventFilterOptionsInput,
   BlockQueryInput,
   BlockSortByInput,
+  VerificationKeyUpdateFilterInput,
 } from '../../resolvers-types.js';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
 import { EventsService } from '../../services/events-service/events-service.js';
@@ -21,6 +23,8 @@ import { NetworkService } from '../../services/network-service/network-service.j
 import { INetworkService } from '../../services/network-service/network-service.interface.js';
 import { BlocksService } from '../../services/blocks-service/blocks-service.js';
 import { IBlocksService } from '../../services/blocks-service/blocks-service.interface.js';
+import { VerificationKeyUpdatesService } from '../../services/verification-key-updates-service/verification-key-updates-service.js';
+import { IVerificationKeyUpdatesService } from '../../services/verification-key-updates-service/verification-key-updates-service.interface.js';
 
 /**
  * Connect deadline for the readiness pinger, in seconds. Kept short so a probe
@@ -46,6 +50,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private actionsService: IActionsService;
   private networkService: INetworkService;
   private blocksService: IBlocksService;
+  private verificationKeyUpdatesService: IVerificationKeyUpdatesService;
 
   constructor(connectionString: string | undefined) {
     if (!connectionString)
@@ -62,6 +67,9 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.actionsService = new ActionsService(this.client);
     this.networkService = new NetworkService(this.client);
     this.blocksService = new BlocksService(this.client);
+    this.verificationKeyUpdatesService = new VerificationKeyUpdatesService(
+      this.client
+    );
   }
 
   async getEvents(
@@ -80,6 +88,16 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
 
   async getNetworkState(options: unknown): Promise<NetworkState> {
     return this.networkService.getNetworkState(options);
+  }
+
+  async getVerificationKeyUpdates(
+    input: VerificationKeyUpdateFilterInput,
+    options: unknown
+  ): Promise<VerificationKeyUpdates> {
+    return this.verificationKeyUpdatesService.getVerificationKeyUpdates(
+      input,
+      options
+    );
   }
 
   async getBlocks(

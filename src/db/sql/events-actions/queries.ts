@@ -553,6 +553,7 @@ export const USED_TABLES = [
   'zkapp_field',
   'zkapp_verification_key_hashes',
   'zkapp_verification_keys',
+  'zkapp_updates',
   'zkapp_accounts',
   'zkapp_action_states',
 ] as const;

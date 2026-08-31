@@ -66,6 +66,19 @@ input ActionFilterOptionsInput {
   endActionState: String
 }
 
+"""
+Find applied account updates that set a specific verification key.
+
+The block range is required and limited by the server's configured maximum.
+`from` is inclusive and `to` is exclusive.
+"""
+input VerificationKeyUpdateFilterInput {
+  verificationKeyHash: String!
+  from: Int!
+  to: Int!
+  status: BlockStatusFilter
+}
+
 type EventData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
@@ -102,6 +115,15 @@ type TransactionInfo {
   authorizationKind: String!
   sequenceNumber: Int!
   zkappAccountUpdateIds: [Int]!
+}
+
+type VerificationKeyUpdate {
+  accountUpdateId: String!
+  address: String!
+  tokenId: String!
+  verificationKeyHash: String!
+  blockInfo: BlockInfo!
+  transactionInfo: TransactionInfo!
 }
 
 type ActionStates {
@@ -216,6 +238,9 @@ type Block {
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  verificationKeyUpdates(
+    input: VerificationKeyUpdateFilterInput!
+  ): [VerificationKeyUpdate!]!
   networkState: NetworkStateOutput!
   blocks(query: BlockQueryInput, limit: Int, sortBy: BlockSortByInput): [Block]!
 }
