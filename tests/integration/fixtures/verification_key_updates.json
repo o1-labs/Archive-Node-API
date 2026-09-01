@@ -1,0 +1,142 @@
+{
+  "targetVerificationKeyHash": "910000000000000000000000000000000000000000000000000000000000000001",
+  "otherVerificationKeyHash": "910000000000000000000000000000000000000000000000000000000000000002",
+  "defaultTokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+  "customTokenId": "wZZZVkFixtureCustomToken00000000000000000000000000",
+  "heights": {
+    "anchor": 26,
+    "firstCommand": 27,
+    "lastPending": 32,
+    "afterAll": 33
+  },
+  "expected": {
+    "canonical": [
+      {
+        "account": "alpha",
+        "accountUpdateId": "910001",
+        "address": "B62qVkFixtureAlphaSetsTargetCanonical00000000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 27,
+        "stateHash": "3NVkFixtureBlock27",
+        "chainStatus": "canonical",
+        "sequenceNumber": 0,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910001",
+        "memo": "vk-fixture-three-updates",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "gamma",
+        "accountUpdateId": "910003",
+        "address": "B62qVkFixtureGammaSetsTargetCustomToken0000000000000",
+        "tokenId": "wZZZVkFixtureCustomToken00000000000000000000000000",
+        "height": 27,
+        "stateHash": "3NVkFixtureBlock27",
+        "chainStatus": "canonical",
+        "sequenceNumber": 0,
+        "position": 3,
+        "transactionHash": "CkpZVkFixtureTx910001",
+        "memo": "vk-fixture-three-updates",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "delta",
+        "accountUpdateId": "910004",
+        "address": "B62qVkFixtureDeltaSetsTargetSequenceZero0000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 28,
+        "stateHash": "3NVkFixtureBlock28",
+        "chainStatus": "canonical",
+        "sequenceNumber": 0,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910002",
+        "memo": "vk-fixture-seq-zero",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "epsilon",
+        "accountUpdateId": "910005",
+        "address": "B62qVkFixtureEpsilonSetsTargetSequenceOne000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 28,
+        "stateHash": "3NVkFixtureBlock28",
+        "chainStatus": "canonical",
+        "sequenceNumber": 1,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910003",
+        "memo": "vk-fixture-seq-one",
+        "authorizationKind": "Signature"
+      }
+    ],
+    "pending": [
+      {
+        "account": "iota",
+        "accountUpdateId": "910009",
+        "address": "B62qVkFixtureIotaSetsTargetInPendingBlock000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 31,
+        "stateHash": "3NVkFixtureBlock31Pending",
+        "chainStatus": "pending",
+        "sequenceNumber": 0,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910007",
+        "memo": "vk-fixture-pending",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "kappa",
+        "accountUpdateId": "910010",
+        "address": "B62qVkFixtureKappaSetsTargetPendingForkA000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 32,
+        "stateHash": "3NVkFixtureBlock32ForkA",
+        "chainStatus": "pending",
+        "sequenceNumber": 0,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910008",
+        "memo": "vk-fixture-both-forks",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "kappa",
+        "accountUpdateId": "910010",
+        "address": "B62qVkFixtureKappaSetsTargetPendingForkA000000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 32,
+        "stateHash": "3NVkFixtureBlock32ForkB",
+        "chainStatus": "pending",
+        "sequenceNumber": 0,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910008",
+        "memo": "vk-fixture-both-forks",
+        "authorizationKind": "Proof"
+      },
+      {
+        "account": "lambda",
+        "accountUpdateId": "910011",
+        "address": "B62qVkFixtureLambdaSetsTargetPendingForkB00000000000",
+        "tokenId": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+        "height": 32,
+        "stateHash": "3NVkFixtureBlock32ForkB",
+        "chainStatus": "pending",
+        "sequenceNumber": 1,
+        "position": 1,
+        "transactionHash": "CkpZVkFixtureTx910009",
+        "memo": "vk-fixture-fork-b-only",
+        "authorizationKind": "Proof"
+      }
+    ]
+  },
+  "excluded": {
+    "beta": "sets a different verification key",
+    "zeta": "the command failed",
+    "eta": "the target hash is a precondition, not a key this update sets",
+    "theta": "the block is orphaned"
+  },
+  "excludedAddresses": {
+    "beta": "B62qVkFixtureBetaSetsOtherHash000000000000000000000000",
+    "zeta": "B62qVkFixtureZetaSetsTargetInFailedCommand00000000000",
+    "eta": "B62qVkFixtureEtaTargetAsPreconditionOnly00000000000000",
+    "theta": "B62qVkFixtureThetaSetsTargetInOrphanedBlock0000000000"
+  }
+}
