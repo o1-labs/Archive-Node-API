@@ -23,6 +23,8 @@ declare global {
       ENABLE_INTROSPECTION?: bool;
       ENABLE_GRAPHIQL?: bool;
       ENABLE_JAEGER?: bool;
+      ENABLE_BLOCK_TRANSACTION_DETAILS?: bool;
+      ENABLED_QUERIES?: string;
       JAEGER_ENDPOINT?: string;
       JAEGER_SERVICE_NAME?: string;
     }
