@@ -194,6 +194,7 @@ export type Query = {
   blocks: Array<Maybe<Block>>;
   events: Array<Maybe<EventOutput>>;
   networkState: NetworkStateOutput;
+  verificationKeyUpdates: Array<VerificationKeyUpdate>;
 };
 
 export type QueryActionsArgs = {
@@ -208,6 +209,10 @@ export type QueryBlocksArgs = {
 
 export type QueryEventsArgs = {
   input: EventFilterOptionsInput;
+};
+
+export type QueryVerificationKeyUpdatesArgs = {
+  input: VerificationKeyUpdateFilterInput;
 };
 
 export type TransactionInfo = {
@@ -232,6 +237,29 @@ export type UserCommand = {
   nonce: Scalars['Int']['output'];
   status: Scalars['String']['output'];
   to: Scalars['String']['output'];
+};
+
+export type VerificationKeyUpdate = {
+  __typename?: 'VerificationKeyUpdate';
+  accountUpdateId: Scalars['String']['output'];
+  address: Scalars['String']['output'];
+  blockInfo: BlockInfo;
+  tokenId: Scalars['String']['output'];
+  transactionInfo: TransactionInfo;
+  verificationKeyHash: Scalars['String']['output'];
+};
+
+/**
+ * Find applied account updates that set a specific verification key.
+ *
+ * The block range is required and limited by the server's configured maximum.
+ * `from` is inclusive and `to` is exclusive.
+ */
+export type VerificationKeyUpdateFilterInput = {
+  from: Scalars['Int']['input'];
+  status?: InputMaybe<BlockStatusFilter>;
+  to: Scalars['Int']['input'];
+  verificationKeyHash: Scalars['String']['input'];
 };
 
 export type ZkAppCommand = {
@@ -386,6 +414,8 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
   UserCommand: ResolverTypeWrapper<UserCommand>;
+  VerificationKeyUpdate: ResolverTypeWrapper<VerificationKeyUpdate>;
+  VerificationKeyUpdateFilterInput: VerificationKeyUpdateFilterInput;
   ZkAppCommand: ResolverTypeWrapper<ZkAppCommand>;
 };
 
@@ -412,6 +442,8 @@ export type ResolversParentTypes = {
   String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
   UserCommand: UserCommand;
+  VerificationKeyUpdate: VerificationKeyUpdate;
+  VerificationKeyUpdateFilterInput: VerificationKeyUpdateFilterInput;
   ZkAppCommand: ZkAppCommand;
 };
 
@@ -672,6 +704,12 @@ export type QueryResolvers<
     ParentType,
     ContextType
   >;
+  verificationKeyUpdates?: Resolver<
+    Array<ResolversTypes['VerificationKeyUpdate']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryVerificationKeyUpdatesArgs, 'input'>
+  >;
 };
 
 export type TransactionInfoResolvers<
@@ -716,6 +754,27 @@ export type UserCommandResolvers<
   to?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type VerificationKeyUpdateResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['VerificationKeyUpdate'] = ResolversParentTypes['VerificationKeyUpdate'],
+> = {
+  accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  address?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  blockInfo?: Resolver<ResolversTypes['BlockInfo'], ParentType, ContextType>;
+  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  transactionInfo?: Resolver<
+    ResolversTypes['TransactionInfo'],
+    ParentType,
+    ContextType
+  >;
+  verificationKeyHash?: Resolver<
+    ResolversTypes['String'],
+    ParentType,
+    ContextType
+  >;
+};
+
 export type ZkAppCommandResolvers<
   ContextType = GraphQLContext,
   ParentType extends
@@ -750,5 +809,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Query?: QueryResolvers<ContextType>;
   TransactionInfo?: TransactionInfoResolvers<ContextType>;
   UserCommand?: UserCommandResolvers<ContextType>;
+  VerificationKeyUpdate?: VerificationKeyUpdateResolvers<ContextType>;
   ZkAppCommand?: ZkAppCommandResolvers<ContextType>;
 };

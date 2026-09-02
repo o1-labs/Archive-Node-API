@@ -1,11 +1,18 @@
-import type { EventFilterOptionsInput } from '../../resolvers-types.js';
+import type {
+  EventFilterOptionsInput,
+  VerificationKeyUpdateFilterInput,
+} from '../../resolvers-types.js';
 import type {
   Actions,
   Events,
   NetworkState,
   Blocks,
+  VerificationKeyUpdates,
 } from '../../blockchain/types.js';
-import type { BlockQueryInput, BlockSortByInput } from '../../resolvers-types.js';
+import type {
+  BlockQueryInput,
+  BlockSortByInput,
+} from '../../resolvers-types.js';
 
 export interface DatabaseAdapter {
   getEvents(input: EventFilterOptionsInput, options?: unknown): Promise<Events>;
@@ -14,6 +21,10 @@ export interface DatabaseAdapter {
     options?: unknown
   ): Promise<Actions>;
   getNetworkState(options?: unknown): Promise<NetworkState>;
+  getVerificationKeyUpdates(
+    input: VerificationKeyUpdateFilterInput,
+    options?: unknown
+  ): Promise<VerificationKeyUpdates>;
   getBlocks(
     query: BlockQueryInput | null | undefined,
     limit: number | null | undefined,

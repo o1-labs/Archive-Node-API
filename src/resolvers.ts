@@ -33,6 +33,15 @@ const fullResolvers: Resolvers = {
         tracingState: new TracingState(graphQLSpan),
       });
     },
+    verificationKeyUpdates: async (_, { input }, context) => {
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'verificationKeyUpdates.graphql'
+      );
+      return context.db_client.getVerificationKeyUpdates(input, {
+        tracingState: new TracingState(graphQLSpan),
+      });
+    },
     networkState: async (_, __, context) => {
       const graphQLSpan = setSpanNameFromGraphQLContext(
         context,

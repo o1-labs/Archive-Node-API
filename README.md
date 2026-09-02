@@ -58,7 +58,7 @@ PG_CONN='postgres://postgres:postgres@localhost:5432/archive' \
 | `PORT`                 | `8080`       | Port the GraphQL server listens on                 |
 | `ENABLE_GRAPHIQL`      | `false`      | Serve the GraphiQL playground at `/`               |
 | `ENABLE_INTROSPECTION` | `false`      | Allow GraphQL schema introspection                 |
-| `ENABLE_LOGGING`       | `false`      | Enable OpenTelemetry request tracing               |
+| `ENABLE_LOGGING`       | `false`      | Emit OpenTelemetry traces                          |
 | `ENABLE_METRICS`       | `false`      | Expose Prometheus metrics at `/metrics`            |
 | `ENABLED_QUERIES`      | _(all)_      | Comma-separated subset of root query fields        |
 | `ENABLE_JAEGER`        | `false`      | Emit traces to a Jaeger collector                  |

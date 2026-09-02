@@ -2,7 +2,7 @@ import { useLogger } from '@envelop/core';
 import { useGraphQlJit } from '@envelop/graphql-jit';
 import { useDisableIntrospection } from '@envelop/disable-introspection';
 import { useOpenTelemetry } from '@envelop/opentelemetry';
-import { inspect } from 'node:util';
+import type { GraphQLError } from 'graphql';
 
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
 import { initJaegerProvider } from '../tracing/jaeger-tracing.js';
@@ -10,12 +10,17 @@ import { parseBoolean } from '../config.js';
 import { useMetrics } from './metrics.js';
 import { useRateLimit } from './rate-limit.js';
 import { buildArmorPlugins } from './graphql-armor.js';
+import { logger } from './logger.js';
+import { useRequestLogging, requestIdFor } from './request-logging.js';
 
 export { buildPlugins };
 
 async function buildPlugins() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const plugins: any[] = [];
+
+  // Structured per-request access logging with correlation ids.
+  plugins.push(useRequestLogging());
 
   // Per-IP request rate limiting. Runs on every request before GraphQL parsing,
   // so over-limit traffic is rejected as cheaply as possible.
@@ -57,20 +62,25 @@ async function buildPlugins() {
 
   plugins.push(
     useLogger({
-      logFn: (eventName, args) => {
+      logFn: (_eventName, args) => {
         if (args?.result?.errors) {
-          console.debug(
-            eventName,
-            inspect(args.args.contextValue.params, {
-              showHidden: false,
-              depth: null,
-              colors: true,
-            }),
-            inspect(args.result.errors, {
-              showHidden: false,
-              depth: null,
-              colors: true,
-            })
+          const request = args?.args?.contextValue?.request as
+            | Request
+            | undefined;
+          logger.error(
+            {
+              requestId: request ? requestIdFor(request) : undefined,
+              variables: args?.args?.variableValues,
+              errors: args.result.errors.map((error: GraphQLError) => ({
+                message: error.message,
+                path: error.path,
+                locations: error.locations,
+                stack: error.originalError?.stack ?? error.stack,
+                code: (error.originalError as { code?: string } | undefined)
+                  ?.code,
+              })),
+            },
+            'graphql execution errors'
           );
         }
       },
