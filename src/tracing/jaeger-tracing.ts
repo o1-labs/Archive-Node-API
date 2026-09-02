@@ -11,6 +11,7 @@ import {
   parseEndpoint,
   checkJaegerEndpointAvailability,
 } from './jaeger-setup.js';
+import { parseBoolean } from '../config.js';
 
 export { initJaegerProvider };
 
@@ -20,7 +21,7 @@ function createJaegerExporter(endpoint: string) {
 
 async function initJaegerProvider(): Promise<BasicTracerProvider | undefined> {
   const jaegerEndpoint = process.env.JAEGER_ENDPOINT;
-  if (!process.env.ENABLE_JAEGER || !jaegerEndpoint) {
+  if (!parseBoolean(process.env.ENABLE_JAEGER) || !jaegerEndpoint) {
     return undefined;
   }
 
