@@ -15,6 +15,7 @@ import type {
   VerificationKeyUpdateFilterInput,
 } from '../../resolvers-types.js';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
+import { buildPostgresOptions } from './postgres-options.js';
 import { EventsService } from '../../services/events-service/events-service.js';
 import { IEventsService } from '../../services/events-service/events-service.interface.js';
 import { ActionsService } from '../../services/actions-service/actions-service.js';
@@ -57,7 +58,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
       throw new Error(
         'Missing Postgres Connection String. Please provide a valid connection string in the environment variables or in your configuration file to connect to the Postgres database.'
       );
-    this.client = postgres(connectionString);
+    this.client = postgres(connectionString, buildPostgresOptions());
     this.pingClient = postgres(connectionString, {
       max: 1,
       idle_timeout: 60,

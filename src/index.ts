@@ -4,6 +4,7 @@ import { buildContext } from './context.js';
 import { buildServer } from './server/server.js';
 import { buildPlugins } from './server/plugins.js';
 import { createGracefulShutdown } from './server/graceful-shutdown.js';
+import { assertValidConfig } from './config.js';
 
 const PORT = process.env.PORT || 8080;
 const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 20000;
@@ -31,6 +32,7 @@ function withTimeout(
 
 (async function main() {
   try {
+    assertValidConfig();
     const context = await buildContext(process.env.PG_CONN);
     const { plugins, provider } = await buildPlugins();
     const server = buildServer(context, plugins);

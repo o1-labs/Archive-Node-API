@@ -170,25 +170,36 @@ JAEGER_ENDPOINT=http://localhost:14268/api/traces
 
 ## Configuration
 
-The server reads config from environment variables. `PG_CONN` is the only required one.
+The server reads config from environment variables. `PG_CONN` is the only required one. Configuration is validated at startup — a missing `PG_CONN`, a non-numeric `PORT`, a mistyped boolean, or an invalid `ENABLED_QUERIES` value makes the server exit immediately with a clear message rather than booting into a broken state.
+
+Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `on`/`off` (case-insensitive); `false` reliably means off. Any other non-empty spelling now aborts startup instead of being interpreted inconsistently. `ENABLE_LOGGING`, `ENABLE_INTROSPECTION`, and `ENABLE_JAEGER` previously treated any non-empty value as on; `ENABLE_GRAPHIQL` and `ENABLE_BLOCK_TRANSACTION_DETAILS` previously only accepted the literal string `true` as on.
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PG_CONN` | *(required)* | Postgres connection string for the archive-node DB |
+| `PG_MAX_CONNECTIONS` | `10` | Max pooled Postgres connections (total, not per host) |
+| `PG_IDLE_TIMEOUT` | `30` | Seconds an idle connection is kept before closing |
+| `PG_CONNECT_TIMEOUT` | `30` | Seconds to wait for a new connection before failing |
+| `PG_STATEMENT_TIMEOUT` | `15000` | Server-side timeout in ms per SQL statement, deliberately below the 20s timeout used by known clients so Postgres reclaims work before clients give up. `0` disables |
 | `PORT` | `8080` | Port the GraphQL server listens on |
 | `SHUTDOWN_TIMEOUT_MS` | `20000` | Max ms to drain in-flight requests on SIGTERM before forcing exit. Keep Kubernetes `terminationGracePeriodSeconds` above this value |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
-| `CORS_ORIGIN` | `*` | CORS allowed origin |
+| `CORS_ORIGIN` | *(disabled)* | Cross-origin access. Unset = same-origin only; `*` = any origin; or a comma-separated allowlist |
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
 | `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window length in milliseconds |
 | `TRUST_PROXY` | _(unset)_ | Number of trusted proxy hops in front of the API. Required when `RATE_LIMIT_MAX > 0`: the limiter stays disabled until it is set. `0` ignores `X-Forwarded-For` and keys on the socket address |
+| `GRAPHQL_MAX_DEPTH` | `12` | Max query selection-set nesting depth. Do not set below `8`: known clients send depth-7 probes, and a depth rejection replaces the `Cannot query field` error those clients rely on for schema-tier fallback |
+| `GRAPHQL_MAX_ALIASES` | `15` | Max aliases allowed in a single operation |
+| `GRAPHQL_MAX_TOKENS` | `1000` | Max lexical tokens allowed in a query document |
+| `GRAPHQL_MAX_COST` | `5000` | Max estimated query cost (depth/field heuristic) |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
-| `ENABLE_LOGGING` | `false` | Enable request logging |
+| `ENABLE_LOGGING` | `false` | Enable OpenTelemetry request tracing |
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
+| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,networkState,blocks` to expose; omitted fields are removed from the schema |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
@@ -205,6 +216,13 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 - Counting the hops: a GCP external Application Load Balancer appends two entries — the client IP, then the forwarding-rule IP — so a bare GCP LB is `TRUST_PROXY=2`, plus one for each additional in-cluster proxy. Getting this wrong fails silently in both directions: too high falls back to the socket address, too low keys on your own proxy's IP and collapses every client into one bucket. The `TRUST_PROXY=0` warning reports the observed chain length; use it to confirm.
 - The counter is in-memory and **per-instance**: with N replicas the effective limit is roughly N × `RATE_LIMIT_MAX`. A shared store (e.g. Redis) for exact cross-replica limits is tracked as deployment hardening.
 - Health checks (`/healthcheck`) are never rate-limited.
+
+### Notes on `CORS_ORIGIN`
+
+- Secure by default: when unset, the server sends no permissive CORS headers, so browsers can only call it same-origin. Server-to-server clients and `curl` are unaffected.
+- To allow browser apps on other origins, set an explicit allowlist: `CORS_ORIGIN=https://app.example.com,https://www.example.com`.
+- Allowlist entries must be exact `scheme://host[:port]` origins: no trailing slash, no wildcard subdomains, and no path.
+- `CORS_ORIGIN=*` opens the API to any origin — convenient for a fully public read API, but make it a deliberate choice rather than a default.
 
 ---
 
@@ -277,9 +295,20 @@ This query returns the latest indexed block height — compare it with [MinaScan
 ```graphql
 query GetEvents {
   events(input: { address: "B62..." }) {
-    blockInfo { height stateHash timestamp chainStatus }
-    eventData { data }
-    transactionInfo { status hash memo }
+    blockInfo {
+      height
+      stateHash
+      timestamp
+      chainStatus
+    }
+    eventData {
+      data
+    }
+    transactionInfo {
+      status
+      hash
+      memo
+    }
   }
 }
 ```
@@ -290,19 +319,20 @@ Replace `B62...` with the address of the zkApp whose events you want.
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `An error occurred: AggregateError [ECONNREFUSED]` | `PG_CONN` host/port wrong or DB not running | Verify with `psql "$PG_CONN" -c 'SELECT 1'` |
-| `relation "..." does not exist` on startup | Postgres reachable but not an archive-node schema | Point `PG_CONN` at an actual archive-node DB |
-| `/` returns 404 in the browser | `ENABLE_GRAPHIQL` not set | Set `ENABLE_GRAPHIQL=true` and restart |
-| `EADDRINUSE: address already in use :::8080` | Port already taken | `PORT=<free port>` and restart |
+| Symptom                                                    | Likely cause                                      | Fix                                                      |
+| ---------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| `An error occurred: AggregateError [ECONNREFUSED]`         | `PG_CONN` host/port wrong or DB not running       | Verify with `psql "$PG_CONN" -c 'SELECT 1'`              |
+| `relation "..." does not exist` on startup                 | Postgres reachable but not an archive-node schema | Point `PG_CONN` at an actual archive-node DB             |
+| `/` returns 404 in the browser                             | `ENABLE_GRAPHIQL` not set                         | Set `ENABLE_GRAPHIQL=true` and restart                   |
+| `EADDRINUSE: address already in use :::8080`               | Port already taken                                | `PORT=<free port>` and restart                           |
 | Compose: API starts but logs `relation ... does not exist` | Snapshot still loading into Postgres on first run | Wait for the `postgres` container to finish initialising |
-| Compose: snapshot download script fails | Network or storage limit | Re-run `./scripts/download_db.sh`; check disk space |
+| Compose: snapshot download script fails                    | Network or storage limit                          | Re-run `./scripts/download_db.sh`; check disk space      |
 
 ---
 
 ## Where to go next
 
+- [Security & deployment hardening](./security.md) — read before exposing the API publicly
 - [Schema reference](../schema.graphql) — the full GraphQL surface
 - [Mina archive node docs](https://docs.minaprotocol.com/node-operators/archive-node) — what an archive node is and how to run one
 - [`AGENTS.md`](../AGENTS.md) — orientation for AI coding agents working in this repo
