@@ -399,6 +399,10 @@ describe('ActionsService (integration)', () => {
   });
 });
 
+// The verification-key update tests live in `verification-key-updates.test.ts`.
+// They need applied zkApp commands, and every zkApp command in this fixture
+// failed, so they run against their own database and their own fixture.
+
 // ─── SQL Schema Validation ───────────────────────────────────────────
 
 describe('Schema validation (integration)', () => {
@@ -419,6 +423,7 @@ describe('Schema validation (integration)', () => {
       'zkapp_events',
       'zkapp_field_array',
       'zkapp_field',
+      'zkapp_updates',
       'zkapp_accounts',
       'zkapp_action_states',
     ];

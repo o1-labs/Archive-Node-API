@@ -5,6 +5,7 @@ coverage
 .github
 .memsearch
 .env*
+.npmrc
 db
 data
 *.log

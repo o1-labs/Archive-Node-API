@@ -543,6 +543,8 @@ export function getTables(db_client: postgres.Sql) {
 export const USED_TABLES = [
   'blocks',
   'account_identifiers',
+  'public_keys',
+  'tokens',
   'accounts_accessed',
   'blocks_zkapp_commands',
   'zkapp_commands',
@@ -553,6 +555,7 @@ export const USED_TABLES = [
   'zkapp_field',
   'zkapp_verification_key_hashes',
   'zkapp_verification_keys',
+  'zkapp_updates',
   'zkapp_accounts',
   'zkapp_action_states',
 ] as const;

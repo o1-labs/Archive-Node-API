@@ -18,18 +18,27 @@ env:
 
 jobs:
   build-and-deploy:
+    # This job authenticates to Google Cloud, publishes a dev npm package and
+    # pushes a Docker image, so it only works where repository secrets are
+    # available. GitHub passes no secrets to a pull request from a fork or from
+    # Dependabot, so the job is skipped there instead of failing at the auth
+    # step. Fork and Dependabot pull requests are still covered by Run-Tests,
+    # Linting, unit-tests, smoke-load, npm audit and Check Schema.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Checkout PR branch
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin ${{github.event.pull_request.head.ref}}
-          git checkout ${{github.event.pull_request.head.sha}}
+          # Build the head commit of the pull request rather than the merge
+          # commit, which is what this job published before. The previous
+          # `git fetch origin <head ref>` assumed the branch lived in this
+          # repository and could not resolve a fork's branch.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.6.1
@@ -110,7 +119,13 @@ jobs:
         if: always() && steps.determine_npm_version.outputs.needs_version_update == 'true'
         run: |
           node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.determine_npm_version.outputs.original_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
-          rm -f .npmrc
+
+      - name: Remove registry credentials from the workspace
+        # Unconditional, unlike the version restore above: `docker/build-push-action`
+        # runs later with `context: .`, so a live registry token must never be left
+        # on disk merely because the version-bump branch was not taken (#214).
+        if: always()
+        run: rm -f .npmrc
 
       - name: Determine tags
         id: determine_tags
