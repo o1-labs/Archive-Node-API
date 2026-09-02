@@ -4,6 +4,7 @@ import type {
   Events,
   NetworkState,
   Blocks,
+  ZkappCommands,
 } from '../../blockchain/types.js';
 import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
@@ -11,12 +12,15 @@ import type {
   EventFilterOptionsInput,
   BlockQueryInput,
   BlockSortByInput,
+  ZkappCommandFilterOptionsInput,
 } from '../../resolvers-types.js';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
 import { EventsService } from '../../services/events-service/events-service.js';
 import { IEventsService } from '../../services/events-service/events-service.interface.js';
 import { ActionsService } from '../../services/actions-service/actions-service.js';
 import { IActionsService } from '../../services/actions-service/actions-service.interface.js';
+import { ZkappCommandsService } from '../../services/zkapp-commands-service/zkapp-commands-service.js';
+import { IZkappCommandsService } from '../../services/zkapp-commands-service/zkapp-commands-service.interface.js';
 import { NetworkService } from '../../services/network-service/network-service.js';
 import { INetworkService } from '../../services/network-service/network-service.interface.js';
 import { BlocksService } from '../../services/blocks-service/blocks-service.js';
@@ -44,6 +48,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private pingClient: postgres.Sql;
   private eventsService: IEventsService;
   private actionsService: IActionsService;
+  private zkappCommandsService: IZkappCommandsService;
   private networkService: INetworkService;
   private blocksService: IBlocksService;
 
@@ -60,6 +65,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     });
     this.eventsService = new EventsService(this.client);
     this.actionsService = new ActionsService(this.client);
+    this.zkappCommandsService = new ZkappCommandsService(this.client);
     this.networkService = new NetworkService(this.client);
     this.blocksService = new BlocksService(this.client);
   }
@@ -76,6 +82,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     options: unknown
   ): Promise<Actions> {
     return this.actionsService.getActions(input, options);
+  }
+
+  async getZkappCommands(
+    input: ZkappCommandFilterOptionsInput,
+    options: unknown
+  ): Promise<ZkappCommands> {
+    return this.zkappCommandsService.getZkappCommands(input, options);
   }
 
   async getNetworkState(options: unknown): Promise<NetworkState> {

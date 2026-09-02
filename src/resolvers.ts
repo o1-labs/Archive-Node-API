@@ -12,6 +12,8 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const schemaPath = path.resolve(__dirname, '../../schema.graphql');
+const ENABLE_BLOCK_TRANSACTION_DETAILS =
+  process.env.ENABLE_BLOCK_TRANSACTION_DETAILS === 'true';
 
 const fullResolvers: Resolvers = {
   Query: {
@@ -30,6 +32,15 @@ const fullResolvers: Resolvers = {
         'actions.graphql'
       );
       return context.db_client.getActions(input, {
+        tracingState: new TracingState(graphQLSpan),
+      });
+    },
+    zkappCommands: async (_, { input }, context) => {
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'zkappCommands.graphql'
+      );
+      return context.db_client.getZkappCommands(input, {
         tracingState: new TracingState(graphQLSpan),
       });
     },
@@ -54,49 +65,46 @@ const fullResolvers: Resolvers = {
   },
 };
 
-let resolvers: Resolvers = fullResolvers;
-let typeDefs: string | undefined = undefined;
+let enabledQueries = Object.keys(fullResolvers.Query || {});
 
-// If the ENABLED_QUERIES environment variable is set, filter the schema and resolvers.
 if (process.env.ENABLED_QUERIES !== undefined) {
-  const enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) =>
-    q.trim()
-  );
-
-  // If the list is not empty, filter the resolvers.
-  if (enabledQueries.length > 0) {
-    resolvers = {
-      Query: Object.fromEntries(
-        Object.entries(fullResolvers.Query || {}).filter(([queryName]) =>
-          enabledQueries.includes(queryName)
-        )
-      ),
-    };
-
-    // Filter the schema AST.
-    const typeDefsString = fs.readFileSync(schemaPath, 'utf-8');
-    const typeDefsAst = parse(typeDefsString);
-    const modifiedAst = visit(typeDefsAst, {
-      ObjectTypeDefinition(node) {
-        if (node.name.value === 'Query') {
-          return {
-            ...node,
-            fields: node.fields?.filter((field) =>
-              enabledQueries.includes(field.name.value)
-            ),
-          };
-        }
-        return node;
-      },
-    });
-    typeDefs = print(modifiedAst);
-  }
+  enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) => q.trim());
 }
+
+if (!ENABLE_BLOCK_TRANSACTION_DETAILS) {
+  enabledQueries = enabledQueries.filter(
+    (queryName) => queryName !== 'zkappCommands'
+  );
+}
+
+const resolvers: Resolvers = {
+  Query: Object.fromEntries(
+    Object.entries(fullResolvers.Query || {}).filter(([queryName]) =>
+      enabledQueries.includes(queryName)
+    )
+  ),
+};
+
+const typeDefsString = fs.readFileSync(schemaPath, 'utf-8');
+const typeDefsAst = parse(typeDefsString);
+const modifiedAst = visit(typeDefsAst, {
+  ObjectTypeDefinition(node) {
+    if (node.name.value === 'Query') {
+      return {
+        ...node,
+        fields: node.fields?.filter((field) =>
+          enabledQueries.includes(field.name.value)
+        ),
+      };
+    }
+    return node;
+  },
+});
 
 // Create the executable schema.
 const schema = makeExecutableSchema({
   resolvers: [resolvers],
-  typeDefs: typeDefs || fs.readFileSync(schemaPath, 'utf-8'),
+  typeDefs: print(modifiedAst),
 });
 
 export { resolvers, schema };

@@ -8,6 +8,8 @@ import { resolveCorsOptions, warnIfCorsDisabled } from './cors.js';
 
 export {
   BLOCK_RANGE_SIZE,
+  ZKAPP_COMMAND_RANGE_SIZE,
+  ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT,
   ENABLE_BLOCK_TRANSACTION_DETAILS,
   buildYoga,
   buildServer,
@@ -15,6 +17,10 @@ export {
 
 const LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || 'info';
 const BLOCK_RANGE_SIZE = Number(process.env.BLOCK_RANGE_SIZE) || 10000;
+const ZKAPP_COMMAND_RANGE_SIZE =
+  Number(process.env.ZKAPP_COMMAND_RANGE_SIZE) || 1000;
+const ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT =
+  Number(process.env.ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT) || 5000;
 const ENABLE_BLOCK_TRANSACTION_DETAILS =
   process.env.ENABLE_BLOCK_TRANSACTION_DETAILS === 'true';
 

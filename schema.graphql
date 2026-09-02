@@ -66,6 +66,31 @@ input ActionFilterOptionsInput {
   endActionState: String
 }
 
+"""
+Filter successful zkApp commands by block range.
+
+Both `from` and `to` are required. The range is bounded by `ZKAPP_COMMAND_RANGE_SIZE`, and the server may reject dense ranges that expand to too many account updates.
+"""
+input ZkappCommandFilterOptionsInput {
+  blockStatus: BlockStatusFilter
+  """
+  Mina block height to filter zkApp commands from, inclusive
+  """
+  from: Int!
+  """
+  Mina block height to filter zkApp commands to, exclusive
+  """
+  to: Int!
+  """
+  Optional account update public key filter.
+  """
+  accountPublicKey: String
+  """
+  Optional account update token id filter.
+  """
+  tokenId: String
+}
+
 type EventData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
@@ -122,6 +147,57 @@ type ActionOutput {
   transactionInfo: TransactionInfo
   actionData: [ActionData]
   actionState: ActionStates!
+}
+
+"""
+Raw field array from the archive database.
+
+An empty `fields` array means the archive row exists but contains no field values.
+Nullable entries mean the corresponding nullable archive state slot has no field value.
+"""
+type ZkappFieldArray {
+  fields: [String]!
+}
+
+type ZkappAccountPrecondition {
+  state: ZkappFieldArray
+  actionState: ZkappFieldArray
+  provedState: Boolean
+  isNew: Boolean
+}
+
+type ZkappGlobalSlotBounds {
+  lowerBound: Int
+  upperBound: Int
+}
+
+type ZkappNetworkPrecondition {
+  globalSlotSinceGenesis: ZkappGlobalSlotBounds
+}
+
+type ZkappAccountUpdateOutput {
+  id: String!
+  publicKey: String!
+  tokenId: String!
+  authorizationKind: String!
+  balanceChange: String!
+  incrementNonce: Boolean!
+  callDepth: Int!
+  actions: [ZkappFieldArray!]!
+  events: [ZkappFieldArray!]!
+  appState: ZkappFieldArray
+  accountPrecondition: ZkappAccountPrecondition
+  networkPrecondition: ZkappNetworkPrecondition
+}
+
+type ZkappCommandOutput {
+  blockInfo: BlockInfo!
+  hash: String!
+  feePayer: String!
+  fee: String!
+  memo: String!
+  sequenceNumber: Int!
+  accountUpdates: [ZkappAccountUpdateOutput!]!
 }
 
 """
@@ -216,6 +292,7 @@ type Block {
 type Query {
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  zkappCommands(input: ZkappCommandFilterOptionsInput!): [ZkappCommandOutput!]!
   networkState: NetworkStateOutput!
   blocks(query: BlockQueryInput, limit: Int, sortBy: BlockSortByInput): [Block]!
 }

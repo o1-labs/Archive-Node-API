@@ -60,6 +60,9 @@ PG_CONN='postgres://postgres:postgres@localhost:5432/archive' \
 | `ENABLE_INTROSPECTION` | `false`      | Allow GraphQL schema introspection                 |
 | `ENABLE_LOGGING`       | `false`      | Enable request logging                             |
 | `ENABLE_METRICS`       | `false`      | Expose Prometheus metrics at `/metrics`            |
+| `BLOCK_RANGE_SIZE`     | `10000`      | Max block range a single query may span            |
+| `ZKAPP_COMMAND_RANGE_SIZE` | `1000`       | Max block range for `zkappCommands`                |
+| `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000`       | Max expanded account updates for one `zkappCommands` query |
 | `ENABLE_JAEGER`        | `false`      | Emit traces to a Jaeger collector                  |
 | `JAEGER_ENDPOINT`      | —            | e.g. `http://localhost:14268/api/traces`           |
 
