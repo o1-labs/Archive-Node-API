@@ -31,16 +31,12 @@ export function getVerificationKeyUpdatesQuery(
   to: number,
   status: BlockStatusFilter
 ) {
-  const params: (string | number)[] = [verificationKeyHash, from, to];
-  let statusClause = "AND b.chain_status <> 'orphaned'";
+  const statusClause =
+    status === BlockStatusFilter.all
+      ? client`AND b.chain_status <> 'orphaned'`
+      : client`AND b.chain_status = ${status.toLowerCase()}`;
 
-  if (status !== BlockStatusFilter.all) {
-    params.push(status.toLowerCase());
-    statusClause = `AND b.chain_status = $${params.length}`;
-  }
-
-  return client.unsafe(
-    `
+  return client<VerificationKeyUpdateDatabaseRow[]>`
       WITH RECURSIVE pending_chain AS (
         SELECT id, parent_id
         FROM blocks
@@ -69,13 +65,13 @@ export function getVerificationKeyUpdatesQuery(
         FROM zkapp_verification_key_hashes vkh
         INNER JOIN zkapp_verification_keys vk ON vk.hash_id = vkh.id
         INNER JOIN zkapp_updates zu ON zu.verification_key_id = vk.id
-        WHERE vkh.value = $1
+        WHERE vkh.value = ${verificationKeyHash}
       ),
       full_chain AS (
         SELECT b.*
         FROM blocks b
-        WHERE b.height >= $2
-          AND b.height < $3
+        WHERE b.height >= ${from}
+          AND b.height < ${to}
           AND (
             b.chain_status = 'canonical'
             OR b.id IN (SELECT id FROM pending_chain)
@@ -85,7 +81,7 @@ export function getVerificationKeyUpdatesQuery(
         zau.id AS account_update_id,
         pk.value AS address,
         t.value AS token_id,
-        $1::text AS verification_key_hash,
+        ${verificationKeyHash}::text AS verification_key_hash,
         b.state_hash,
         b.parent_hash,
         b.height,
@@ -132,7 +128,5 @@ export function getVerificationKeyUpdatesQuery(
         b.state_hash ASC,
         bzc.sequence_no ASC,
         update_ref.position ASC
-    `,
-    params
-  );
+    `;
 }

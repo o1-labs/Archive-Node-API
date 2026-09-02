@@ -12,10 +12,7 @@ import {
   extractTraceStateFromOptions,
   TracingState,
 } from '../../tracing/tracer.js';
-import {
-  getVerificationKeyUpdatesQuery,
-  VerificationKeyUpdateDatabaseRow,
-} from '../../db/sql/verification-key-updates/queries.js';
+import { getVerificationKeyUpdatesQuery } from '../../db/sql/verification-key-updates/queries.js';
 import type { IVerificationKeyUpdatesService } from './verification-key-updates-service.interface.js';
 
 export class VerificationKeyUpdatesService
@@ -50,16 +47,14 @@ export class VerificationKeyUpdatesService
     const processingSpan = tracingState.startSpan(
       'verificationKeyUpdates.processing'
     );
-    const updates = (rows as unknown as VerificationKeyUpdateDatabaseRow[]).map(
-      (row) => ({
-        accountUpdateId: row.account_update_id.toString(),
-        address: row.address,
-        tokenId: row.token_id,
-        verificationKeyHash: row.verification_key_hash,
-        blockInfo: createBlockInfo(row),
-        transactionInfo: createTransactionInfo(row),
-      })
-    );
+    const updates = rows.map((row) => ({
+      accountUpdateId: row.account_update_id.toString(),
+      address: row.address,
+      tokenId: row.token_id,
+      verificationKeyHash: row.verification_key_hash,
+      blockInfo: createBlockInfo(row),
+      transactionInfo: createTransactionInfo(row),
+    }));
     processingSpan.end();
     return updates;
   }
