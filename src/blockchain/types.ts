@@ -57,6 +57,17 @@ export type TransactionInfo = {
   zkappAccountUpdateIds: number[];
 };
 
+export type VerificationKeyUpdate = {
+  accountUpdateId: string;
+  address: string;
+  tokenId: string;
+  verificationKeyHash: string;
+  blockInfo: BlockInfo;
+  transactionInfo: TransactionInfo;
+};
+
+export type VerificationKeyUpdates = VerificationKeyUpdate[];
+
 export type Events = {
   eventData: Event[];
   blockInfo: BlockInfo;
