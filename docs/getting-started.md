@@ -47,7 +47,7 @@ npx @o1-labs/mina-archive-node-graphql
 export PG_CONN='postgresql://postgres:postgres@localhost:5432/archive'
 export ENABLE_GRAPHIQL=true        # optional, exposes GraphiQL UI at /
 mina-archive-node-graphql
-# → Server is running on port: 8080
+# → {"level":"info",...,"port":"8080","msg":"server started"}
 ```
 
 Or via a `.env` file (Node 20+ supports `--env-file` natively):
@@ -89,7 +89,7 @@ docker run --rm \
   -e PG_CONN='postgresql://postgres:postgres@host.docker.internal:5432/archive' \
   -e ENABLE_GRAPHIQL=true \
   ghcr.io/o1-labs/archive-node-api:latest
-# → Server is running on port: 8080
+# → {"level":"info",...,"port":"8080","msg":"server started"}
 ```
 
 Notes:
@@ -147,7 +147,7 @@ Compose will:
 - start Jaeger for tracing
 - build and start the API on port `8080`
 
-Once you see `Server is running on port: 8080` in the logs, you're up.
+Once you see a `server started` log line with `"port":"8080"`, you're up.
 
 ### Variant: only Postgres + Jaeger (use when iterating on the API itself)
 
@@ -183,7 +183,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `PG_STATEMENT_TIMEOUT` | `15000` | Server-side timeout in ms per SQL statement, deliberately below the 20s timeout used by known clients so Postgres reclaims work before clients give up. `0` disables |
 | `PORT` | `8080` | Port the GraphQL server listens on |
 | `SHUTDOWN_TIMEOUT_MS` | `20000` | Max ms to drain in-flight requests on SIGTERM before forcing exit. Keep Kubernetes `terminationGracePeriodSeconds` above this value |
-| `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
+| `LOG_LEVEL` | `info` | Log verbosity: `trace` \| `debug` \| `info` \| `warn` \| `error` \| `fatal` \| `silent` |
 | `CORS_ORIGIN` | *(disabled)* | Cross-origin access. Unset = same-origin only; `*` = any origin; or a comma-separated allowlist |
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
 | `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
@@ -195,7 +195,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `GRAPHQL_MAX_COST` | `5000` | Max estimated query cost (depth/field heuristic) |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
-| `ENABLE_LOGGING` | `false` | Enable OpenTelemetry request tracing |
+| `ENABLE_LOGGING` | `false` | Emit OpenTelemetry traces (request access logs are always on — see below) |
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
@@ -224,11 +224,18 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 - Allowlist entries must be exact `scheme://host[:port]` origins: no trailing slash, no wildcard subdomains, and no path.
 - `CORS_ORIGIN=*` opens the API to any origin — convenient for a fully public read API, but make it a deliberate choice rather than a default.
 
+### Notes on logging
+
+- Logs are emitted as **structured JSON** (one object per line) to stdout, ready for aggregation — independent of the optional Jaeger tracing (`ENABLE_LOGGING`).
+- Each request is assigned a correlation id (honouring an inbound `X-Request-Id` header) and logged once with method, path, status, and duration. GraphQL execution errors are logged with the same `requestId`.
+- Inbound `X-Request-Id` values are capped and sanitized before logging; blank or fully unsafe values are replaced with a generated UUID.
+- Probe endpoints (`/healthcheck`, `/readiness`) are not access-logged, to avoid noise from orchestrator health checks.
+
 ---
 
 ## Verification
 
-Once the server prints `Server is running on port: 8080`:
+Once the server prints a `server started` log line:
 
 ```sh
 # liveness probe — process is up (does not check the DB)

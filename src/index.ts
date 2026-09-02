@@ -5,6 +5,7 @@ import { buildServer } from './server/server.js';
 import { buildPlugins } from './server/plugins.js';
 import { createGracefulShutdown } from './server/graceful-shutdown.js';
 import { assertValidConfig } from './config.js';
+import { logger } from './server/logger.js';
 
 const PORT = process.env.PORT || 8080;
 const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 20000;
@@ -38,7 +39,7 @@ function withTimeout(
     const server = buildServer(context, plugins);
 
     server.listen(PORT, () => {
-      console.info(`Server is running on port: ${PORT}`);
+      logger.info({ port: PORT }, 'server started');
     });
 
     const shutdown = createGracefulShutdown({
@@ -73,15 +74,15 @@ function withTimeout(
     // Crashes exit non-zero: an exit 0 reads as a clean stop to Kubernetes and
     // systemd, suppressing restarts and non-zero-exit alerting.
     process.on('uncaughtException', (error) => {
-      console.error('Uncaught exception:', error);
+      logger.error({ err: error }, 'uncaught exception');
       void shutdown('uncaughtException', 1);
     });
     process.on('unhandledRejection', (reason) => {
-      console.error('Unhandled rejection:', reason);
+      logger.error({ err: reason }, 'unhandled rejection');
       void shutdown('unhandledRejection', 1);
     });
   } catch (error) {
-    console.error('An error occurred:', error);
+    logger.error({ err: error }, 'fatal error during startup');
     process.exit(1); // exit with an error code
   }
 })();
