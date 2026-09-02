@@ -6,6 +6,14 @@ on:
     branches:
       - main
 
+# A pull request from a fork, or one opened by Dependabot, runs with a read-only
+# GITHUB_TOKEN. The previous implementation reported through a check run, which
+# needs `checks: write`, so it failed on every such pull request with
+# "Resource not accessible by integration". The gate is now the job's own exit
+# code, which needs no write access at all.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Check Schema
@@ -13,9 +21,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
 
-      - uses: kamilkisiela/graphql-inspector@master
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
         with:
-          schema: 'main:schema.graphql'
-          approve-label: expected-breaking-change
+          node-version: '22'
+
+      - name: Fetch the base schema
+        run: git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Diff schema.graphql against main
+        env:
+          # Same escape hatch as before: a deliberate breaking change is approved
+          # by labelling the pull request, not by editing the workflow.
+          APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'expected-breaking-change') }}
+        run: |
+          set +e
+          npx --yes @graphql-inspector/cli@7.0.0 diff 'git:origin/main:schema.graphql' schema.graphql
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$APPROVED" = 'true' ]; then
+            echo "::warning::Breaking schema changes detected. Accepted because this pull request carries the expected-breaking-change label."
+            exit 0
+          fi
+          exit $status
