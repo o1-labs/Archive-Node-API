@@ -183,6 +183,10 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window length in milliseconds |
 | `TRUST_PROXY` | _(unset)_ | Number of trusted proxy hops in front of the API. Required when `RATE_LIMIT_MAX > 0`: the limiter stays disabled until it is set. `0` ignores `X-Forwarded-For` and keys on the socket address |
+| `GRAPHQL_MAX_DEPTH` | `12` | Max query selection-set nesting depth. Do not set below `8`: known clients send depth-7 probes, and a depth rejection replaces the `Cannot query field` error those clients rely on for schema-tier fallback |
+| `GRAPHQL_MAX_ALIASES` | `15` | Max aliases allowed in a single operation |
+| `GRAPHQL_MAX_TOKENS` | `1000` | Max lexical tokens allowed in a query document |
+| `GRAPHQL_MAX_COST` | `5000` | Max estimated query cost (depth/field heuristic) |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Enable request logging |
