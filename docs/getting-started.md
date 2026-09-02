@@ -175,6 +175,10 @@ The server reads config from environment variables. `PG_CONN` is the only requir
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PG_CONN` | *(required)* | Postgres connection string for the archive-node DB |
+| `PG_MAX_CONNECTIONS` | `10` | Max pooled Postgres connections (total, not per host) |
+| `PG_IDLE_TIMEOUT` | `30` | Seconds an idle connection is kept before closing |
+| `PG_CONNECT_TIMEOUT` | `30` | Seconds to wait for a new connection before failing |
+| `PG_STATEMENT_TIMEOUT` | `15000` | Server-side timeout in ms per SQL statement, deliberately below the 20s timeout used by known clients so Postgres reclaims work before clients give up. `0` disables |
 | `PORT` | `8080` | Port the GraphQL server listens on |
 | `SHUTDOWN_TIMEOUT_MS` | `20000` | Max ms to drain in-flight requests on SIGTERM before forcing exit. Keep Kubernetes `terminationGracePeriodSeconds` above this value |
 | `LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
