@@ -43,9 +43,10 @@ kubectl apply -f deploy/kubernetes.yaml
 
 Put a TLS-terminating Ingress/gateway in front and set **`TRUST_PROXY` to the
 number of hops** it adds. The gateway must set `X-Forwarded-For`, but the API
-ignores that header while `TRUST_PROXY=0` (the safe default for a directly
-exposed server), so leaving it unset behind an ingress collapses every client
-into a single rate-limit bucket. See [`docs/security.md`](../docs/security.md).
+does not assume a safe default hop count: while `TRUST_PROXY` is unset, rate
+limiting is disabled with a startup warning. Use `TRUST_PROXY=0` only for a
+directly exposed server; behind an ingress, set the real hop count so clients do
+not collapse into one bucket. See [`docs/security.md`](../docs/security.md).
 
 ## Docker Compose — [`docker-compose.prod.yml`](./docker-compose.prod.yml)
 

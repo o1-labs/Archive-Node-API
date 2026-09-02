@@ -110,18 +110,17 @@ From 1.0.0 the GraphQL schema, HTTP endpoints, and configuration are a versioned
 
 ## Hardware requirements
 
-The bottleneck is the Postgres database, not this server. Listing multiple hosts
-in `PG_CONN` gives failover, not read fan-out; put a load balancer or managed
-reader endpoint in front of read replicas when you need to spread query load. A
-recent benchmark on a 12-core / 32 GB box (API + Postgres co-located) sustained
-~800 req/s with p99 latency of 39 ms. Use `npm run benchmark` to size your own
-deployment.
+The bottleneck is the Postgres database, not this server. A recent benchmark on a 12-core / 32 GB box (API + Postgres co-located) sustained ~800 req/s with p99 latency of 39 ms. Use `npm run benchmark` to size your own deployment.
+
+Listing multiple hosts in `PG_CONN` (`postgres://host1:5432,host2:5432/archive`) buys **redundancy, not read throughput**: the client connects to the first host and only moves to the next one when that connection fails, so it fails over rather than spreading queries across replicas. To actually scale reads, load-balance in front of Postgres (PgBouncer, HAProxy, or a managed reader endpoint) and point `PG_CONN` at that.
 
 For SLOs, capacity guidance, what to monitor, and incident response, see the [operations runbook](./docs/runbook.md).
 
 ## Deployment
 
 Reference Kubernetes and production Docker Compose manifests — with liveness/readiness probes, resource limits, autoscaling, and a hardened pod security context — live in [`deploy/`](./deploy/). Read [`docs/security.md`](./docs/security.md) for the deployment contract (TLS gateway, read-only DB role, private Postgres).
+
+The API is a public, read-only service and is meant to run **behind a TLS-terminating gateway**, against a **read-only** Postgres role. Before exposing it publicly, read [`docs/security.md`](./docs/security.md) — it covers the security model, network architecture, the built-in abuse protections, and a deployment checklist.
 
 ## Contributing
 

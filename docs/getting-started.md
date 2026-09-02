@@ -318,6 +318,7 @@ Replace `B62...` with the address of the zkApp whose events you want.
 
 ## Where to go next
 
+- [Security & deployment hardening](./security.md) — read before exposing the API publicly
 - [Schema reference](../schema.graphql) — the full GraphQL surface
 - [Mina archive node docs](https://docs.minaprotocol.com/node-operators/archive-node) — what an archive node is and how to run one
 - [`AGENTS.md`](../AGENTS.md) — orientation for AI coding agents working in this repo
