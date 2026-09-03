@@ -10,6 +10,7 @@ import type {
   BlockSortByInput,
 } from '../../resolvers-types.js';
 import { IBlocksService } from './blocks-service.interface.js';
+import { BEST_CHAIN_TIP_HEIGHT_SQL } from '../../db/sql/best-chain.js';
 import {
   TracingState,
   extractTraceStateFromOptions,
@@ -79,7 +80,9 @@ class BlocksService implements IBlocksService {
     options: unknown
   ): Promise<Blocks> {
     const tracingState = extractTraceStateFromOptions(options);
-    return (await this.getBlockData(query, limit, sortBy, { tracingState })) ?? [];
+    return (
+      (await this.getBlockData(query, limit, sortBy, { tracingState })) ?? []
+    );
   }
 
   async getBlockData(
@@ -128,7 +131,8 @@ class BlocksService implements IBlocksService {
     const dateTimeLt = query?.dateTime_lt;
     const canonical = query?.canonical;
     const inBestChain = query?.inBestChain;
-    const orderBy: 'ASC' | 'DESC' = sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
+    const orderBy: 'ASC' | 'DESC' =
+      sortBy === 'BLOCKHEIGHT_DESC' ? 'DESC' : 'ASC';
     const limitValue = Math.min(limit ?? 200, BLOCK_RANGE_SIZE);
 
     // Build the SQL query for blocks with transactions
@@ -192,16 +196,15 @@ class BlocksService implements IBlocksService {
       paramIndex++;
     }
 
-    const best_chain_til_canonical_cte =
-      `
+    const best_chain_til_canonical_cte = `
         WITH RECURSIVE best_chain_til_canonical AS (
             SELECT
                 id,
                 parent_id,
                 height
             FROM blocks
-            WHERE height = (SELECT MAX(height) FROM blocks)
-            AND chain_status = 'pending'
+            WHERE chain_status = 'pending'
+            AND height = ${BEST_CHAIN_TIP_HEIGHT_SQL}
 
             UNION
 
@@ -213,19 +216,18 @@ class BlocksService implements IBlocksService {
             JOIN best_chain_til_canonical ON potential_parent.id = best_chain_til_canonical.parent_id
             WHERE potential_parent.chain_status <> 'canonical'
         )
-        `
+        `;
     if (inBestChain === true) {
       sql =
-        best_chain_til_canonical_cte
-        + sql
-        + ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
+        best_chain_til_canonical_cte +
+        sql +
+        ` AND (b.id IN (SELECT id FROM best_chain_til_canonical) OR b.chain_status = 'canonical')`;
     } else if (inBestChain === false) {
       sql =
-        best_chain_til_canonical_cte
-        + sql
-        + ` AND (b.id NOT IN (SELECT id FROM best_chain_til_canonical)
+        best_chain_til_canonical_cte +
+        sql +
+        ` AND (b.id NOT IN (SELECT id FROM best_chain_til_canonical)
                  OR b.chain_status = 'orphaned')`;
-
     }
 
     sql += ` ORDER BY b.height ${orderBy}`;

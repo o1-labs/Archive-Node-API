@@ -19,6 +19,7 @@ import { ActionsService } from '../../src/services/actions-service/actions-servi
 import { NetworkService } from '../../src/services/network-service/network-service.js';
 import { BlocksService } from '../../src/services/blocks-service/blocks-service.js';
 import { BlockStatusFilter } from '../../src/blockchain/types.js';
+import { BlockSortByInput } from '../../src/resolvers-types.js';
 import { DEFAULT_TOKEN_ID } from '../../src/blockchain/constants.js';
 import { TracingState } from '../../src/tracing/tracer.js';
 import {
@@ -32,10 +33,13 @@ const nullOptions = { tracingState: new TracingState(undefined as any) };
 
 let client: postgres.Sql;
 
-before(async () => {
-  await setupTestDatabase();
-  client = createTestClient();
-}, { timeout: 30000 });
+before(
+  async () => {
+    await setupTestDatabase();
+    client = createTestClient();
+  },
+  { timeout: 30000 }
+);
 
 after(async () => {
   await client.end();
@@ -137,7 +141,11 @@ describe('BlocksService (integration)', () => {
     );
     assert.ok(blocks.length > 0);
     // 24 canonical blocks in the dump — verify we get them all within default limit
-    assert.strictEqual(blocks.length, 24, 'should return all 24 canonical blocks');
+    assert.strictEqual(
+      blocks.length,
+      24,
+      'should return all 24 canonical blocks'
+    );
   });
 
   test('filters non-canonical blocks', async () => {
@@ -160,7 +168,10 @@ describe('BlocksService (integration)', () => {
     assert.ok(blocks.length > 0);
     // Should include canonical blocks plus pending best chain
     // At minimum 24 canonical + 1 pending = 25 blocks
-    assert.ok(blocks.length >= 24, 'should include at least all canonical blocks');
+    assert.ok(
+      blocks.length >= 24,
+      'should include at least all canonical blocks'
+    );
   });
 
   test('block data has correct shape', async () => {
@@ -193,9 +204,7 @@ describe('BlocksService (integration)', () => {
       nullOptions
     );
     // At least one block at height 2-3 should have a coinbase
-    const withCoinbase = blocks.filter(
-      (b) => b.transactions.coinbase !== '0'
-    );
+    const withCoinbase = blocks.filter((b) => b.transactions.coinbase !== '0');
     assert.ok(
       withCoinbase.length > 0,
       'at least one block should have coinbase'
@@ -224,7 +233,10 @@ describe('BlocksService (integration)', () => {
     const oneHourBefore = new Date(latestTime.getTime() - 3600000);
 
     const blocks = await blocksService.getBlocks(
-      { dateTime_gte: oneHourBefore.toISOString(), dateTime_lt: latestTime.toISOString() },
+      {
+        dateTime_gte: oneHourBefore.toISOString(),
+        dateTime_lt: latestTime.toISOString(),
+      },
       null,
       null,
       nullOptions
@@ -263,10 +275,132 @@ describe('NetworkService (integration)', () => {
 
   test('pending height > canonical height', async () => {
     const state = await networkService.getNetworkState(nullOptions);
-    assert.ok(state.maxBlockHeight, 'fixture seeds both canonical and pending rows');
+    assert.ok(
+      state.maxBlockHeight,
+      'fixture seeds both canonical and pending rows'
+    );
     assert.ok(
       state.maxBlockHeight.pendingMaxBlockHeight >
         state.maxBlockHeight.canonicalMaxBlockHeight
+    );
+  });
+});
+
+// ─── Hard-fork shape: an abandoned chain above the tip ──────────────
+
+/**
+ * After a hard fork the archive still holds the OLD chain's blocks above the new
+ * chain's tip, marked `orphaned` (mainnet, Mesa upgrade 2026-09-03: old chain to
+ * 548187, fork block 548147, new tip 548164). Every "walk back from the tip" CTE
+ * used to anchor on the global MAX(height) — a dead block — so `inBestChain: true`
+ * returned nothing above the fork block for as long as the old chain outranked the
+ * new one. These tests plant that shape on top of the fixture: one orphaned block
+ * one height ABOVE the synthetic pending tip.
+ */
+describe('Hard-fork shape (integration)', () => {
+  const ORPHAN_ABOVE_TIP = '3NKorphan_above_the_pending_tip_hard_fork_shape';
+  let blocksService: BlocksService;
+  let networkService: NetworkService;
+  let tipHeight: number;
+
+  before(async () => {
+    blocksService = new BlocksService(client);
+    networkService = new NetworkService(client);
+    const [tip] = await client.unsafe(
+      `SELECT height FROM blocks WHERE chain_status = 'pending' ORDER BY height DESC LIMIT 1`
+    );
+    tipHeight = Number(tip.height);
+    await client.unsafe(`
+      INSERT INTO blocks (
+        id, state_hash, parent_id, parent_hash, creator_id, block_winner_id,
+        last_vrf_output,
+        snarked_ledger_hash_id, staking_epoch_data_id, next_epoch_data_id,
+        min_window_density, sub_window_densities, total_currency,
+        ledger_hash, height, global_slot_since_hard_fork, global_slot_since_genesis,
+        protocol_version_id, proposed_protocol_version_id,
+        timestamp, chain_status
+      )
+      SELECT
+        (SELECT max(id) + 1 FROM blocks),
+        '${ORPHAN_ABOVE_TIP}',
+        id,
+        state_hash,
+        creator_id,
+        block_winner_id,
+        last_vrf_output,
+        snarked_ledger_hash_id,
+        staking_epoch_data_id,
+        next_epoch_data_id,
+        min_window_density,
+        sub_window_densities,
+        total_currency,
+        ledger_hash,
+        height + 1,
+        global_slot_since_hard_fork + 1,
+        global_slot_since_genesis + 1,
+        protocol_version_id,
+        proposed_protocol_version_id,
+        (timestamp::bigint + 60000)::text,
+        'orphaned'
+      FROM blocks
+      WHERE chain_status = 'pending'
+      ORDER BY height DESC
+      LIMIT 1
+    `);
+  });
+
+  after(async () => {
+    await client.unsafe(
+      `DELETE FROM blocks WHERE state_hash = '${ORPHAN_ABOVE_TIP}'`
+    );
+  });
+
+  test('networkState ignores the abandoned block above the tip', async () => {
+    const state = await networkService.getNetworkState(nullOptions);
+    assert.ok(state.maxBlockHeight);
+    assert.strictEqual(state.maxBlockHeight.pendingMaxBlockHeight, tipHeight);
+  });
+
+  test('inBestChain=true still reaches the pending tip', async () => {
+    const blocks = await blocksService.getBlocks(
+      { inBestChain: true, blockHeight_gte: tipHeight },
+      null,
+      null,
+      nullOptions
+    );
+    assert.deepStrictEqual(
+      blocks.map((b) => Number(b.blockHeight)),
+      [tipHeight],
+      'the pending tip must be in the best chain even with an orphan above it'
+    );
+    assert.notStrictEqual(blocks[0].stateHash, ORPHAN_ABOVE_TIP);
+  });
+
+  test('the best chain and networkState agree on the tip', async () => {
+    const state = await networkService.getNetworkState(nullOptions);
+    const blocks = await blocksService.getBlocks(
+      { inBestChain: true },
+      null,
+      BlockSortByInput.BlockheightDesc,
+      nullOptions
+    );
+    assert.ok(state.maxBlockHeight);
+    assert.strictEqual(
+      Number(blocks[0].blockHeight),
+      state.maxBlockHeight.pendingMaxBlockHeight
+    );
+  });
+
+  test('inBestChain=false reports the abandoned block', async () => {
+    const blocks = await blocksService.getBlocks(
+      { inBestChain: false, blockHeight_gte: tipHeight },
+      null,
+      null,
+      nullOptions
+    );
+    assert.deepStrictEqual(
+      blocks.map((b) => b.stateHash),
+      [ORPHAN_ABOVE_TIP]
     );
   });
 });
