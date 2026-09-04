@@ -2,6 +2,7 @@ import type postgres from 'postgres';
 import { ArchiveNodeDatabaseRow } from './types.js';
 import { BlockStatusFilter } from '../../../blockchain/types.js';
 import { BLOCK_RANGE_SIZE } from '../../../server/server.js';
+import { bestChainTipHeight } from '../best-chain.js';
 
 function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
   let toAsNum = to ? Number(to) : undefined;
@@ -20,7 +21,7 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
       FROM
         blocks b
       WHERE
-        height = (SELECT max(height) FROM blocks)
+        height = ${bestChainTipHeight(db_client)}
     ) 
     UNION ALL
     SELECT
@@ -38,7 +39,9 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
   ),
   full_chain AS (
     SELECT
-      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, (SELECT max(height) FROM blocks) - height AS distance_from_max_block_height, last_vrf_output
+      DISTINCT id, state_hash, parent_id, parent_hash, height, global_slot_since_genesis, global_slot_since_hard_fork, timestamp, chain_status, ledger_hash, ${bestChainTipHeight(
+        db_client
+      )} - height AS distance_from_max_block_height, last_vrf_output
     FROM
       (
         SELECT
@@ -68,10 +71,9 @@ function fullChainCTE(db_client: postgres.Sql, from?: string, to?: string) {
             // If no params ar provided, then we query the last BLOCK_RANGE_SIZE blocks
             fromAsNum
               ? db_client`AND b.height >= ${fromAsNum} AND b.height < ${toAsNum!}`
-              : db_client`AND b.height >= (
-                SELECT MAX(b2.height)
-                FROM blocks b2
-            ) - ${BLOCK_RANGE_SIZE}`
+              : db_client`AND b.height >= ${bestChainTipHeight(
+                  db_client
+                )} - ${BLOCK_RANGE_SIZE}`
           }
       ) AS full_chain
   )
@@ -494,7 +496,7 @@ export function resolveActionStateBoundary(
     (
       SELECT id, parent_id, chain_status
       FROM blocks
-      WHERE height = (SELECT max(height) FROM blocks)
+      WHERE height = ${bestChainTipHeight(db_client)}
     )
     UNION ALL
     SELECT b.id, b.parent_id, b.chain_status
@@ -511,7 +513,9 @@ export function resolveActionStateBoundary(
         ? db_client`${fromAsNum}::bigint`
         : toAsNum !== null
         ? db_client`${toAsNum - BLOCK_RANGE_SIZE}::bigint`
-        : db_client`(SELECT max(height) FROM blocks) - ${BLOCK_RANGE_SIZE}::bigint`
+        : db_client`${bestChainTipHeight(
+            db_client
+          )} - ${BLOCK_RANGE_SIZE}::bigint`
     } AS window_start
   ),
   target AS (
@@ -577,7 +581,7 @@ export function getZkappsWithPendingEventsQuery(db_client: postgres.Sql) {
   -- start at the tip
   SELECT id, parent_id, chain_status
     FROM blocks
-   WHERE height = (SELECT MAX(height) FROM blocks)
+   WHERE height = ${bestChainTipHeight(db_client)}
 
   UNION ALL
 
