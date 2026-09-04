@@ -59,6 +59,31 @@ after(async () => {
 
 // ─── Network State ─────────────────────────────────────────────────
 
+/**
+ * A block timestamp is plausible when it is not epoch 0 and not in the future.
+ *
+ * The suite asserts invariants rather than values, because the dump rotates
+ * hourly. An earlier version pinned the year at >= 2023, which no dump can
+ * satisfy: devnet's genesis block is dated 2021-09-24, so the oldest blocks in
+ * every dump fail it.
+ */
+const MINA_EPOCH_START = Date.UTC(2020, 0, 1);
+
+function assertPlausibleBlockTime(date: Date, context: string): void {
+  assert.ok(
+    !Number.isNaN(date.getTime()),
+    `${context}: dateTime should parse, got ${date}`
+  );
+  assert.ok(
+    date.getTime() >= MINA_EPOCH_START,
+    `${context}: dateTime should be after 2020, got ${date.toISOString()}`
+  );
+  assert.ok(
+    date.getTime() <= Date.now() + 60 * 60 * 1000,
+    `${context}: dateTime should not be in the future, got ${date.toISOString()}`
+  );
+}
+
 describe('NetworkState (devnet dump)', () => {
   test('returns valid max block heights', async () => {
     const state = await networkService.getNetworkState(nullOptions);
@@ -106,8 +131,7 @@ describe('Oldest blocks (devnet dump)', () => {
     );
     assert.strictEqual(blocks.length, 1);
     const date = new Date(blocks[0].dateTime);
-    // Genesis should be a real date, not epoch 0
-    assert.ok(date.getFullYear() >= 2023, `genesis date should be >= 2023, got ${date}`);
+    assertPlausibleBlockTime(date, `genesis (height ${minHeight})`);
   });
 
   test('block details for very old block (height ~10)', async () => {
@@ -336,10 +360,7 @@ describe(`Quickcheck: ${RANDOM_BLOCK_COUNT} random individual blocks (devnet dum
       );
       const date = new Date(block.dateTime);
       assert.ok(!isNaN(date.getTime()), `height ${height}: invalid dateTime ${block.dateTime}`);
-      assert.ok(
-        date.getFullYear() >= 2023,
-        `height ${height}: dateTime year should be >= 2023, got ${date.getFullYear()}`
-      );
+      assertPlausibleBlockTime(date, `height ${height}`);
       assert.ok(block.transactions, `height ${height}: transactions missing`);
     }
   });
@@ -409,10 +430,13 @@ describe(`Quickcheck: ${RANDOM_RANGE_COUNT} random block ranges (devnet dump)`, 
 describe('Quickcheck: random zkApp addresses (devnet dump)', () => {
   test('events and actions queries succeed for random zkApp addresses', async () => {
     const rows = await client`
-      SELECT DISTINCT pk.value as address
-      FROM account_identifiers ai
-      JOIN public_keys pk ON ai.public_key_id = pk.id
-      JOIN zkapp_accounts za ON ai.id = za.account_identifier_id
+      SELECT address FROM (
+        SELECT DISTINCT pk.value as address
+        FROM accounts_accessed aa
+        JOIN account_identifiers ai ON aa.account_identifier_id = ai.id
+        JOIN public_keys pk ON ai.public_key_id = pk.id
+        WHERE aa.zkapp_id IS NOT NULL
+      ) AS zkapp_addresses
       ORDER BY random()
       LIMIT 10
     `;
@@ -441,9 +465,10 @@ describe('Events and Actions (devnet dump)', () => {
     // Find an address that exists in the chain
     const rows = await client`
       SELECT pk.value as address
-      FROM account_identifiers ai
+      FROM accounts_accessed aa
+      JOIN account_identifiers ai ON aa.account_identifier_id = ai.id
       JOIN public_keys pk ON ai.public_key_id = pk.id
-      JOIN zkapp_accounts za ON ai.id = za.account_identifier_id
+      WHERE aa.zkapp_id IS NOT NULL
       LIMIT 1
     `;
 
@@ -462,9 +487,10 @@ describe('Events and Actions (devnet dump)', () => {
   test('actions query works with real addresses from the chain', async () => {
     const rows = await client`
       SELECT pk.value as address
-      FROM account_identifiers ai
+      FROM accounts_accessed aa
+      JOIN account_identifiers ai ON aa.account_identifier_id = ai.id
       JOIN public_keys pk ON ai.public_key_id = pk.id
-      JOIN zkapp_accounts za ON ai.id = za.account_identifier_id
+      WHERE aa.zkapp_id IS NOT NULL
       LIMIT 1
     `;
 
