@@ -28,6 +28,9 @@ on:
       - 'benchmark/smoke.yaml'
       - '.github/workflows/smoke-load-test.yaml'
 
+permissions:
+  contents: read
+
 jobs:
   smoke-load:
     runs-on: ubuntu-latest
@@ -48,9 +51,9 @@ jobs:
           --health-retries 10
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '22.12.0'
           cache: 'npm'
@@ -76,7 +79,7 @@ jobs:
           nohup npm run start > server.log 2>&1 &
           echo $! > server.pid
           disown
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -fsS http://localhost:8080/healthcheck >/dev/null; then
               echo "server is up"
               exit 0
@@ -103,7 +106,7 @@ jobs:
 
       - name: Upload report and server log
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: smoke-load-report
           path: |

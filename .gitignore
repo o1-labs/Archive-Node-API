@@ -1,5 +1,9 @@
 # API keys and secrets
 .env
+.npmrc
+
+# Credential files google-github-actions/auth may write into the workspace
+gha-creds-*.json
 
 # Dependency directory
 node_modules

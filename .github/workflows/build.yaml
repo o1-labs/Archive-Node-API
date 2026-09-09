@@ -8,8 +8,12 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+  id-token: write # mint the GitHub OIDC token for Workload Identity Federation
+  packages: write # ghcr.io push on tag builds
+
 env:
-    GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
     GAR_LOCATION: europe-west3
     PROJECT_ID: o1labs-192920
     REGISTRY: euro-docker-repo
@@ -29,9 +33,12 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
        github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
+    # ORDERING RULE: every step that runs dependency code (npm ci, npm run build)
+    # comes BEFORE "Authenticate to Google Cloud". After that step only the
+    # registry logins, npm publish and the docker build may run. See issue 03.
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           # Build the head commit of the pull request rather than the merge
@@ -40,58 +47,41 @@ jobs:
           # repository and could not resolve a fork's branch.
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.3.0
-
-      - name: Cache Docker layers
-        uses: actions/cache@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3.0.0
-        with:
-          credentials_json: ${{ env.GCP_SA_KEY }}
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure npm authentication for Artifact Registry
-        run: |
-          # Only set authentication, not the default registry
-          # This allows dependencies to install from public npm
-          echo "//europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/:_authToken=$(gcloud auth print-access-token)" > .npmrc
+          node-version: '22'
+          # `scope` is load-bearing: it makes euro-npm the registry for
+          # @o1-labs packages only, so `npm ci` keeps resolving every other
+          # dependency from the public registry. setup-node writes its .npmrc
+          # into $RUNNER_TEMP and points NPM_CONFIG_USERCONFIG at it, so no
+          # credential file is ever created in the workspace. The real token is
+          # supplied as NODE_AUTH_TOKEN by the publish step alone.
+          registry-url: 'https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/'
+          scope: '@o1-labs'
 
       - name: Determine npm version
         id: determine_npm_version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           # Save original version BEFORE any modifications
           ORIGINAL_VERSION=$(node -p "require('./package.json').version")
-          echo "original_version=${ORIGINAL_VERSION}" >> $GITHUB_OUTPUT
+          echo "original_version=${ORIGINAL_VERSION}" >> "$GITHUB_OUTPUT"
 
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "$EVENT_NAME" == "push" && "$REF" == refs/tags/* ]]; then
             # Release build - use version from package.json
-            echo "version=${ORIGINAL_VERSION}" >> $GITHUB_OUTPUT
-            echo "needs_version_update=false" >> $GITHUB_OUTPUT
+            echo "version=${ORIGINAL_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "needs_version_update=false" >> "$GITHUB_OUTPUT"
             echo "Publishing release version from package.json: ${ORIGINAL_VERSION}"
           else
             # PR build - use dev version with SHA
-            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+            SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
             DEV_VERSION="${ORIGINAL_VERSION}-dev.${SHORT_SHA}"
-            echo "version=${DEV_VERSION}" >> $GITHUB_OUTPUT
-            echo "needs_version_update=true" >> $GITHUB_OUTPUT
+            echo "version=${DEV_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "needs_version_update=true" >> "$GITHUB_OUTPUT"
             echo "Publishing dev version: ${DEV_VERSION}"
           fi
 
@@ -100,19 +90,74 @@ jobs:
         run: |
           node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.determine_npm_version.outputs.version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
-      - name: Build npm package
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Assert no credential files in the workspace
+        shell: bash
         run: |
-          npm ci
-          npm run build
+          set -euo pipefail
+          # `.env.example.compose` and `.env.example.lightnet` are committed,
+          # secret-free templates and are excluded; every other dotenv or
+          # credential file in the workspace root is a failure.
+          found=$(find . -maxdepth 1 \( -name 'gha-creds-*.json' -o -name '.npmrc' -o -name '.env' -o \( -name '.env.*' ! -name '.env.example.*' \) \) -print)
+          if [[ -n "$found" ]]; then
+            echo "::error::credential file(s) present in workspace:"; echo "$found"; exit 1
+          fi
+          npm pack --dry-run --json --ignore-scripts | jq -r '.[0].files[].path' > "$RUNNER_TEMP/packed-files.txt"
+          if grep -E '^(gha-creds|\.npmrc|\.env)' "$RUNNER_TEMP/packed-files.txt"; then
+            echo "::error::npm would pack a credential file"; exit 1
+          fi
+          echo "npm pack would ship $(wc -l < "$RUNNER_TEMP/packed-files.txt") files:"; cat "$RUNNER_TEMP/packed-files.txt"
+
+      # Keyless: the runner presents its GitHub OIDC token and receives a
+      # 15-minute Google access token. `create_credentials_file: false` keeps
+      # the credential out of $GITHUB_WORKSPACE (and therefore out of the npm
+      # tarball and the Docker build context); nothing is stored in the
+      # repository. The pool, provider and service account are declared in
+      # gitops-infrastructure/platform/gcloud/service-accounts/workload-identity.tf.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/1020762690228/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: archive-node-api-ci@o1labs-192920.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          access_token_lifetime: 900s
+
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm registry
+        env:
+          # The token lives for this step only; setup-node's .npmrc in
+          # $RUNNER_TEMP reads it from the environment.
+          NODE_AUTH_TOKEN: ${{ steps.auth.outputs.access_token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "$EVENT_NAME" == "push" && "$REF" == refs/tags/* ]]; then
             # Release version - publish with 'latest' tag
-            npm publish --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag latest
+            npm publish --ignore-scripts --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag latest
           else
             # Dev version - publish with 'dev' tag
-            npm publish --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag dev
+            npm publish --ignore-scripts --registry=https://europe-southwest1-npm.pkg.dev/o1labs-192920/euro-npm/ --tag dev
           fi
 
       - name: Restore original package version for dev builds
@@ -120,20 +165,48 @@ jobs:
         run: |
           node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.determine_npm_version.outputs.original_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
-      - name: Remove registry credentials from the workspace
-        # Unconditional, unlike the version restore above: `docker/build-push-action`
-        # runs later with `context: .`, so a live registry token must never be left
-        # on disk merely because the version-bump branch was not taken (#214).
-        if: always()
-        run: rm -f .npmrc
+      - name: Assert no credential files in the workspace
+        # Repeated deliberately: `docker/build-push-action` runs below with
+        # `context: .`, so the workspace must be proven clean again after the
+        # publish steps and before anything is packaged into an image layer.
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `.env.example.compose` and `.env.example.lightnet` are committed,
+          # secret-free templates and are excluded; every other dotenv or
+          # credential file in the workspace root is a failure.
+          found=$(find . -maxdepth 1 \( -name 'gha-creds-*.json' -o -name '.npmrc' -o -name '.env' -o \( -name '.env.*' ! -name '.env.example.*' \) \) -print)
+          if [[ -n "$found" ]]; then
+            echo "::error::credential file(s) present in workspace:"; echo "$found"; exit 1
+          fi
+          npm pack --dry-run --json --ignore-scripts | jq -r '.[0].files[].path' > "$RUNNER_TEMP/packed-files.txt"
+          if grep -E '^(gha-creds|\.npmrc|\.env)' "$RUNNER_TEMP/packed-files.txt"; then
+            echo "::error::npm would pack a credential file"; exit 1
+          fi
+          echo "npm pack would ship $(wc -l < "$RUNNER_TEMP/packed-files.txt") files:"; cat "$RUNNER_TEMP/packed-files.txt"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Cache Docker layers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Determine tags
         id: determine_tags
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           GCP_IMAGE="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY }}/archive-node-api"
           GITHUB_IMAGE="ghcr.io/${{ github.repository_owner }}/archive-node-api"
 
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "$EVENT_NAME" == "push" && "$REF" == refs/tags/* ]]; then
             # Release build from tag (e.g., v1.2.3)
             TAG_NAME=${GITHUB_REF#refs/tags/}
             VERSION=${TAG_NAME#v}  # Remove 'v' prefix
@@ -160,19 +233,19 @@ jobs:
               TAGS="${TAGS},${GITHUB_IMAGE}:${MAJOR}"
             fi
 
-            echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+            echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
             echo "Building release tags for GCP and GitHub: ${TAGS}"
           else
             # PR build - use dev tags with SHA (GCP only)
-            SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-            FULL_TAG="${GCP_IMAGE}:dev-${{ github.sha }}"
+            SHORT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
+            FULL_TAG="${GCP_IMAGE}:dev-${COMMIT_SHA}"
             SHORT_TAG="${GCP_IMAGE}:dev-${SHORT_SHA}"
-            echo "tags=${FULL_TAG},${SHORT_TAG}" >> $GITHUB_OUTPUT
+            echo "tags=${FULL_TAG},${SHORT_TAG}" >> "$GITHUB_OUTPUT"
             echo "Building dev tags (GCP only): ${FULL_TAG},${SHORT_TAG}"
           fi
- 
+
       - name: Build and push Docker image
-        uses: docker/build-push-action@v7.3.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           push: true
