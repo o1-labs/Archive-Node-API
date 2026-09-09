@@ -135,6 +135,26 @@ CI then builds and publishes the npm package (with provenance, once npm trusted
 publishing is configured for this repository) and the Docker images. Choose the
 bump level according to the rules above.
 
+### CI credentials
+
+`.github/workflows/build.yaml` authenticates to Google Cloud **keylessly**, via
+Workload Identity Federation. There is no service-account key stored in this
+repository and none should ever be added.
+
+| | |
+| --- | --- |
+| Provider | `projects/1020762690228/locations/global/workloadIdentityPools/github-actions/providers/github` |
+| Service account | `archive-node-api-ci@o1labs-192920.iam.gserviceaccount.com` |
+| Declared in | [`gitops-infrastructure`](https://github.com/o1-labs/gitops-infrastructure) → `platform/gcloud/service-accounts/workload-identity.tf` |
+
+Each run presents GitHub's OIDC token (`permissions: id-token: write`) and
+receives a 15-minute Google access token, honoured only for this repository. The
+token is minted after `npm ci` / `npm run build` have finished, is never written
+to the workspace (`create_credentials_file: false`), and reaches only the two
+registry logins and `npm publish`. Changing the step order, or reintroducing a
+stored credential, undoes both properties — see the ordering comment at the top
+of the job.
+
 ## Migrating from npm `0.0.6`
 
 Tags `0.0.7` through `0.0.9` existed in git but were not published to npm, so

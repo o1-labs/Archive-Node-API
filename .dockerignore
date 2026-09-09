@@ -6,6 +6,9 @@ coverage
 .memsearch
 .env*
 .npmrc
+
+# Credential files google-github-actions/auth may write into the workspace
+gha-creds-*.json
 db
 data
 *.log

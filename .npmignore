@@ -2,6 +2,9 @@
 .env
 .env.*
 
+# Credential files google-github-actions/auth may write into the workspace
+gha-creds-*.json
+
 # Source files (included via tsconfig, but we ship the build)
 src/**/*.test.ts
 src/**/*.spec.ts
