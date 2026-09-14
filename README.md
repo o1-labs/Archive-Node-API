@@ -3,6 +3,12 @@
 [![Unit Tests](https://github.com/o1-labs/Archive-Node-API/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/o1-labs/Archive-Node-API/actions/workflows/unit-tests.yaml)
 [![codecov](https://codecov.io/gh/o1-labs/Archive-Node-API/branch/main/graph/badge.svg)](https://codecov.io/gh/o1-labs/Archive-Node-API)
 [![npm](https://img.shields.io/npm/v/@o1-labs/mina-archive-node-graphql.svg)](https://www.npmjs.com/package/@o1-labs/mina-archive-node-graphql)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-archive--node--api-2496ED?logo=docker&logoColor=white)](https://github.com/o1-labs/Archive-Node-API/pkgs/container/archive-node-api)
+
+**Client SDKs** —
+[![TypeScript](https://img.shields.io/npm/v/%40o1-labs%2Fmina-archive-sdk?label=TypeScript&logo=npm)](https://www.npmjs.com/package/@o1-labs/mina-archive-sdk)
+[![Rust](https://img.shields.io/crates/v/mina-archive-sdk.svg?label=Rust&logo=rust)](https://crates.io/crates/mina-archive-sdk)
+[![Go](https://img.shields.io/github/v/tag/o1-labs/mina-archive-sdk-go?label=Go&sort=semver&logo=go)](https://pkg.go.dev/github.com/o1-labs/mina-archive-sdk-go)
 
 A GraphQL server that exposes [Mina archive-node](https://docs.minaprotocol.com/node-operators/archive-node) data — blocks, events, actions, transactions — for o1js / zkApp developers. It does **not** run an archive node itself; it queries an existing archive-node Postgres database.
 
