@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/o1-labs/Archive-Node-API/branch/main/graph/badge.svg)](https://codecov.io/gh/o1-labs/Archive-Node-API)
 [![npm](https://img.shields.io/npm/v/@o1-labs/mina-archive-node-graphql.svg)](https://www.npmjs.com/package/@o1-labs/mina-archive-node-graphql)
 [![ghcr.io](https://img.shields.io/badge/ghcr.io-archive--node--api-2496ED?logo=docker&logoColor=white)](https://github.com/o1-labs/Archive-Node-API/pkgs/container/archive-node-api)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
 **Client SDKs** —
 [![TypeScript](https://img.shields.io/npm/v/%40o1-labs%2Fmina-archive-sdk?label=TypeScript&logo=npm)](https://www.npmjs.com/package/@o1-labs/mina-archive-sdk)
