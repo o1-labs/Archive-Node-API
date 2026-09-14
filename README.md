@@ -136,4 +136,4 @@ The API is a public, read-only service and is meant to run **behind a TLS-termin
 
 ## License
 
-ISC
+[Apache-2.0](./LICENSE) — the same license as [`MinaProtocol/mina`](https://github.com/MinaProtocol/mina), [`o1js`](https://github.com/o1-labs/o1js) and the archive SDKs.
