@@ -185,6 +185,14 @@ jobs:
           fi
           echo "npm pack would ship $(wc -l < "$RUNNER_TEMP/packed-files.txt") files:"; cat "$RUNNER_TEMP/packed-files.txt"
 
+      # arm64 layers are built on an amd64 runner, so register the binfmt
+      # handlers that let the runner execute aarch64 binaries. Must come before
+      # buildx sets up the builder.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
@@ -249,6 +257,9 @@ jobs:
         with:
           context: .
           push: true
+          # The pinned node:22-alpine digest is a multi-arch index that carries
+          # linux/arm64/v8, so both architectures resolve from the same pin.
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.determine_tags.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
