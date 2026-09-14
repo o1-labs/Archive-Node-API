@@ -49,7 +49,7 @@
     "blockchain"
   ],
   "author": "O(1) Labs <build@o1labs.org>",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=22.12.0"
   },
