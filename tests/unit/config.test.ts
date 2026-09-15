@@ -1,10 +1,32 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { parse } from 'graphql';
 import {
   parseBoolean,
   validateConfig,
   assertValidConfig,
 } from '../../src/config.js';
+
+/**
+ * Root field names declared by `type Query` in schema.graphql. The schema is
+ * not copied next to the compiled test, so resolve it against the source tree
+ * rather than the test's own location.
+ */
+function rootQueryFieldsFromSchema(): string[] {
+  const schemaPath = path.resolve(process.cwd(), 'schema.graphql');
+  const ast = parse(fs.readFileSync(schemaPath, 'utf-8'));
+  for (const definition of ast.definitions) {
+    if (
+      definition.kind === 'ObjectTypeDefinition' &&
+      definition.name.value === 'Query'
+    ) {
+      return (definition.fields ?? []).map((field) => field.name.value);
+    }
+  }
+  throw new Error('schema.graphql declares no `type Query`');
+}
 
 describe('parseBoolean', () => {
   test('recognises truthy spellings', () => {
@@ -95,6 +117,19 @@ describe('validateConfig', () => {
       ENABLED_QUERIES: 'blocks,event',
     });
     assert.ok(errors.some((e) => /unknown queries: event/.test(e)));
+  });
+
+  // KNOWN_QUERIES is hand-maintained; a query added to the schema but not to
+  // that list makes ENABLED_QUERIES reject a field the server really serves.
+  // That is how `verificationKeyUpdates` became unselectable (#232 follow-up).
+  test('accepts every root query field declared in schema.graphql', () => {
+    for (const field of rootQueryFieldsFromSchema()) {
+      assert.deepStrictEqual(
+        validateConfig({ ...valid, ENABLED_QUERIES: field }),
+        [],
+        `ENABLED_QUERIES=${field} should be accepted; add it to KNOWN_QUERIES`
+      );
+    }
   });
 
   test('rejects an empty ENABLED_QUERIES list', () => {

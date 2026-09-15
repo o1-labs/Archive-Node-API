@@ -199,7 +199,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
-| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,networkState,blocks` to expose; omitted fields are removed from the schema |
+| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,networkState,blocks` to expose; omitted fields are removed from the schema |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
