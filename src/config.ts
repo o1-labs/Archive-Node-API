@@ -19,7 +19,13 @@ const BOOLEAN_VARS = [
 const POSITIVE_INT_VARS = ['PORT', 'BLOCK_RANGE_SIZE'] as const;
 
 /** Root query fields in schema.graphql — keep in sync. */
-const KNOWN_QUERIES = ['events', 'actions', 'networkState', 'blocks'] as const;
+const KNOWN_QUERIES = [
+  'events',
+  'actions',
+  'verificationKeyUpdates',
+  'networkState',
+  'blocks',
+] as const;
 
 /**
  * Parse a boolean environment value. Recognises `true/false`, `1/0`, `yes/no`,
