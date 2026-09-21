@@ -12,6 +12,11 @@ permissions:
 jobs:
   Run-Tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22 is the `engines` floor, 24 is what the container image ships.
+        node-version: ['22', '24']
     services:
       mina-local-network:
         image: o1labs/mina-local-network:compatible-latest-lightnet
@@ -30,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm ci
