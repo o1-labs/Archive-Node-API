@@ -96,13 +96,19 @@ function validateConfig(env: EnvSource = process.env): string[] {
       );
     }
 
+    // schemaVersion is served whatever this lists (see src/resolvers.ts), so
+    // naming it is redundant rather than wrong. Rejecting it would fail startup
+    // over a list that asks for exactly what it already gets.
     const unknown = names.filter(
-      (name) => !(KNOWN_QUERIES as readonly string[]).includes(name)
+      (name) =>
+        !(KNOWN_QUERIES as readonly string[]).includes(name) &&
+        name !== 'schemaVersion'
     );
     if (unknown.length > 0) {
       errors.push(
         `ENABLED_QUERIES contains unknown queries: ${unknown.join(', ')}. ` +
-          `Known queries: ${KNOWN_QUERIES.join(', ')}.`
+          `Known queries: ${KNOWN_QUERIES.join(', ')}. ` +
+          'schemaVersion is always served and does not need listing.'
       );
     }
   }

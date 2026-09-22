@@ -236,6 +236,18 @@ type Block {
 }
 
 type Query {
+  """
+  The `MAJOR.MINOR` version of this schema.
+
+  Clients compare it with the schema version they were built against: an equal
+  major means the contract they code against still holds, and a higher minor
+  means this server has additive changes they may not know about yet.
+
+  Always available, even when `ENABLED_QUERIES` restricts which data queries
+  this server exposes — a compatibility check that can itself be switched off
+  is of no use to a client.
+  """
+  schemaVersion: String!
   events(input: EventFilterOptionsInput!): [EventOutput]!
   actions(input: ActionFilterOptionsInput!): [ActionOutput]!
   verificationKeyUpdates(
