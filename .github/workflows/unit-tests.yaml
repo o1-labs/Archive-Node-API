@@ -10,7 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  unit-tests:
+  # See run-tests.yaml: the legs report as "unit-tests (22)" / "unit-tests (24)",
+  # and the aggregate below keeps the required "unit-tests" name reporting.
+  unit-tests-matrix:
+    name: unit-tests (${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -40,3 +43,16 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
+
+  # Aggregate: reports under the name the branch ruleset requires.
+  unit-tests:
+    name: unit-tests
+    needs: unit-tests-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on every matrix leg
+        run: |
+          result='${{ needs.unit-tests-matrix.result }}'
+          echo "matrix result: $result"
+          [ "$result" = 'success' ] || exit 1
