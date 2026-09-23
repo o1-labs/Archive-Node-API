@@ -169,6 +169,59 @@ operator-visible changes before rolling out:
 - `actions` result semantics include correctness fixes called out in the release
   notes.
 
+## Schema version
+
+`schema.graphql` carries its own `MAJOR.MINOR` version, served by the
+`schemaVersion` query and defined in `src/schema-version.ts`. It is **not** the
+package version.
+
+- The **package** version describes this server: its flags, its defaults, its
+  behaviour. The list of breaking changes above is about that.
+- The **schema** version describes only what a client codes against: the types,
+  fields and arguments in `schema.graphql`. Its MINOR moves on an additive
+  change, its MAJOR on one that can break a client.
+
+The two move independently, and that is deliberate. A server release can change
+a default or a flag without touching the contract, and a schema can gain a field
+without the server's own surface changing.
+
+The client SDKs pin the schema version they were built against and compare it
+with what `schemaVersion` reports. That is why their package versions do not
+track this repository's, and do not track Mina's either — see below.
+
+`schemaVersion` is served even when `ENABLED_QUERIES` restricts the data
+queries. A compatibility check a deployment can switch off would leave clients
+guessing, which is the situation the field exists to end.
+
+## Mina compatibility
+
+This server reads a Mina archive node's PostgreSQL database directly, so what it
+depends on is the **archive database schema**, which comes from Mina. Its own
+GraphQL contract sits on top of that and moves separately.
+
+**Verified continuously.** The nightly `Live Integration` workflow
+(`.github/workflows/live-integration.yaml`, 05:00 UTC) runs the live-api suite
+against the devnet, mainnet and mesa archive endpoints. Those runs are the
+compatibility evidence; a network with no configured `*_ARCHIVE_API_URL`
+variable is skipped.
+
+**Known-good as of 2026-09-22**, read from the live daemons rather than assumed:
+
+| Network | Daemon commit  | Mina release                                                                                 |
+| ------- | -------------- | -------------------------------------------------------------------------------------------- |
+| mainnet | `685030107ff3` | [`4.0.0-mainnet-mesa`](https://github.com/MinaProtocol/mina/releases/tag/4.0.0-mainnet-mesa) |
+| devnet  | `6965b502ecd7` | [`4.0.0-devnet-mesa`](https://github.com/MinaProtocol/mina/releases/tag/4.0.0-devnet-mesa)   |
+
+**Untested, not unsupported.** Mina releases before 4.0.0 are not exercised by
+any job here. The integration fixture
+(`tests/integration/fixtures/archive_db.sql`) is a `pg_dump` of an archive
+database and declares no Mina release, so it is not evidence either way. If you
+run an older archive node, treat compatibility as unknown until you have run the
+queries you need against it.
+
+A hardfork that changes the archive database schema is the case to watch: it can
+break the SQL in `src/db/sql/` without changing one line of this repository.
+
 ## Supported versions
 
 The latest released **MAJOR.MINOR** receives bug and security fixes. Older lines

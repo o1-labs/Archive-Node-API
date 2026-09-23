@@ -8,6 +8,7 @@ import {
   TracingState,
   setSpanNameFromGraphQLContext,
 } from './tracing/tracer.js';
+import { SCHEMA_VERSION } from './schema-version.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,7 @@ const schemaPath = path.resolve(__dirname, '../../schema.graphql');
 
 const fullResolvers: Resolvers = {
   Query: {
+    schemaVersion: () => SCHEMA_VERSION,
     events: async (_, { input }, context) => {
       const graphQLSpan = setSpanNameFromGraphQLContext(
         context,
@@ -66,6 +68,11 @@ const fullResolvers: Resolvers = {
 let resolvers: Resolvers = fullResolvers;
 let typeDefs: string | undefined = undefined;
 
+// schemaVersion is a compatibility handshake, not a data query, so it survives
+// ENABLED_QUERIES. A client that cannot ask which schema it is talking to has
+// to guess, which is the situation the field exists to end.
+const ALWAYS_ENABLED = ['schemaVersion'];
+
 // If the ENABLED_QUERIES environment variable is set, filter the schema and resolvers.
 if (process.env.ENABLED_QUERIES !== undefined) {
   const enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) =>
@@ -76,8 +83,10 @@ if (process.env.ENABLED_QUERIES !== undefined) {
   if (enabledQueries.length > 0) {
     resolvers = {
       Query: Object.fromEntries(
-        Object.entries(fullResolvers.Query || {}).filter(([queryName]) =>
-          enabledQueries.includes(queryName)
+        Object.entries(fullResolvers.Query || {}).filter(
+          ([queryName]) =>
+            enabledQueries.includes(queryName) ||
+            ALWAYS_ENABLED.includes(queryName)
         )
       ),
     };
@@ -90,8 +99,10 @@ if (process.env.ENABLED_QUERIES !== undefined) {
         if (node.name.value === 'Query') {
           return {
             ...node,
-            fields: node.fields?.filter((field) =>
-              enabledQueries.includes(field.name.value)
+            fields: node.fields?.filter(
+              (field) =>
+                enabledQueries.includes(field.name.value) ||
+                ALWAYS_ENABLED.includes(field.name.value)
             ),
           };
         }

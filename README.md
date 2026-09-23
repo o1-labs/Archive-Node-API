@@ -115,6 +115,28 @@ publishing is configured, and pushes Docker tags `1.2.3`, `1.2`, `1`,
 
 From 1.0.0 the GraphQL schema, HTTP endpoints, and configuration are a versioned public contract — see the [versioning & schema stability policy](./docs/versioning.md) for what counts as a breaking change and how deprecations work.
 
+## Compatibility
+
+This server reads a Mina archive node's PostgreSQL database. The nightly
+`Live Integration` workflow exercises it against the live devnet, mainnet and
+mesa archive endpoints, which run **Mina 4.0.0 (Mesa)** as of 2026-09-22.
+Earlier Mina releases are untested here. See
+[docs/versioning.md](docs/versioning.md#mina-compatibility).
+
+Clients can ask this server which GraphQL contract it serves:
+
+```graphql
+{
+  schemaVersion
+}
+```
+
+It answers a `MAJOR.MINOR` string — `"1.0"` today — which the client SDKs
+compare with the schema version they were built against. The field is always
+served, even when `ENABLED_QUERIES` restricts the data queries. The schema
+version is independent of this package's version: see
+[docs/versioning.md](docs/versioning.md#schema-version).
+
 ## Hardware requirements
 
 The bottleneck is the Postgres database, not this server. A recent benchmark on a 12-core / 32 GB box (API + Postgres co-located) sustained ~800 req/s with p99 latency of 39 ms. Use `npm run benchmark` to size your own deployment.

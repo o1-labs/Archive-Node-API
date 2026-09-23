@@ -194,6 +194,18 @@ export type Query = {
   blocks: Array<Maybe<Block>>;
   events: Array<Maybe<EventOutput>>;
   networkState: NetworkStateOutput;
+  /**
+   * The `MAJOR.MINOR` version of this schema.
+   *
+   * Clients compare it with the schema version they were built against: an equal
+   * major means the contract they code against still holds, and a higher minor
+   * means this server has additive changes they may not know about yet.
+   *
+   * Always available, even when `ENABLED_QUERIES` restricts which data queries
+   * this server exposes — a compatibility check that can itself be switched off
+   * is of no use to a client.
+   */
+  schemaVersion: Scalars['String']['output'];
   verificationKeyUpdates: Array<VerificationKeyUpdate>;
 };
 
@@ -704,6 +716,7 @@ export type QueryResolvers<
     ParentType,
     ContextType
   >;
+  schemaVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   verificationKeyUpdates?: Resolver<
     Array<ResolversTypes['VerificationKeyUpdate']>,
     ParentType,
