@@ -259,12 +259,17 @@ jobs:
           push: true
           # The pinned node:22-alpine digest is a multi-arch index that carries
           # linux/arm64/v8, so both architectures resolve from the same pin.
+          # The Dockerfile keeps `npm ci` off the emulated path: see its header.
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.determine_tags.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
+      # always(): without it a failed build skips the rotation, and the post
+      # step then saves the stale cache under the new key.
       - name: Move cache
+        if: always()
         run: |
           rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          [ -d /tmp/.buildx-cache-new ] && mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          exit 0
