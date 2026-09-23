@@ -7030,3 +7030,127 @@ ALTER TABLE ONLY public.zkapp_verification_keys
 -- PostgreSQL database dump complete
 --
 
+
+--
+-- SDK integration coverage
+--
+-- ---------------------------------------------------------------------------
+-- Fixture enrichment: one applied zkApp command with real event, action and
+-- verification-key data, for the address the SDK integration suites query.
+--
+-- Without this the fixture cannot exercise the decode paths at all:
+--   * every zkapp command in the dump is status = 'failed', and every query
+--     filters those out, so no address returns events or actions;
+--   * zkapp_events holds a single row with an empty element_ids array;
+--   * zkapp_field_array is empty;
+--   * no account-update body sets verification_key_hash_id.
+--
+-- Rows are cloned from existing ones wherever a column is a foreign key we do
+-- not care about, so this stays valid if those tables change.
+-- ---------------------------------------------------------------------------
+
+-- Two field arrays of two fields each: one event, one action.
+INSERT INTO public.zkapp_field_array (id, element_ids) VALUES
+  (1, '{1,2}'),
+  (2, '{3,4}');
+
+-- zkapp_events holds both events (id 2) and actions (id 3); both FKs point here.
+INSERT INTO public.zkapp_events (id, element_ids) VALUES
+  (2, '{1}'),
+  (3, '{2}');
+
+-- An account-update body for the SDK fixture address (account_identifier 23),
+-- carrying the event array, the action array and a verification-key hash.
+INSERT INTO public.zkapp_account_update_body (
+  id, account_identifier_id, update_id, balance_change, increment_nonce,
+  events_id, actions_id, call_data_id, call_depth,
+  zkapp_network_precondition_id, zkapp_account_precondition_id,
+  zkapp_valid_while_precondition_id, use_full_commitment,
+  implicit_account_creation_fee, may_use_token, authorization_kind,
+  verification_key_hash_id)
+SELECT
+  1001, 23, update_id, balance_change, increment_nonce,
+  2, 3, call_data_id, call_depth,
+  zkapp_network_precondition_id, zkapp_account_precondition_id,
+  zkapp_valid_while_precondition_id, use_full_commitment,
+  implicit_account_creation_fee, may_use_token, authorization_kind,
+  1
+FROM public.zkapp_account_update_body
+WHERE id = (SELECT min(id) FROM public.zkapp_account_update_body);
+
+INSERT INTO public.zkapp_account_update (id, body_id) VALUES (1001, 1001);
+
+INSERT INTO public.zkapp_commands (id, zkapp_fee_payer_body_id, zkapp_account_updates_ids, memo, hash)
+SELECT 1001, zkapp_fee_payer_body_id, '{1001}', memo,
+       '5JufixtureAppliedZkappCommandForSdkIntegrationTests0001'
+FROM public.zkapp_commands
+WHERE id = (SELECT min(id) FROM public.zkapp_commands);
+
+-- Applied, in the highest canonical block, so it survives the status filter and
+-- is reachable from the canonical chain tip.
+INSERT INTO public.blocks_zkapp_commands (block_id, zkapp_command_id, sequence_no, status)
+SELECT b.id, 1001, 999, 'applied'
+FROM public.blocks b
+WHERE b.chain_status = 'canonical'
+ORDER BY b.height DESC
+LIMIT 1;
+
+SELECT setval('public.zkapp_field_array_id_seq', 1000, true);
+SELECT setval('public.zkapp_events_id_seq', 1000, true);
+SELECT setval('public.zkapp_account_update_body_id_seq', 1001, true);
+SELECT setval('public.zkapp_account_update_id_seq', 1001, true);
+SELECT setval('public.zkapp_commands_id_seq', 1001, true);
+
+-- The fixture holds no zkApp *accounts* either: accounts_accessed.zkapp_id is
+-- NULL for every row, and the events/actions queries join
+-- accounts_accessed.zkapp_id to find the zkApp. Give the fixture address one.
+INSERT INTO public.zkapp_states (id,
+  element0, element1, element2, element3, element4, element5, element6, element7,
+  element8, element9, element10, element11, element12, element13, element14, element15,
+  element16, element17, element18, element19, element20, element21, element22, element23,
+  element24, element25, element26, element27, element28, element29, element30, element31)
+VALUES (1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1);
+
+INSERT INTO public.zkapp_action_states (id, element0, element1, element2, element3, element4)
+VALUES (1, 1, 1, 1, 1, 1);
+
+INSERT INTO public.zkapp_uris (id, value) VALUES (1, 'https://example.invalid/fixture-zkapp');
+
+INSERT INTO public.zkapp_accounts
+  (id, app_state_id, verification_key_id, zkapp_version, action_state_id, last_action_slot, proved_state, zkapp_uri_id)
+VALUES (1, 1, 1, 0, 1, 0, true, 1);
+
+-- Mark the fixture address as a zkApp account in the canonical block that
+-- carries the applied command above. accounts_accessed is per block, and the
+-- query joins it to the block, so the row has to be in that block.
+INSERT INTO public.accounts_accessed
+  (ledger_index, block_id, account_identifier_id, token_symbol_id, balance, nonce,
+   receipt_chain_hash, delegate_id, voting_for_id, timing_id, permissions_id, zkapp_id)
+SELECT
+  9001, b.id, 23, aa.token_symbol_id, '1000000000', 0,
+  aa.receipt_chain_hash, aa.delegate_id, aa.voting_for_id, aa.timing_id, aa.permissions_id, 1
+FROM public.blocks b
+CROSS JOIN LATERAL (
+  SELECT token_symbol_id, receipt_chain_hash, delegate_id, voting_for_id, timing_id, permissions_id
+  FROM public.accounts_accessed LIMIT 1
+) aa
+WHERE b.chain_status = 'canonical'
+ORDER BY b.height DESC
+LIMIT 1;
+
+SELECT setval('public.zkapp_states_id_seq', 1000, true);
+SELECT setval('public.zkapp_action_states_id_seq', 1000, true);
+SELECT setval('public.zkapp_uris_id_seq', 1000, true);
+SELECT setval('public.zkapp_accounts_id_seq', 1000, true);
+
+-- The verification-key query resolves the requested hash through zkapp_updates
+-- (zu.verification_key_id -> zkapp_verification_keys.id), so the body must
+-- point at an update row that actually SETS the key. No row in the dump does.
+INSERT INTO public.zkapp_updates (id, app_state_id, verification_key_id)
+SELECT 1001, app_state_id, 1
+FROM public.zkapp_updates
+WHERE id = (SELECT min(id) FROM public.zkapp_updates);
+
+UPDATE public.zkapp_account_update_body SET update_id = 1001 WHERE id = 1001;
+
+SELECT setval('public.zkapp_updates_id_seq', 1001, true);
