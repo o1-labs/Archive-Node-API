@@ -565,7 +565,9 @@ describe('ZkappCommandsService (integration)', () => {
     );
     assert.ok(
       seeded,
-      `seeded command not returned; got ${commands.map((c) => c.hash).join(', ')}`
+      `seeded command not returned; got ${commands
+        .map((c) => c.hash)
+        .join(', ')}`
     );
     assert.strictEqual(seeded.blockInfo.height, 25);
     assert.strictEqual(seeded.blockInfo.chainStatus, 'canonical');
