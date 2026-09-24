@@ -1,16 +1,26 @@
 # Stage 1: Build the TypeScript code
 # Pinned by digest for reproducible, tamper-evident builds; Dependabot's docker
 # ecosystem keeps it current. Bump both stages together.
-FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4 AS build
+# Node 24 is the Active LTS line (LTS since 2025-10-28, supported to 2028-04-30).
+# Keep this on an LTS line: a Current line takes semver-major changes, which a
+# routine digest refresh would then carry straight into the production image.
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
 WORKDIR /app
+
+# artillery (devDependency) pulls @playwright/browser-chromium, whose install
+# script downloads a browser the image never runs. benchmark/ is not COPYd in.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 COPY package*.json ./
-RUN npm ci
+# --no-audit only suppresses npm's inline post-install summary; the audit gate is
+# a separate job (.github/workflows/security.yaml).
+RUN npm ci --no-audit --no-fund
 COPY src ./src
 COPY tsconfig.json ./
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
 WORKDIR /app
 
 # tini as PID 1: forwards SIGTERM to node (so graceful shutdown runs) and reaps zombies.

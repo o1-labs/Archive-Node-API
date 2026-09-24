@@ -10,8 +10,18 @@ permissions:
   contents: read
 
 jobs:
-  Run-Tests:
+  # The matrix legs report as "Run-Tests (22)" / "Run-Tests (24)". The required
+  # status check is named "Run-Tests", so the aggregate job below keeps that
+  # name reporting — without it, a required check that no longer exists leaves
+  # every PR waiting on a status that can never arrive.
+  Run-Tests-matrix:
+    name: Run-Tests (${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22 is the `engines` floor, 24 is what the container image ships.
+        node-version: ['22', '24']
     services:
       mina-local-network:
         image: o1labs/mina-local-network:compatible-latest-lightnet
@@ -30,7 +40,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm ci
@@ -44,3 +54,16 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+  # Aggregate: reports under the name the branch ruleset requires.
+  Run-Tests:
+    name: Run-Tests
+    needs: Run-Tests-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on every matrix leg
+        run: |
+          result='${{ needs.Run-Tests-matrix.result }}'
+          echo "matrix result: $result"
+          [ "$result" = 'success' ] || exit 1

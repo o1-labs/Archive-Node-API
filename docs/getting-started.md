@@ -17,7 +17,7 @@ Skip to the path that matches your situation. The [Configuration](#configuration
 
 ## Prerequisites
 
-- **Path A:** Node.js 20+ (`node --version`) and a reachable archive-node Postgres database
+- **Path A:** Node.js 22.12+ (`node --version`, the `engines` floor) and a reachable archive-node Postgres database
 - **Path B:** Docker, and a reachable archive-node Postgres database
 - **Path C:** Docker + Docker Compose, ~50 GB free disk for the snapshot
 
@@ -50,7 +50,7 @@ mina-archive-node-graphql
 # → {"level":"info",...,"port":"8080","msg":"server started"}
 ```
 
-Or via a `.env` file (Node 20+ supports `--env-file` natively):
+Or via a `.env` file (Node 22+ supports `--env-file` natively):
 
 ```sh
 cat > .env <<'EOF'

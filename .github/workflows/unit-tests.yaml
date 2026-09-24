@@ -10,14 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  unit-tests:
+  # See run-tests.yaml: the legs report as "unit-tests (22)" / "unit-tests (24)",
+  # and the aggregate below keeps the required "unit-tests" name reporting.
+  unit-tests-matrix:
+    name: unit-tests (${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22 is the `engines` floor, 24 is what the container image ships.
+        node-version: ['22', '24']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm ci
@@ -35,3 +43,16 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
+
+  # Aggregate: reports under the name the branch ruleset requires.
+  unit-tests:
+    name: unit-tests
+    needs: unit-tests-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on every matrix leg
+        run: |
+          result='${{ needs.unit-tests-matrix.result }}'
+          echo "matrix result: $result"
+          [ "$result" = 'success' ] || exit 1

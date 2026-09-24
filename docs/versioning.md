@@ -163,7 +163,8 @@ operator-visible changes before rolling out:
 
 - Browser deployments must set `CORS_ORIGIN` deliberately.
 - Rate limiting is enabled and depends on the correct `TRUST_PROXY` hop count.
-- The supported Node.js runtime moves to Node 22.
+- The supported Node.js runtime moves to Node 22.12 for npm consumers
+  (`engines`), and the container image ships Node 24, the Active LTS line.
 - Boolean environment variables reject junk values instead of relying on
   JavaScript truthiness.
 - `actions` result semantics include correctness fixes called out in the release

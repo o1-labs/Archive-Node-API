@@ -30,3 +30,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 2
+    # Digest and patch refreshes stay automatic — that is the security value.
+    # Moving the Node major is a breaking change under docs/versioning.md, and it
+    # has to move together with the CI matrix and the docs, so it is made
+    # deliberately rather than by an automated bump onto a Current release line.
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
