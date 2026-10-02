@@ -2,10 +2,8 @@
 # ecosystem keeps it current. Bump every stage together. The digest is a
 # multi-arch index, so the same pin resolves for amd64 and arm64.
 #
-# Node 24 is the Active LTS line (LTS since 2025-10-28, supported to 2028-04-30).
-# main briefly shipped node:25, which is end-of-life (never LTS, ended
-# 2026-06-01); #235 carries the same move plus the CI and dependabot changes
-# that stop a major bump landing by routine refresh.
+# Node 24 is an LTS line, supported to 2028-04-30. Stay on LTS lines only: an
+# odd-numbered Node major is never LTS.
 #
 # Three stages because this image is built for two architectures. A single
 # stage meant `npm ci` ran under QEMU for the arm64 leg: 752s against 112s
