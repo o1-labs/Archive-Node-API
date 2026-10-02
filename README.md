@@ -121,24 +121,9 @@ From 1.0.0 the GraphQL schema, HTTP endpoints, and configuration are a versioned
 
 ## Compatibility
 
-This server reads a Mina archive node's PostgreSQL database. The nightly
-`Live Integration` workflow exercises it against the live devnet, mainnet and
-mesa archive endpoints, which run **Mina 4.0.0 (Mesa)** as of 2026-09-22.
-Earlier Mina releases are untested here. See
-[docs/versioning.md](docs/versioning.md#mina-compatibility).
-
-Clients can ask this server which GraphQL contract it serves:
-
-```graphql
-{
-  schemaVersion
-}
-```
-
-It answers a `MAJOR.MINOR` string — `"1.0"` today — which the client SDKs
-compare with the schema version they were built against. The field is always
-served, even when `ENABLED_QUERIES` restricts the data queries. The schema
-version is independent of this package's version: see
+Clients can ask the server which GraphQL contract it serves with the
+`schemaVersion` query. For the schema version rules and the Mina releases this
+server is known to work with, see
 [docs/versioning.md](docs/versioning.md#schema-version).
 
 ## Hardware requirements

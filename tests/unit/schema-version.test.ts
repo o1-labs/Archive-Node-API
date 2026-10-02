@@ -55,4 +55,26 @@ describe('schemaVersion handshake', () => {
       'an unnamed data query should still be filtered out'
     );
   });
+
+  // ENABLED_QUERIES naming only a flag-gated query, with its flag off, leaves
+  // no data query at all. The handshake must still be there.
+  test('survives when every named query is gated off', () => {
+    const script = `
+      const { schema } = await import(${JSON.stringify(resolversPath)});
+      console.log(JSON.stringify(Object.keys(schema.getQueryType().getFields())));
+    `;
+    const out = execFileSync(
+      process.execPath,
+      ['--input-type=module', '-e', script],
+      {
+        env: {
+          ...process.env,
+          ENABLED_QUERIES: 'zkappCommands',
+          ENABLE_ZKAPP_COMMANDS_QUERY: 'false',
+        },
+        encoding: 'utf-8',
+      }
+    );
+    assert.deepEqual(JSON.parse(out.trim()), ['schemaVersion']);
+  });
 });

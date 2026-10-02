@@ -20,4 +20,4 @@
  *   a narrowed type, an argument that becomes required, or a field that becomes
  *   nullable when clients were entitled to assume it was not.
  */
-export const SCHEMA_VERSION = '1.0';
+export const SCHEMA_VERSION = '1.1';
