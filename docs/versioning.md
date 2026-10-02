@@ -36,8 +36,12 @@ Operational contract:
   that alters behaviour.
 - Removing or renaming an HTTP endpoint (`/`, `/healthcheck`, `/readiness`,
   `/metrics`).
-- Raising the minimum supported Node.js runtime, whether through `engines`, the
-  Docker base image, or the Node version used by CI to publish the package.
+- Raising the minimum supported Node.js runtime for npm consumers, through
+  `engines` or the Node version used by CI to publish the package.
+- Moving the container image to a Node line that is not LTS (Current or
+  end-of-life). Moving it between LTS lines, with `engines` and the image's
+  HTTP contract (port, endpoints, environment variables, entrypoint, user)
+  unchanged, is **minor**.
 - Enabling by default behaviour that can reject, throttle, or block a request
   that was previously accepted, such as rate limiting, request-size caps,
   query-cost limits, or a stricter CORS allowlist.
