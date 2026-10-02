@@ -198,6 +198,8 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `ENABLE_LOGGING` | `false` | Emit OpenTelemetry traces (request access logs are always on — see below) |
 | `ENABLE_METRICS` | `false` | If `true`, exposes unauthenticated Prometheus metrics at `/metrics` |
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
+| `ZKAPP_COMMAND_RANGE_SIZE` | `1000` | Max block range for `zkappCommands` |
+| `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000` | Max expanded account updates for one `zkappCommands` query |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
 | `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,networkState,blocks` to expose; omitted fields are removed from the schema |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |

@@ -86,6 +86,63 @@ export async function setupTestDatabase(): Promise<void> {
       WHERE height = (SELECT max(height) FROM blocks)
       LIMIT 1
     `);
+
+    await db.unsafe(`
+      WITH inserted_fee_payer AS (
+        INSERT INTO zkapp_fee_payer_body (
+          public_key_id,
+          fee,
+          valid_until,
+          nonce
+        )
+        SELECT
+          (SELECT id FROM public_keys ORDER BY id LIMIT 1),
+          '100000000',
+          NULL,
+          0
+        RETURNING id
+      ),
+      inserted_command AS (
+        INSERT INTO zkapp_commands (
+          zkapp_fee_payer_body_id,
+          zkapp_account_updates_ids,
+          memo,
+          hash
+        )
+        SELECT
+          inserted_fee_payer.id,
+          ARRAY[(SELECT id FROM zkapp_account_update ORDER BY id LIMIT 1)],
+          'integration-test-memo',
+          'integration-test-zkapp-command-hash'
+        FROM inserted_fee_payer
+        RETURNING id
+      )
+      INSERT INTO blocks_zkapp_commands (
+        block_id,
+        zkapp_command_id,
+        sequence_no,
+        status,
+        failure_reasons_ids
+      )
+      SELECT
+        canonical_tip.id,
+        inserted_command.id,
+        COALESCE((
+          SELECT max(sequence_no) + 1
+          FROM blocks_zkapp_commands
+          WHERE block_id = canonical_tip.id
+        ), 0),
+        'applied',
+        NULL
+      FROM inserted_command
+      CROSS JOIN (
+        SELECT id
+        FROM blocks
+        WHERE chain_status = 'canonical'
+        ORDER BY height DESC
+        LIMIT 1
+      ) canonical_tip
+    `);
   } finally {
     await db.end();
   }
