@@ -1,7 +1,7 @@
 # Stage 1: Build the TypeScript code
 # Pinned by digest for reproducible, tamper-evident builds; Dependabot's docker
 # ecosystem keeps it current. Bump both stages together.
-# Node 24 is the Active LTS line (LTS since 2025-10-28, supported to 2028-04-30).
+# Node 24 is an LTS line (LTS since 2025-10-28, supported to 2028-04-30).
 # Keep this on an LTS line: a Current line takes semver-major changes, which a
 # routine digest refresh would then carry straight into the production image.
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build

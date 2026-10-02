@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  # See run-tests.yaml: the legs report as "unit-tests (22)" / "unit-tests (24)",
+  # See run-tests.yaml: the legs report as "unit-tests (22.12.0)" / "unit-tests (24)",
   # and the aggregate below keeps the required "unit-tests" name reporting.
   unit-tests-matrix:
     name: unit-tests (${{ matrix.node-version }})
@@ -18,8 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 22 is the `engines` floor, 24 is what the container image ships.
-        node-version: ['22', '24']
+        # 22.12.0 is the exact `engines` floor (a bare '22' resolves to the newest
+        # 22.x and stops testing the floor); 24 is what the container image ships.
+        node-version: ['22.12.0', '24']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
