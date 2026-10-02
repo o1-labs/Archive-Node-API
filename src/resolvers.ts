@@ -9,6 +9,7 @@ import {
   setSpanNameFromGraphQLContext,
 } from './tracing/tracer.js';
 import { parseBoolean } from './config.js';
+import { SCHEMA_VERSION } from './schema-version.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,7 @@ const ENABLE_ZKAPP_COMMANDS_QUERY = parseBoolean(
 
 const fullResolvers: Resolvers = {
   Query: {
+    schemaVersion: () => SCHEMA_VERSION,
     events: async (_, { input }, context) => {
       const graphQLSpan = setSpanNameFromGraphQLContext(
         context,
@@ -85,8 +87,16 @@ const fullResolvers: Resolvers = {
 
 let enabledQueries = Object.keys(fullResolvers.Query || {});
 
+// schemaVersion is a compatibility handshake, not a data query, so it survives
+// ENABLED_QUERIES. A client that cannot ask which schema it is talking to has
+// to guess, which is the situation the field exists to end.
+const ALWAYS_ENABLED = ['schemaVersion'];
+
 if (process.env.ENABLED_QUERIES !== undefined) {
-  enabledQueries = process.env.ENABLED_QUERIES.split(',').map((q) => q.trim());
+  enabledQueries = [
+    ...ALWAYS_ENABLED,
+    ...process.env.ENABLED_QUERIES.split(',').map((q) => q.trim()),
+  ];
 }
 
 if (!ENABLE_ZKAPP_COMMANDS_QUERY) {

@@ -201,7 +201,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `ZKAPP_COMMAND_RANGE_SIZE` | `1000` | Max block range for `zkappCommands` |
 | `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000` | Max expanded account updates for one `zkappCommands` query |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
-| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,networkState,blocks` to expose; omitted fields are removed from the schema |
+| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,networkState,blocks` to expose; omitted fields are removed from the schema. `schemaVersion` is always served |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |
