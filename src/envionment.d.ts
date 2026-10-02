@@ -18,12 +18,16 @@ declare global {
       GRAPHQL_MAX_ALIASES?: string;
       GRAPHQL_MAX_TOKENS?: string;
       GRAPHQL_MAX_COST?: string;
+      BLOCK_RANGE_SIZE?: string;
+      ZKAPP_COMMAND_RANGE_SIZE?: string;
+      ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT?: string;
       ENABLE_LOGGING?: bool;
       ENABLE_METRICS?: bool;
       ENABLE_INTROSPECTION?: bool;
       ENABLE_GRAPHIQL?: bool;
       ENABLE_JAEGER?: bool;
       ENABLE_BLOCK_TRANSACTION_DETAILS?: bool;
+      ENABLE_ZKAPP_COMMANDS_QUERY?: bool;
       ENABLED_QUERIES?: string;
       JAEGER_ENDPOINT?: string;
       JAEGER_SERVICE_NAME?: string;
