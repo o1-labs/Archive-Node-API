@@ -7,7 +7,7 @@
  * The sample dump contains:
  * - 24 canonical blocks (heights 1-25), 15 orphaned blocks
  * - 1 pending block (inserted by test setup at height 26)
- * - 227 failed zkapp commands (no successful ones, so events/actions return empty)
+ * - 227 failed zkapp commands plus 1 applied command inserted by test setup
  * - Coinbase internal commands
  * - 240 public keys, default token only
  */
@@ -18,6 +18,7 @@ import { EventsService } from '../../src/services/events-service/events-service.
 import { ActionsService } from '../../src/services/actions-service/actions-service.js';
 import { NetworkService } from '../../src/services/network-service/network-service.js';
 import { BlocksService } from '../../src/services/blocks-service/blocks-service.js';
+import { ZkappCommandsService } from '../../src/services/zkapp-commands-service/zkapp-commands-service.js';
 import { BlockStatusFilter } from '../../src/blockchain/types.js';
 import { BlockSortByInput } from '../../src/resolvers-types.js';
 import { DEFAULT_TOKEN_ID } from '../../src/blockchain/constants.js';
@@ -537,6 +538,45 @@ describe('ActionsService (integration)', () => {
 // They need applied zkApp commands, and every zkApp command in this fixture
 // failed, so they run against their own database and their own fixture.
 
+// ─── Zkapp Commands Service ──────────────────────────────────────────
+
+describe('ZkappCommandsService (integration)', () => {
+  let zkappCommandsService: ZkappCommandsService;
+
+  before(() => {
+    zkappCommandsService = new ZkappCommandsService(client);
+  });
+
+  test('returns successful zkApp commands with account updates', async () => {
+    const commands = await zkappCommandsService.getZkappCommands(
+      {
+        blockStatus: BlockStatusFilter.canonical,
+        from: 25,
+        to: 26,
+      },
+      nullOptions
+    );
+
+    // Assert on the command this suite seeds, not on the row count: the base
+    // fixture also carries an applied command in the canonical tip block, so a
+    // count assertion here breaks whenever the fixture gains another one.
+    const seeded = commands.find(
+      (command) => command.hash === 'integration-test-zkapp-command-hash'
+    );
+    assert.ok(
+      seeded,
+      `seeded command not returned; got ${commands
+        .map((c) => c.hash)
+        .join(', ')}`
+    );
+    assert.strictEqual(seeded.blockInfo.height, 25);
+    assert.strictEqual(seeded.blockInfo.chainStatus, 'canonical');
+    assert.strictEqual(seeded.accountUpdates.length, 1);
+    assert.ok(seeded.accountUpdates[0].publicKey.length > 0);
+    assert.deepStrictEqual(seeded.accountUpdates[0].events, []);
+  });
+});
+
 // ─── SQL Schema Validation ───────────────────────────────────────────
 
 describe('Schema validation (integration)', () => {
@@ -552,6 +592,7 @@ describe('Schema validation (integration)', () => {
       'accounts_accessed',
       'blocks_zkapp_commands',
       'zkapp_commands',
+      'zkapp_fee_payer_body',
       'zkapp_account_update',
       'zkapp_account_update_body',
       'zkapp_events',
