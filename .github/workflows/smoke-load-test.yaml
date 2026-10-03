@@ -69,7 +69,7 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -c 'CREATE DATABASE archive_smoke;'
-          psql -h localhost -U postgres -d archive_smoke -f tests/integration/fixtures/archive_db.sql
+          psql -h localhost -U postgres -d archive_smoke -v ON_ERROR_STOP=1 -f tests/integration/fixtures/archive_db.sql
 
       - name: Start API server
         env:

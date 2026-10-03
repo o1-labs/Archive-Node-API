@@ -60,7 +60,18 @@ cp ~/work/minaprotocol/mina/src/test/archive/sample_db/archive_db.sql tests/inte
 
 ### After updating the dump
 
-Run the tests to verify everything still works. You may need to update expected values in `integration.test.ts` (e.g., block counts, max heights) if the data shape changed.
+A regenerated dump does not contain the **SDK integration coverage** block. That
+block is appended by hand at the end of the old `archive_db.sql`, after the
+`PostgreSQL database dump complete` line. It adds one applied zkApp command with
+events, actions and a verification-key update, which this suite and the SDK
+integration suites read. Copy the block from the old file to the end of the new
+one before you commit. Without it, the `Base fixture zkApp coverage` tests in
+`integration.test.ts` fail, and the SDK suites skip their events, actions and
+verification-key tests.
+
+Then run the tests to verify everything still works. The suites load the
+checked-in dump with `ON_ERROR_STOP=1`, so a statement in the appended block
+that does not apply to the new schema fails the setup. You may need to update expected values in `integration.test.ts` (e.g., block counts, max heights) if the data shape changed.
 
 ## What's tested
 
@@ -68,11 +79,12 @@ Run the tests to verify everything still works. You may need to update expected 
 |---|---|---|
 | BlocksService | 13 | Sorting, filtering (height, date, canonical, inBestChain), limit, shape validation, coinbase |
 | NetworkService | 2 | Max block heights for canonical and pending |
-| EventsService | 5 | Empty results (no successful zkapp txs in dump), block range validation |
+| EventsService | 5 | Empty results for addresses without events, block range validation |
 | ActionsService | 4 | Empty results, block range validation, action state validation |
+| Base fixture zkApp coverage | 4 | Events `[0,1]`, actions `[2,3]` and a verification-key update at height 25 for the SDK fixture address, and the applied command in `blocks` |
 | Schema | 1 | All required tables exist |
 
-The current dump has no successful zkapp transactions, so events/actions queries return empty arrays. This still validates the full SQL query pipeline runs without errors. For richer event/action testing, regenerate the dump from a network that has successful zkapp deployments.
+The dump from the mina repo has no successful zkapp transactions. Its 227 zkapp commands all have status `failed`, so events/actions queries for those addresses return empty arrays. The **SDK integration coverage** block at the end of the dump adds one applied command at height 25, for `B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML`. It carries one event (`[0,1]`), one action (`[2,3]`) and a verification-key update. The `Base fixture zkApp coverage` tests assert on that data, so a broken or missing block fails this suite, not only the SDK suites.
 
 ## Action-state ordering tests
 

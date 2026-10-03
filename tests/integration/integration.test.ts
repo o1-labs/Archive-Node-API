@@ -7,18 +7,26 @@
  * The sample dump contains:
  * - 24 canonical blocks (heights 1-25), 15 orphaned blocks
  * - 1 pending block (inserted by test setup at height 26)
- * - 227 failed zkapp commands plus 1 applied command inserted by test setup
+ * - 227 failed zkapp commands
+ * - 1 applied zkapp command at height 25, appended to the dump by its "SDK
+ *   integration coverage" block, with events, actions and a verification-key
+ *   update for B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML
+ * - 1 more applied zkapp command at height 25, inserted by test setup
  * - Coinbase internal commands
  * - 240 public keys, default token only
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert';
 import postgres from 'postgres';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { EventsService } from '../../src/services/events-service/events-service.js';
 import { ActionsService } from '../../src/services/actions-service/actions-service.js';
 import { NetworkService } from '../../src/services/network-service/network-service.js';
 import { BlocksService } from '../../src/services/blocks-service/blocks-service.js';
 import { ZkappCommandsService } from '../../src/services/zkapp-commands-service/zkapp-commands-service.js';
+import { VerificationKeyUpdatesService } from '../../src/services/verification-key-updates-service/verification-key-updates-service.js';
 import { BlockStatusFilter } from '../../src/blockchain/types.js';
 import { BlockSortByInput } from '../../src/resolvers-types.js';
 import { DEFAULT_TOKEN_ID } from '../../src/blockchain/constants.js';
@@ -27,6 +35,7 @@ import {
   setupTestDatabase,
   teardownTestDatabase,
   createTestClient,
+  connectionString,
 } from './setup.js';
 
 // Null tracing for tests
@@ -534,9 +543,120 @@ describe('ActionsService (integration)', () => {
   });
 });
 
-// The verification-key update tests live in `verification-key-updates.test.ts`.
-// They need applied zkApp commands, and every zkApp command in this fixture
-// failed, so they run against their own database and their own fixture.
+// The full verification-key update tests live in
+// `verification-key-updates.test.ts`. They need more cases than the single
+// applied command in this dump (hash filter, token join, order, failed,
+// orphaned and pending rows), so they run against their own database and their
+// own fixture. The block below only checks that the dump's own key update is
+// returned.
+
+// ─── Base fixture zkApp coverage ─────────────────────────────────────
+
+// The "SDK integration coverage" block at the end of archive_db.sql appends one
+// applied zkApp command for this address, and the SDK integration suites read
+// its data. These tests fail here if a regenerated dump loses or breaks the
+// block, so the SDK suites do not quietly go back to skipping.
+describe('Base fixture zkApp coverage (integration)', () => {
+  const SDK_ADDRESS = 'B62qiaEMrWiYdK7LcJ2ScdMyG8LzUxi7yaw17XvBD34on7UKfhAkRML';
+  const SDK_VK_HASH =
+    '330109536550383627416201330124291596191867681867265169258470531313815097966';
+  const SDK_COMMAND_HASH =
+    '5JuSdkFixtureAppZkappCommandForSdkTestsHashPadding1';
+
+  test('events: the applied command at the canonical tip is decoded', async () => {
+    const events = await new EventsService(client).getEvents(
+      { address: SDK_ADDRESS, status: BlockStatusFilter.canonical },
+      nullOptions
+    );
+    assert.strictEqual(events.length, 1);
+    assert.strictEqual(events[0].blockInfo.height, 25);
+    assert.deepStrictEqual(
+      events[0].eventData.map((e) => e.data),
+      [['0', '1']]
+    );
+    assert.strictEqual(
+      events[0].eventData[0].transactionInfo.status,
+      'applied'
+    );
+  });
+
+  test('actions: the applied command at the canonical tip is decoded', async () => {
+    const actions = await new ActionsService(client).getActions(
+      { address: SDK_ADDRESS, status: BlockStatusFilter.canonical },
+      nullOptions
+    );
+    assert.strictEqual(actions.length, 1);
+    assert.strictEqual(actions[0].blockInfo.height, 25);
+    assert.deepStrictEqual(
+      actions[0].actionData.map((a) => a.data),
+      [['2', '3']]
+    );
+  });
+
+  test('verificationKeyUpdates: the key set at height 25 is returned', async () => {
+    const updates = await new VerificationKeyUpdatesService(
+      client
+    ).getVerificationKeyUpdates(
+      { verificationKeyHash: SDK_VK_HASH, from: 1, to: 27 },
+      nullOptions
+    );
+    assert.deepStrictEqual(
+      updates.map((u) => [u.address, u.blockInfo.height]),
+      [[SDK_ADDRESS, 25]]
+    );
+  });
+
+  // `blocks` returns zkApp commands only with ENABLE_BLOCK_TRANSACTION_DETAILS
+  // set, and the service reads that flag once, when its module loads. So this
+  // test runs the query in a fresh process with the flag on.
+  test('blocks: the canonical tip carries the command as applied', () => {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const blocksServicePath = path.resolve(
+      here,
+      '../../src/services/blocks-service/blocks-service.js'
+    );
+    const tracerPath = path.resolve(here, '../../src/tracing/tracer.js');
+    const script = `
+      const postgres = (await import('postgres')).default;
+      const { BlocksService } = await import(${JSON.stringify(
+        blocksServicePath
+      )});
+      const { TracingState } = await import(${JSON.stringify(tracerPath)});
+      const client = postgres(${JSON.stringify(connectionString)}, { max: 1 });
+      try {
+        const blocks = await new BlocksService(client).getBlocks(
+          { canonical: true, blockHeight_gte: 25, blockHeight_lt: 26 },
+          null,
+          null,
+          { tracingState: new TracingState(undefined) }
+        );
+        console.log(JSON.stringify(blocks.map((b) => ({
+          height: b.blockHeight,
+          zkappCommands: b.transactions.zkappCommands,
+        }))));
+      } finally {
+        await client.end();
+      }
+    `;
+    const out = execFileSync(
+      process.execPath,
+      ['--input-type=module', '-e', script],
+      {
+        env: { ...process.env, ENABLE_BLOCK_TRANSACTION_DETAILS: 'true' },
+        encoding: 'utf-8',
+      }
+    );
+    const blocks = JSON.parse(out.trim());
+    assert.strictEqual(blocks.length, 1);
+    assert.strictEqual(Number(blocks[0].height), 25);
+    const command = blocks[0].zkappCommands.find(
+      (c: { hash: string }) => c.hash === SDK_COMMAND_HASH
+    );
+    assert.ok(command, 'the fixture command should be in the height 25 block');
+    assert.strictEqual(command.status, 'applied');
+    assert.strictEqual(command.failureReason, null);
+  });
+});
 
 // ─── Zkapp Commands Service ──────────────────────────────────────────
 

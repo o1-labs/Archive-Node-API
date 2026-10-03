@@ -57,9 +57,12 @@ export async function setupTestDatabase(): Promise<void> {
     await admin.end();
   }
 
-  // The base dump emits a few benign notices, so it is not run with
-  // ON_ERROR_STOP. The generated fixture must apply cleanly.
-  applySqlFile(BASE_DUMP, { stopOnError: false });
+  // The checked-in base dump and the generated fixture must both apply
+  // cleanly. A dump given through ARCHIVE_DUMP_PATH can come from another
+  // Postgres version, so it is loaded leniently.
+  applySqlFile(BASE_DUMP, {
+    stopOnError: process.env.ARCHIVE_DUMP_PATH === undefined,
+  });
   applySqlFile(VERIFICATION_KEY_FIXTURE, { stopOnError: true });
 }
 

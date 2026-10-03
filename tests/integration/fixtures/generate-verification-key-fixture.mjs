@@ -3,16 +3,18 @@
  *
  * WHY THIS FIXTURE EXISTS
  * -----------------------
- * The base `archive_db.sql` fixture has 227 `blocks_zkapp_commands` rows and
- * every one of them has status `failed`. It also holds exactly one
- * verification-key hash and one account update that sets a verification key.
- * No input can therefore make `getVerificationKeyUpdatesQuery` return a row
- * against the base fixture, and a test written on it can only ever assert the
- * empty list.
+ * The base `archive_db.sql` fixture has 228 `blocks_zkapp_commands` rows: 227
+ * with status `failed`, and one `applied` command at height 25 that the "SDK
+ * integration coverage" block at the end of the dump appends. That command sets
+ * one verification key for one address. With only that row, a test on the base
+ * fixture can check that the query returns a row, but it cannot check the
+ * hash filter, the token join, the order of the rows, the precondition column,
+ * or the exclusion of failed, orphaned and pending commands.
  *
- * That is not a theoretical gap. Replacing the query body with one that returns
- * nothing at all (`AND 1=0`) leaves the whole integration suite green. The base
- * fixture cannot tell a working query from a broken one.
+ * That is not a theoretical gap. Before that block was appended, replacing the
+ * query body with one that returns nothing at all (`AND 1=0`) left the whole
+ * integration suite green. The base fixture alone cannot tell a correct query
+ * from one that is wrong in any of the ways listed above.
  *
  * WHAT THE FIXTURE CONTAINS
  * -------------------------
