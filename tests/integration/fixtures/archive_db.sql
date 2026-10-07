@@ -7043,7 +7043,8 @@ ALTER TABLE ONLY public.zkapp_verification_keys
 --     filters those out, so no address returns events or actions;
 --   * zkapp_events holds a single row with an empty element_ids array;
 --   * zkapp_field_array is empty;
---   * no account-update body sets verification_key_hash_id.
+--   * the only zkapp_updates row that sets verification_key_id belongs to a
+--     failed command, so no query can return it.
 --
 -- Rows are cloned from existing ones wherever a column is a foreign key we do
 -- not care about, so this stays valid if those tables change.
@@ -7080,9 +7081,23 @@ WHERE id = (SELECT min(id) FROM public.zkapp_account_update_body);
 
 INSERT INTO public.zkapp_account_update (id, body_id) VALUES (1001, 1001);
 
+-- The command gets its own fee-payer body. A zkApp command consumes the
+-- fee-payer nonce even when it fails, so it cannot share a body (same payer,
+-- same nonce) with an existing command. The clone keeps the payer and fee and
+-- takes the first nonce that payer has not used.
+INSERT INTO public.zkapp_fee_payer_body (id, public_key_id, fee, valid_until, nonce)
+SELECT 1001, fp.public_key_id, fp.fee, fp.valid_until,
+       (SELECT max(nonce) + 1 FROM public.zkapp_fee_payer_body
+        WHERE public_key_id = fp.public_key_id)
+FROM public.zkapp_fee_payer_body fp
+WHERE fp.id = (SELECT zkapp_fee_payer_body_id FROM public.zkapp_commands
+               WHERE id = (SELECT min(id) FROM public.zkapp_commands));
+
+-- The hash is a placeholder. It uses only the base58 alphabet (no 0, O, I or
+-- l), so a client that validates transaction hashes does not reject it.
 INSERT INTO public.zkapp_commands (id, zkapp_fee_payer_body_id, zkapp_account_updates_ids, memo, hash)
-SELECT 1001, zkapp_fee_payer_body_id, '{1001}', memo,
-       '5JufixtureAppliedZkappCommandForSdkIntegrationTests0001'
+SELECT 1001, 1001, '{1001}', memo,
+       '5JuSdkFixtureAppZkappCommandForSdkTestsHashPadding1'
 FROM public.zkapp_commands
 WHERE id = (SELECT min(id) FROM public.zkapp_commands);
 
@@ -7099,6 +7114,7 @@ SELECT setval('public.zkapp_field_array_id_seq', 1000, true);
 SELECT setval('public.zkapp_events_id_seq', 1000, true);
 SELECT setval('public.zkapp_account_update_body_id_seq', 1001, true);
 SELECT setval('public.zkapp_account_update_id_seq', 1001, true);
+SELECT setval('public.zkapp_fee_payer_body_id_seq', 1001, true);
 SELECT setval('public.zkapp_commands_id_seq', 1001, true);
 
 -- The fixture holds no zkApp *accounts* either: accounts_accessed.zkapp_id is
@@ -7145,7 +7161,8 @@ SELECT setval('public.zkapp_accounts_id_seq', 1000, true);
 
 -- The verification-key query resolves the requested hash through zkapp_updates
 -- (zu.verification_key_id -> zkapp_verification_keys.id), so the body must
--- point at an update row that actually SETS the key. No row in the dump does.
+-- point at an update row that actually SETS the key. The only such row in the
+-- dump belongs to a failed command.
 INSERT INTO public.zkapp_updates (id, app_state_id, verification_key_id)
 SELECT 1001, app_state_id, 1
 FROM public.zkapp_updates
