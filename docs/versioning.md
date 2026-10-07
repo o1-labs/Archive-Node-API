@@ -106,7 +106,7 @@ We prefer deprecation over removal:
 
 1. Mark schema elements with the `@deprecated(reason: "…")` directive, pointing to
    the replacement and planned removal target, for example
-   `"Use X. Removed in 2.0.0, no earlier than 2026-11-15."`.
+   `"Use X. Removed in 3.0.0, no earlier than 2027-03-01."`.
 2. Announce the deprecation in the GitHub release notes for the minor that
    introduces it. The 90-day clock starts when that release is published.
 3. Keep the deprecated element working for **at least one minor release and 90
@@ -186,11 +186,15 @@ package version.
 }
 ```
 
-The server answers `"1.1"` today. Schema 1.1 is the schema that the 1.0.x
-releases shipped (1.0), plus two additive changes: the `schemaVersion` query
-itself and the `zkappCommands` query with its types. `zkappCommands` is off by
-default (`ENABLE_ZKAPP_COMMANDS_QUERY`), but it is part of the contract, so it
-moves the MINOR.
+The server answers `"2.0"` today. Schema 2.0 has no breaking change against
+schema 1.0, which the 1.0.x releases shipped; see "One major across the server
+and the SDKs" below for why it is a major. Its changes against 1.0:
+
+- the `schemaVersion` query itself;
+- the `zkappCommands` query and its types, off by default
+  (`ENABLE_ZKAPP_COMMANDS_QUERY`) but part of the contract;
+- non-null elements on eight list positions that never carried a null
+  (`[T]!` → `[T!]!`), which only strengthens the guarantee.
 
 - The **package** version describes this server: its flags, its defaults, its
   behaviour. The list of breaking changes above is about that.
@@ -203,8 +207,26 @@ a default or a flag without touching the contract, and a schema can gain a field
 without the server's own surface changing.
 
 The client SDKs pin the schema version they were built against and compare it
-with what `schemaVersion` reports. That is why their package versions do not
-track this repository's, and do not track Mina's either — see below.
+with what `schemaVersion` reports.
+
+### One major across the server and the SDKs
+
+This package, its schema, and the three client SDKs
+([JS](https://github.com/o1-labs/mina-archive-sdk-js),
+[Go](https://github.com/o1-labs/mina-archive-sdk-go),
+[Rust](https://github.com/o1-labs/mina-archive-sdk-rust)) share one MAJOR.
+**Same major means compatible.** A higher server minor only adds what the SDK
+does not know about yet.
+
+When any of them takes a major, all of them do, even those with no breaking
+change of their own. Semver allows a major without a break; it forbids only a
+break without a major. Minors and patches stay independent.
+
+2.0.0 is the first such release: the SDKs needed a major for changes to their
+own API, and this server and its schema took one to match. A 1.0.x client
+keeps working against it.
+
+Mina versions are separate — see below.
 
 `schemaVersion` is served even when `ENABLED_QUERIES` restricts the data
 queries. A compatibility check a deployment can switch off would leave clients
