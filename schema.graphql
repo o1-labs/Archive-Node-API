@@ -107,13 +107,13 @@ input ZkappCommandFilterOptionsInput {
 type EventData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
-  data: [String]!
+  data: [String!]!
 }
 
 type ActionData {
   accountUpdateId: String!
   transactionInfo: TransactionInfo
-  data: [String]!
+  data: [String!]!
 }
 
 type BlockInfo {
@@ -139,7 +139,7 @@ type TransactionInfo {
   memo: String!
   authorizationKind: String!
   sequenceNumber: Int!
-  zkappAccountUpdateIds: [Int]!
+  zkappAccountUpdateIds: [Int!]!
 }
 
 type VerificationKeyUpdate {
@@ -161,13 +161,13 @@ type ActionStates {
 
 type EventOutput {
   blockInfo: BlockInfo
-  eventData: [EventData]
+  eventData: [EventData!]
 }
 
 type ActionOutput {
   blockInfo: BlockInfo
   transactionInfo: TransactionInfo
-  actionData: [ActionData]
+  actionData: [ActionData!]
   actionState: ActionStates!
 }
 
@@ -324,12 +324,16 @@ type Query {
   is of no use to a client.
   """
   schemaVersion: String!
-  events(input: EventFilterOptionsInput!): [EventOutput]!
-  actions(input: ActionFilterOptionsInput!): [ActionOutput]!
+  events(input: EventFilterOptionsInput!): [EventOutput!]!
+  actions(input: ActionFilterOptionsInput!): [ActionOutput!]!
   verificationKeyUpdates(
     input: VerificationKeyUpdateFilterInput!
   ): [VerificationKeyUpdate!]!
   zkappCommands(input: ZkappCommandFilterOptionsInput!): [ZkappCommandOutput!]!
   networkState: NetworkStateOutput!
-  blocks(query: BlockQueryInput, limit: Int, sortBy: BlockSortByInput): [Block]!
+  blocks(
+    query: BlockQueryInput
+    limit: Int
+    sortBy: BlockSortByInput
+  ): [Block!]!
 }
