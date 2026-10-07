@@ -3,11 +3,12 @@
  *
  * WHY THESE EXIST
  * ---------------
- * The base `archive_db.sql` fixture has 227 `blocks_zkapp_commands` rows and
- * every one of them has status `failed`. No input can make this query return a
- * row against it, so a test written on the base fixture can only assert the
- * empty list — and a query replaced by one that returns nothing at all leaves
- * the whole integration suite green.
+ * The base `archive_db.sql` fixture has 228 `blocks_zkapp_commands` rows: 227
+ * with status `failed`, and one `applied` command at height 25 that sets one
+ * verification key (the "SDK integration coverage" block at the end of the
+ * dump; `integration.test.ts` checks it). One row cannot show the hash filter,
+ * the token join, the row order, or the exclusion of failed, orphaned, pending
+ * and precondition-only rows.
  *
  * `fixtures/verification_key_updates.sql` adds blocks 26…32 with applied zkApp
  * commands that set verification keys, so these tests can tell a working query
