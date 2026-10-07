@@ -217,6 +217,62 @@ describe('Query Resolvers', async () => {
   }
 
   /**
+   * Read the archive's pending max block height on both sides of the daemon's
+   * blockchain length, so the comparison does not race block production.
+   *
+   * `fetchNetworkState` proves and sends a transaction, which takes seconds. A
+   * block produced between the archive read and the daemon read used to make
+   * the daemon one ahead (expected 10, actual 9) and fail the test. Bracketing
+   * removes that race: the daemon value must lie in [archiveBefore,
+   * archiveAfter]. `archiveAfter` is polled until it reaches the daemon value,
+   * because the archive ingests blocks asynchronously.
+   *
+   * This still catches a lagging archive. An archive that stays behind the
+   * daemon never reaches it, so `archiveAfter` stays below the daemon value
+   * when the polling stops. An archive that reports a height the daemon has
+   * not produced fails the `archiveBefore` bound.
+   */
+  async function sampleHeightsAroundDaemon(
+    zkApp: HelloWorld,
+    sender: Keypair,
+    { attempts = 30, delayMs = 1000 } = {}
+  ): Promise<{
+    results: NetworkQueryResult;
+    archiveBefore: number;
+    daemon: number;
+    archiveAfter: number;
+  }> {
+    const results = await executeNetworkStateQuery();
+    const archiveBefore =
+      results.data.networkState.maxBlockHeight!.pendingMaxBlockHeight;
+    const daemon = await fetchNetworkState(zkApp, sender);
+    let archiveAfter = archiveBefore;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      archiveAfter = (await executeNetworkStateQuery()).data.networkState
+        .maxBlockHeight!.pendingMaxBlockHeight;
+      if (archiveAfter >= daemon) break;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    return { results, archiveBefore, daemon, archiveAfter };
+  }
+
+  function assertArchiveTracksDaemon({
+    archiveBefore,
+    daemon,
+    archiveAfter,
+  }: {
+    archiveBefore: number;
+    daemon: number;
+    archiveAfter: number;
+  }) {
+    assert.ok(
+      archiveBefore <= daemon && daemon <= archiveAfter,
+      `archive pendingMaxBlockHeight must bracket the daemon blockchainLength: ` +
+        `archive before ${archiveBefore}, daemon ${daemon}, archive after ${archiveAfter}`
+    );
+  }
+
+  /**
    * The archive node ingests blocks into Postgres asynchronously, so a
    * transaction the daemon already reports as included is not necessarily
    * queryable yet. Re-run `runQuery` until the archive reports more blocks for
@@ -323,12 +379,17 @@ describe('Query Resolvers', async () => {
   describe('NetworkState', async () => {
     let blockResponse: NetworkStateOutput;
     let results: NetworkQueryResult;
-    let fetchedBlockchainLength: number;
+    let heights: {
+      archiveBefore: number;
+      daemon: number;
+      archiveAfter: number;
+    };
 
     before(async () => {
-      results = await executeNetworkStateQuery();
+      const sample = await sampleHeightsAroundDaemon(zkApp, senderKeypair);
+      results = sample.results;
       blockResponse = results.data.networkState;
-      fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
+      heights = sample;
     });
 
     test('Fetching the max block height should not throw', async () => {
@@ -348,24 +409,19 @@ describe('Query Resolvers', async () => {
     });
 
     test('Fetched max block height from archive node should match with the one from mina node', async () => {
-      assert.deepStrictEqual(
-        blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
-        fetchedBlockchainLength
-      );
+      assertArchiveTracksDaemon(heights);
     });
 
     describe('Advance a block', async () => {
       before(async () => {
         await new Promise((resolve) => setTimeout(resolve, 25000)); // wait for new lightnet block
-        results = await executeNetworkStateQuery();
+        const sample = await sampleHeightsAroundDaemon(zkApp, senderKeypair);
+        results = sample.results;
         blockResponse = results.data.networkState;
-        fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
+        heights = sample;
       });
       test('Fetched max block height from archive node should match the one from mina node after one block', () => {
-        assert.deepStrictEqual(
-          blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
-          fetchedBlockchainLength
-        );
+        assertArchiveTracksDaemon(heights);
       });
     });
   });
