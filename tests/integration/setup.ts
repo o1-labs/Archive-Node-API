@@ -41,9 +41,15 @@ export async function setupTestDatabase(): Promise<void> {
     await admin.end();
   }
 
-  // Load the dump
+  // Load the dump. The checked-in fixture must load without errors: a broken
+  // statement in it would otherwise load part of the data, and the tests that
+  // assert on that data would fail for a reason that is hard to find. A dump
+  // given through ARCHIVE_DUMP_PATH can come from another Postgres version, so
+  // it is loaded leniently.
+  const stopOnError =
+    ARCHIVE_DUMP_PATH === DEFAULT_DUMP_PATH ? '-v ON_ERROR_STOP=1 ' : '';
   execSync(
-    `PGPASSWORD=${PG_TEST_PASSWORD} psql -h ${PG_TEST_HOST} -p ${PG_TEST_PORT} -U ${PG_TEST_USER} -d ${PG_TEST_DB} -f ${ARCHIVE_DUMP_PATH}`,
+    `PGPASSWORD=${PG_TEST_PASSWORD} psql ${stopOnError}-h ${PG_TEST_HOST} -p ${PG_TEST_PORT} -U ${PG_TEST_USER} -d ${PG_TEST_DB} -f ${ARCHIVE_DUMP_PATH}`,
     { stdio: 'pipe' }
   );
 

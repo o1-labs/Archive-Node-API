@@ -69,7 +69,7 @@ before/after shape so consumers know why content changed.
 This is what lets consumers survive upgrades. The
 [mina-explorer](https://github.com/o1-labs/mina-explorer) fires fallback query
 chains and degrades on the exact `"Cannot query field"` validation error, so it
-tolerates a field it doesn't know about — but not a *default response* that
+tolerates a field it doesn't know about — but not a _default response_ that
 quietly changes shape. An unflagged change there doesn't error; it blanks
 Explorer pages while every health check stays green. That failure mode is why
 this is a rule rather than a convention: the schema checker cannot catch it,
@@ -145,11 +145,11 @@ bump level according to the rules above.
 Workload Identity Federation. There is no service-account key stored in this
 repository and none should ever be added.
 
-| | |
-| --- | --- |
-| Provider | `projects/1020762690228/locations/global/workloadIdentityPools/github-actions/providers/github` |
-| Service account | `archive-node-api-ci@o1labs-192920.iam.gserviceaccount.com` |
-| Declared in | [`gitops-infrastructure`](https://github.com/o1-labs/gitops-infrastructure) → `platform/gcloud/service-accounts/workload-identity.tf` |
+|                 |                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider        | `projects/1020762690228/locations/global/workloadIdentityPools/github-actions/providers/github`                                       |
+| Service account | `archive-node-api-ci@o1labs-192920.iam.gserviceaccount.com`                                                                           |
+| Declared in     | [`gitops-infrastructure`](https://github.com/o1-labs/gitops-infrastructure) → `platform/gcloud/service-accounts/workload-identity.tf` |
 
 Each run presents GitHub's OIDC token (`permissions: id-token: write`) and
 receives a 15-minute Google access token, honoured only for this repository. The
@@ -167,11 +167,84 @@ operator-visible changes before rolling out:
 
 - Browser deployments must set `CORS_ORIGIN` deliberately.
 - Rate limiting is enabled and depends on the correct `TRUST_PROXY` hop count.
-- The supported Node.js runtime moves to Node 22.
+- The supported Node.js runtime moves to Node 22.12 (`engines`); the 1.0.x
+  container image runs Node 22.
 - Boolean environment variables reject junk values instead of relying on
   JavaScript truthiness.
 - `actions` result semantics include correctness fixes called out in the release
   notes.
+
+## Schema version
+
+`schema.graphql` carries its own `MAJOR.MINOR` version, served by the
+`schemaVersion` query and defined in `src/schema-version.ts`. It is **not** the
+package version.
+
+```graphql
+{
+  schemaVersion
+}
+```
+
+The server answers `"1.1"` today. Schema 1.1 is the schema that the 1.0.x
+releases shipped (1.0), plus two additive changes: the `schemaVersion` query
+itself and the `zkappCommands` query with its types. `zkappCommands` is off by
+default (`ENABLE_ZKAPP_COMMANDS_QUERY`), but it is part of the contract, so it
+moves the MINOR.
+
+- The **package** version describes this server: its flags, its defaults, its
+  behaviour. The list of breaking changes above is about that.
+- The **schema** version describes only what a client codes against: the types,
+  fields and arguments in `schema.graphql`. Its MINOR moves on an additive
+  change, its MAJOR on one that can break a client.
+
+The two move independently, and that is deliberate. A server release can change
+a default or a flag without touching the contract, and a schema can gain a field
+without the server's own surface changing.
+
+The client SDKs pin the schema version they were built against and compare it
+with what `schemaVersion` reports. That is why their package versions do not
+track this repository's, and do not track Mina's either — see below.
+
+`schemaVersion` is served even when `ENABLED_QUERIES` restricts the data
+queries. A compatibility check a deployment can switch off would leave clients
+guessing, which is the situation the field exists to end.
+
+`schemaVersion` describes the contract, not which queries a deployment exposes.
+`ENABLED_QUERIES` and `ENABLE_ZKAPP_COMMANDS_QUERY` can still remove data
+queries from a given server, so a client must continue to detect features from
+the `Cannot query field` error, as mina-explorer already does.
+
+## Mina compatibility
+
+This server reads a Mina archive node's PostgreSQL database directly, so what it
+depends on is the **archive database schema**, which comes from Mina. Its own
+GraphQL contract sits on top of that and moves separately.
+
+**Nightly check of the deployed endpoints.** The `Live Integration` workflow
+(`.github/workflows/live-integration.yaml`, 05:00 UTC) runs the live-api suite
+against the archive endpoint set in each `*_ARCHIVE_API_URL` repository
+variable. It tests the build that runs at that endpoint, not the commit that
+triggers the workflow. A network with no variable is skipped. As of 2026-10-02
+no `*_ARCHIVE_API_URL` variable is set, so every leg skips and the nightly run
+gives no compatibility evidence until the variables are configured.
+
+**Known-good as of 2026-09-22**, read from the live daemons rather than assumed:
+
+| Network | Daemon commit  | Mina release                                                                                 |
+| ------- | -------------- | -------------------------------------------------------------------------------------------- |
+| mainnet | `685030107ff3` | [`4.0.0-mainnet-mesa`](https://github.com/MinaProtocol/mina/releases/tag/4.0.0-mainnet-mesa) |
+| devnet  | `6965b502ecd7` | [`4.0.0-devnet-mesa`](https://github.com/MinaProtocol/mina/releases/tag/4.0.0-devnet-mesa)   |
+
+**Untested, not unsupported.** Mina releases before 4.0.0 are not exercised by
+any job here. The integration fixture
+(`tests/integration/fixtures/archive_db.sql`) is a `pg_dump` of an archive
+database and declares no Mina release, so it is not evidence either way. If you
+run an older archive node, treat compatibility as unknown until you have run the
+queries you need against it.
+
+A hardfork that changes the archive database schema is the case to watch: it can
+break the SQL in `src/db/sql/` without changing one line of this repository.
 
 ## Supported versions
 

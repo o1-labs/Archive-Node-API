@@ -3,7 +3,8 @@
 # multi-arch index, so the same pin resolves for amd64 and arm64.
 #
 # Node 24 is an LTS line, supported to 2028-04-30. Stay on LTS lines only: an
-# odd-numbered Node major is never LTS.
+# odd-numbered Node major is never LTS, and a Current line takes semver-major
+# changes, which a routine digest refresh would carry into the production image.
 #
 # Three stages because this image is built for two architectures. A single
 # stage meant `npm ci` ran under QEMU for the arm64 leg: 752s against 112s
@@ -18,14 +19,16 @@
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# --no-audit only suppresses npm's inline post-install summary; the audit gate is
+# a separate job (.github/workflows/security.yaml).
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 # Stage 2: compile. tsc output is architecture-independent, so this stage is
 # pinned to the BUILD platform: it runs natively once and serves every target.
 FROM --platform=$BUILDPLATFORM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY src ./src
 COPY tsconfig.json ./
 RUN npm run build

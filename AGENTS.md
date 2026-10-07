@@ -60,7 +60,7 @@ Distributed as:
 
 ## Constraints and gotchas
 
-- Node version is pinned by Volta to **20.18.0** (`package.json#volta.node`). The package targets Node ≥ 20; `--env-file` flag and modern ESM behavior assumed.
+- Local Node is pinned by Volta to **22.12.0** (`package.json#volta.node`), the `engines` floor (`>=22.12.0`) for npm consumers. The Docker image ships Node **24** (LTS); CI runs unit and integration tests on both 22 and 24. `--env-file` flag and modern ESM behavior assumed.
 - `package.json` is `"type": "module"` — use ESM imports throughout, including the `.js` extension on relative imports of TS-compiled sources.
 - The bin entry has a shebang in `build/src/index.js`; do not strip it. (See commit `8052799` — broken bin in the past.)
 - The npm package ships only what is in `package.json#files`: `build`, `src`, `schema.graphql`, `README.md`, `tsconfig.json`. New runtime assets must be added there or they won't reach published consumers.
