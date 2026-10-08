@@ -44,7 +44,7 @@ export type Scalars = {
 export type ActionData = {
   __typename?: 'ActionData';
   accountUpdateId: Scalars['String']['output'];
-  data: Array<Maybe<Scalars['String']['output']>>;
+  data: Array<Scalars['String']['output']>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
@@ -70,7 +70,7 @@ export type ActionFilterOptionsInput = {
 
 export type ActionOutput = {
   __typename?: 'ActionOutput';
-  actionData?: Maybe<Array<Maybe<ActionData>>>;
+  actionData?: Maybe<Array<ActionData>>;
   actionState: ActionStates;
   blockInfo?: Maybe<BlockInfo>;
   transactionInfo?: Maybe<TransactionInfo>;
@@ -142,7 +142,7 @@ export type BlockTransactions = {
 export type EventData = {
   __typename?: 'EventData';
   accountUpdateId: Scalars['String']['output'];
-  data: Array<Maybe<Scalars['String']['output']>>;
+  data: Array<Scalars['String']['output']>;
   transactionInfo?: Maybe<TransactionInfo>;
 };
 
@@ -165,7 +165,7 @@ export type EventFilterOptionsInput = {
 export type EventOutput = {
   __typename?: 'EventOutput';
   blockInfo?: Maybe<BlockInfo>;
-  eventData?: Maybe<Array<Maybe<EventData>>>;
+  eventData?: Maybe<Array<EventData>>;
 };
 
 export type FeeTransfer = {
@@ -190,9 +190,9 @@ export type NetworkStateOutput = {
 
 export type Query = {
   __typename?: 'Query';
-  actions: Array<Maybe<ActionOutput>>;
-  blocks: Array<Maybe<Block>>;
-  events: Array<Maybe<EventOutput>>;
+  actions: Array<ActionOutput>;
+  blocks: Array<Block>;
+  events: Array<EventOutput>;
   networkState: NetworkStateOutput;
   /**
    * The `MAJOR.MINOR` version of this schema.
@@ -239,7 +239,7 @@ export type TransactionInfo = {
   memo: Scalars['String']['output'];
   sequenceNumber: Scalars['Int']['output'];
   status: Scalars['String']['output'];
-  zkappAccountUpdateIds: Array<Maybe<Scalars['Int']['output']>>;
+  zkappAccountUpdateIds: Array<Scalars['Int']['output']>;
 };
 
 export type UserCommand = {
@@ -558,11 +558,7 @@ export type ActionDataResolvers<
     ResolversParentTypes['ActionData'] = ResolversParentTypes['ActionData'],
 > = {
   accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  data?: Resolver<
-    Array<Maybe<ResolversTypes['String']>>,
-    ParentType,
-    ContextType
-  >;
+  data?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   transactionInfo?: Resolver<
     Maybe<ResolversTypes['TransactionInfo']>,
     ParentType,
@@ -576,7 +572,7 @@ export type ActionOutputResolvers<
     ResolversParentTypes['ActionOutput'] = ResolversParentTypes['ActionOutput'],
 > = {
   actionData?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['ActionData']>>>,
+    Maybe<Array<ResolversTypes['ActionData']>>,
     ParentType,
     ContextType
   >;
@@ -713,11 +709,7 @@ export type EventDataResolvers<
     ResolversParentTypes['EventData'] = ResolversParentTypes['EventData'],
 > = {
   accountUpdateId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  data?: Resolver<
-    Array<Maybe<ResolversTypes['String']>>,
-    ParentType,
-    ContextType
-  >;
+  data?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   transactionInfo?: Resolver<
     Maybe<ResolversTypes['TransactionInfo']>,
     ParentType,
@@ -736,7 +728,7 @@ export type EventOutputResolvers<
     ContextType
   >;
   eventData?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes['EventData']>>>,
+    Maybe<Array<ResolversTypes['EventData']>>,
     ParentType,
     ContextType
   >;
@@ -787,19 +779,19 @@ export type QueryResolvers<
     ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
 > = {
   actions?: Resolver<
-    Array<Maybe<ResolversTypes['ActionOutput']>>,
+    Array<ResolversTypes['ActionOutput']>,
     ParentType,
     ContextType,
     RequireFields<QueryActionsArgs, 'input'>
   >;
   blocks?: Resolver<
-    Array<Maybe<ResolversTypes['Block']>>,
+    Array<ResolversTypes['Block']>,
     ParentType,
     ContextType,
     Partial<QueryBlocksArgs>
   >;
   events?: Resolver<
-    Array<Maybe<ResolversTypes['EventOutput']>>,
+    Array<ResolversTypes['EventOutput']>,
     ParentType,
     ContextType,
     RequireFields<QueryEventsArgs, 'input'>
@@ -839,7 +831,7 @@ export type TransactionInfoResolvers<
   sequenceNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   zkappAccountUpdateIds?: Resolver<
-    Array<Maybe<ResolversTypes['Int']>>,
+    Array<ResolversTypes['Int']>,
     ParentType,
     ContextType
   >;
