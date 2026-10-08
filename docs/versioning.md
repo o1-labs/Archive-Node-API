@@ -9,7 +9,9 @@ public contract.
 Given `MAJOR.MINOR.PATCH`:
 
 - **MAJOR** — a backwards-incompatible change to the public contract (see
-  "Breaking changes" below). Consumers may need to update queries or config.
+  "Breaking changes" below), or an alignment major shared with the client SDKs
+  (see "One major across the server and the SDKs"). Release notes say which;
+  an alignment major needs no consumer action.
 - **MINOR** — backwards-compatible additions: new schema fields/types/arguments,
   new optional config, new endpoints. Existing queries keep working.
 - **PATCH** — backwards-compatible bug fixes and internal changes.
@@ -124,16 +126,20 @@ reviewed decision that must be paired with a major version bump.
 
 ## Releasing
 
-Releases are cut from `main` by a maintainer:
+Releases are cut in two steps:
 
-```sh
-npm version <major|minor|patch>   # bumps package.json + creates a git tag
-git push --follow-tags            # tag push triggers the publish pipeline
-```
+1. A release PR bumps `package.json`/`package-lock.json` (and
+   `src/schema-version.ts` if the schema moved) and merges to `main`.
+2. A maintainer tags that merge commit; the tag push triggers the publish
+   pipeline:
 
-For the initial `1.0.0` release only, `package.json` on `main` already carries
-the version to release. Tag it directly (`git tag v1.0.0 && git push
---follow-tags`) rather than running `npm version`, which would bump past it.
+   ```sh
+   git tag v$(node -p "require('./package.json').version") <merge-sha>
+   git push origin v<version>
+   ```
+
+Do not run `npm version` on `main`: `package.json` already carries the version
+being released, and `npm version` would bump past it.
 
 CI then builds and publishes the npm package (with provenance, once npm trusted
 publishing is configured for this repository) and the Docker images. Choose the
@@ -159,20 +165,39 @@ registry logins and `npm publish`. Changing the step order, or reintroducing a
 stored credential, undoes both properties — see the ordering comment at the top
 of the job.
 
-## Migrating from npm `0.0.6`
+## Upgrading to 2.0.0
 
-Tags `0.0.7` through `0.0.9` existed in git but were not published to npm, so
-npm consumers should treat `1.0.0` as an upgrade from `0.0.6`. Review these
-operator-visible changes before rolling out:
+npm never received 1.0.x (only `0.0.6` is published), so npm consumers go
+straight from `0.0.6` to `2.0.0`: apply both lists below. Container users on
+1.0.0 need only the second.
+
+### From `0.0.6` (changes that shipped in git tag 1.0.0)
 
 - Browser deployments must set `CORS_ORIGIN` deliberately.
 - Rate limiting is enabled and depends on the correct `TRUST_PROXY` hop count.
-- The supported Node.js runtime moves to Node 22.12 (`engines`); the 1.0.x
-  container image runs Node 22.
+- The supported Node.js runtime moves to Node 22.12 (`engines`).
 - Boolean environment variables reject junk values instead of relying on
   JavaScript truthiness.
 - `actions` result semantics include correctness fixes called out in the release
   notes.
+
+### From 1.0.0
+
+2.0.0 is an alignment major (see "One major across the server and the SDKs"):
+no query that worked against 1.0.0 changes its result shape. Review:
+
+- The container image runs Node 24 (LTS) and is published for linux/amd64 and
+  linux/arm64. `engines` is unchanged (`>=22.12.0`).
+- License: Apache-2.0 (was ISC).
+- New query `schemaVersion`, always served, even when `ENABLED_QUERIES`
+  restricts the data queries. Listing it in `ENABLED_QUERIES` is accepted.
+- New query `zkappCommands`, off unless `ENABLE_ZKAPP_COMMANDS_QUERY=true`;
+  bounded by `ZKAPP_COMMAND_RANGE_SIZE` (1000) and
+  `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` (5000).
+- `ENABLED_QUERIES` now accepts `verificationKeyUpdates` (1.0.0 failed startup
+  on it) and `zkappCommands`.
+- Eight list positions declare non-null elements (`[T]` → `[T!]`). Responses
+  are unchanged; codegen'd clients see stricter element types.
 
 ## Schema version
 
@@ -194,17 +219,19 @@ and the SDKs" below for why it is a major. Its changes against 1.0:
 - the `zkappCommands` query and its types, off by default
   (`ENABLE_ZKAPP_COMMANDS_QUERY`) but part of the contract;
 - non-null elements on eight list positions that never carried a null
-  (`[T]!` → `[T!]!`), which only strengthens the guarantee.
+  (`[T]` → `[T!]`), which only strengthens the guarantee.
 
 - The **package** version describes this server: its flags, its defaults, its
   behaviour. The list of breaking changes above is about that.
 - The **schema** version describes only what a client codes against: the types,
   fields and arguments in `schema.graphql`. Its MINOR moves on an additive
-  change, its MAJOR on one that can break a client.
+  change, its MAJOR on one that can break a client or on an alignment major
+  shared with the SDKs.
 
-The two move independently, and that is deliberate. A server release can change
-a default or a flag without touching the contract, and a schema can gain a field
-without the server's own surface changing.
+Their MINOR and PATCH move independently, and that is deliberate; the MAJOR is
+shared (see "One major across the server and the SDKs"). A server release can
+change a default or a flag without touching the contract, and a schema can gain
+a field without the server's own surface changing.
 
 The client SDKs pin the schema version they were built against and compare it
 with what `schemaVersion` reports.
