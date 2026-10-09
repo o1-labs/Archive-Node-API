@@ -17,6 +17,7 @@ import {
   Poseidon,
   PrivateKey,
   UInt64,
+  fetchLastBlock,
 } from 'o1js';
 import { resolvers } from '../src/resolvers.js';
 import { buildContext, GraphQLContext } from '../src/context.js';
@@ -29,7 +30,6 @@ import {
   Keypair,
   emitActionsFromMultipleSenders,
   emitMultipleFieldsEvents,
-  fetchNetworkState,
   randomStruct,
 } from '../zkapp/utils.js';
 import { HelloWorld, TestStruct } from '../zkapp/contract.js';
@@ -216,6 +216,67 @@ describe('Query Resolvers', async () => {
     })) as NetworkQueryResult;
   }
 
+  type HeightSample = {
+    results: NetworkQueryResult;
+    daemonBefore: number;
+    archive: number;
+    daemonAfter: number;
+  };
+
+  async function daemonHeight(): Promise<number> {
+    // A plain bestChain read: no transaction, so no wait for inclusion.
+    return Number((await fetchLastBlock()).blockchainLength.toString());
+  }
+
+  /**
+   * Read the daemon tip, the archive's pendingMaxBlockHeight, then the daemon
+   * tip again. A sample counts only when no block landed inside it
+   * (daemonBefore === daemonAfter) and the archive has ingested that tip
+   * (archive >= daemonBefore). Retries absorb archive ingestion lag and a block
+   * produced mid-sample; the retry predicate is "caught up", not "equal", so a
+   * wrong height still ends in a clean assertion diff, not a silent pass.
+   *
+   * A resolver one block low never yields a sample that is both stable and
+   * caught up: the archive only reports the next block after the daemon has
+   * it, which moves daemonAfter. The retries run out and the assertion fails.
+   */
+  async function sampleStableHeights({
+    attempts = 30,
+    delayMs = 1000,
+  } = {}): Promise<HeightSample> {
+    let sample!: HeightSample;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      const daemonBefore = await daemonHeight();
+      const results = await executeNetworkStateQuery();
+      const archive =
+        results.data.networkState.maxBlockHeight!.pendingMaxBlockHeight;
+      const daemonAfter = await daemonHeight();
+      sample = { results, daemonBefore, archive, daemonAfter };
+      if (daemonBefore === daemonAfter && archive >= daemonBefore) break;
+      if (attempt < attempts)
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    return sample;
+  }
+
+  function assertArchiveMatchesDaemon({
+    daemonBefore,
+    archive,
+    daemonAfter,
+  }: HeightSample) {
+    const values = `daemon before ${daemonBefore}, archive ${archive}, daemon after ${daemonAfter}`;
+    assert.strictEqual(
+      daemonBefore,
+      daemonAfter,
+      `no block-free sampling window within the retry budget: ${values}`
+    );
+    assert.strictEqual(
+      archive,
+      daemonBefore,
+      `archive pendingMaxBlockHeight must equal the daemon blockchainLength: ${values}`
+    );
+  }
+
   /**
    * The archive node ingests blocks into Postgres asynchronously, so a
    * transaction the daemon already reports as included is not necessarily
@@ -323,12 +384,12 @@ describe('Query Resolvers', async () => {
   describe('NetworkState', async () => {
     let blockResponse: NetworkStateOutput;
     let results: NetworkQueryResult;
-    let fetchedBlockchainLength: number;
+    let heights: HeightSample;
 
     before(async () => {
-      results = await executeNetworkStateQuery();
+      heights = await sampleStableHeights();
+      results = heights.results;
       blockResponse = results.data.networkState;
-      fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
     });
 
     test('Fetching the max block height should not throw', async () => {
@@ -348,24 +409,18 @@ describe('Query Resolvers', async () => {
     });
 
     test('Fetched max block height from archive node should match with the one from mina node', async () => {
-      assert.deepStrictEqual(
-        blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
-        fetchedBlockchainLength
-      );
+      assertArchiveMatchesDaemon(heights);
     });
 
     describe('Advance a block', async () => {
       before(async () => {
         await new Promise((resolve) => setTimeout(resolve, 25000)); // wait for new lightnet block
-        results = await executeNetworkStateQuery();
+        heights = await sampleStableHeights();
+        results = heights.results;
         blockResponse = results.data.networkState;
-        fetchedBlockchainLength = await fetchNetworkState(zkApp, senderKeypair);
       });
       test('Fetched max block height from archive node should match the one from mina node after one block', () => {
-        assert.deepStrictEqual(
-          blockResponse.maxBlockHeight!.pendingMaxBlockHeight,
-          fetchedBlockchainLength
-        );
+        assertArchiveMatchesDaemon(heights);
       });
     });
   });
