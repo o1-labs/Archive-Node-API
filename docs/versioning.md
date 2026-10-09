@@ -130,12 +130,14 @@ Releases are cut in two steps:
 
 1. A release PR bumps `package.json`/`package-lock.json` (and
    `src/schema-version.ts` if the schema moved) and merges to `main`.
-2. A maintainer tags that merge commit; the tag push triggers the publish
+2. A maintainer tags that merge commit from a checkout of it, so the tag and
+   the published version cannot disagree; the tag push triggers the publish
    pipeline:
 
    ```sh
-   git tag v$(node -p "require('./package.json').version") <merge-sha>
-   git push origin v<version>
+   git checkout <merge-sha>
+   git tag v$(node -p "require('./package.json').version")
+   git push origin v$(node -p "require('./package.json').version")
    ```
 
 Do not run `npm version` on `main`: `package.json` already carries the version
