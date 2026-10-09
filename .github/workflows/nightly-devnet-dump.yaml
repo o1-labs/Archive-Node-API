@@ -37,6 +37,12 @@ jobs:
         # Matches the PostgreSQL major version the production dumps are taken
         # from. An older server rejects statements the newer pg_dump emits.
         image: postgres:17
+        # Pull as an authenticated Docker Hub user: anonymous pulls share the
+        # runner's IP rate limit and fail jobs with `toomanyrequests`. The
+        # runner skips the login when the secrets are absent (forks, Dependabot).
+        credentials:
+          username: ${{ secrets.DOCKERHUB_PULL_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PULL_TOKEN }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
