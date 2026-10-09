@@ -38,11 +38,6 @@ jobs:
     services:
       postgres:
         image: postgres:13-alpine
-        # Pull as an authenticated Docker Hub user: anonymous pulls share the
-        # runner's IP rate limit and fail jobs with `toomanyrequests`. Empty
-        # credentials are a template error, so without the secrets (forks,
-        # Dependabot) the whole mapping is null and the pull stays anonymous.
-        credentials: ${{ secrets.DOCKERHUB_PULL_USERNAME && fromJSON(format('{{"username":"{0}","password":"{1}"}}', secrets.DOCKERHUB_PULL_USERNAME, secrets.DOCKERHUB_PULL_TOKEN)) || null }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

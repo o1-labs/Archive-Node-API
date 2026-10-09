@@ -171,8 +171,9 @@ of the job.
 
 A `v*` tag also copies the GHCR image, by digest, to
 `docker.io/minaprotocol/archive-node-api` (same tags: `X.Y.Z`, `X.Y`, `X`,
-`latest`). Separately, every workflow that pulls from Docker Hub logs in, so the
-anonymous per-IP rate limit (`toomanyrequests`) cannot fail CI or a release.
+`latest`). Separately, the release build logs in to Docker Hub before it pulls
+`tonistiigi/binfmt` and `node:24-alpine`, so the anonymous per-IP rate limit
+(`toomanyrequests`) cannot stop it after it has published to Artifact Registry.
 
 A repository admin sets this up once:
 
@@ -183,7 +184,9 @@ A repository admin sets this up once:
 | Repository variable                                   | `PUBLISH_DOCKERHUB`                               | `true`                                                                              |
 
 Until `PUBLISH_DOCKERHUB` is `true` the copy job is skipped, and without the
-pull secrets the workflows pull anonymously, as before.
+pull secrets the build pulls anonymously, as before. Service containers in the
+test workflows still pull anonymously: a service cannot log in only when a
+secret exists (empty `credentials` are a template error).
 
 ## Upgrading to 2.0.0
 
