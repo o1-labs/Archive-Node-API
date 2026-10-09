@@ -33,6 +33,9 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
        github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      version: ${{ steps.determine_tags.outputs.version }}
     # ORDERING RULE: every step that runs dependency code (npm ci, npm run build)
     # comes BEFORE "Authenticate to Google Cloud". After that step only the
     # registry logins, npm publish and the docker build may run. See issue 03.
@@ -120,6 +123,24 @@ jobs:
       # pinned by digest rather than the action's default mutable :latest.
       # cache-image is off: the action's GHA cache entry is keyed by tag, not
       # digest, and adds ~32 MB per PR to the cache budget (#241).
+      # Authenticated Docker Hub pulls (binfmt here, node:24-alpine in the
+      # build), so the anonymous per-IP rate limit cannot fail a release. After
+      # npm ci and the build: no dependency code runs once the login exists.
+      # The secret is read in this step only, never in the job env.
+      - name: Check for Docker Hub pull credentials
+        id: dockerhub_pull
+        env:
+          USERNAME: ${{ secrets.DOCKERHUB_PULL_USERNAME }}
+        run: echo "present=$([ -n "$USERNAME" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub (pulls)
+        if: steps.dockerhub_pull.outputs.present == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_PULL_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PULL_TOKEN }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
         with:
@@ -248,6 +269,7 @@ jobs:
             fi
 
             echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "Building release tags for GCP and GitHub: ${TAGS}"
           else
             # PR build - use dev tags with SHA (GCP only)
@@ -259,6 +281,7 @@ jobs:
           fi
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -279,3 +302,61 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           if [ -d /tmp/.buildx-cache-new ]; then mv /tmp/.buildx-cache-new /tmp/.buildx-cache; fi
+
+  dockerhub:
+    name: Copy the image to Docker Hub
+    # Release tags only. Copies the GHCR image by digest, not a rebuild, so
+    # both registries serve the same bytes and provenance. Operators pulling
+    # the other Mina images from docker.io/minaprotocol find this one there.
+    #
+    # Inert until the repository variable PUBLISH_DOCKERHUB is "true", so a
+    # release does not fail before the Docker Hub token exists. The token lives
+    # in the dockerhub-publish environment, which only v* tags can deploy to.
+    if: >-
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
+      vars.PUBLISH_DOCKERHUB == 'true'
+    needs: build-and-deploy
+    environment: dockerhub-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Copy the image by digest
+        env:
+          SOURCE: ghcr.io/${{ github.repository_owner }}/archive-node-api@${{ needs.build-and-deploy.outputs.digest }}
+          TARGET: docker.io/minaprotocol/archive-node-api
+          VERSION: ${{ needs.build-and-deploy.outputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+            echo "::error::not a release version: '$VERSION'"; exit 1; }
+          MAJOR="${BASH_REMATCH[1]}"; MINOR="${BASH_REMATCH[2]}"
+          # Same tag set as GHCR: X.Y.Z, X.Y, X, latest.
+          docker buildx imagetools create "${SOURCE,,}" \
+            --tag "$TARGET:$VERSION" \
+            --tag "$TARGET:$MAJOR.$MINOR" \
+            --tag "$TARGET:$MAJOR" \
+            --tag "$TARGET:latest"
+          # Prove the copy: the Docker Hub tag must resolve to the GHCR digest.
+          got="$(docker buildx imagetools inspect "$TARGET:$VERSION" --format '{{json .Manifest}}' | jq -r .digest)"
+          [ "$got" = "${{ needs.build-and-deploy.outputs.digest }}" ] || {
+            echo "::error::$TARGET:$VERSION is $got, expected ${{ needs.build-and-deploy.outputs.digest }}"; exit 1; }
+          echo "Copied $SOURCE to $TARGET:{$VERSION,$MAJOR.$MINOR,$MAJOR,latest}"

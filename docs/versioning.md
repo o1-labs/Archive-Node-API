@@ -167,6 +167,27 @@ registry logins and `npm publish`. Changing the step order, or reintroducing a
 stored credential, undoes both properties — see the ordering comment at the top
 of the job.
 
+### Docker Hub
+
+A `v*` tag also copies the GHCR image, by digest, to
+`docker.io/minaprotocol/archive-node-api` (same tags: `X.Y.Z`, `X.Y`, `X`,
+`latest`). Separately, the release build logs in to Docker Hub before it pulls
+`tonistiigi/binfmt` and `node:24-alpine`, so the anonymous per-IP rate limit
+(`toomanyrequests`) cannot stop it after it has published to Artifact Registry.
+
+A repository admin sets this up once:
+
+| Kind                                                  | Name                                              | Value                                                                               |
+| ----------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Repository secrets                                    | `DOCKERHUB_PULL_USERNAME`, `DOCKERHUB_PULL_TOKEN` | Docker Hub account and a **read-only** access token                                 |
+| Environment `dockerhub-publish`, deployment tags `v*` | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`           | Docker Hub account and a token with write access to `minaprotocol/archive-node-api` |
+| Repository variable                                   | `PUBLISH_DOCKERHUB`                               | `true`                                                                              |
+
+Until `PUBLISH_DOCKERHUB` is `true` the copy job is skipped, and without the
+pull secrets the build pulls anonymously, as before. Service containers in the
+test workflows still pull anonymously: a service cannot log in only when a
+secret exists (empty `credentials` are a template error).
+
 ## Upgrading to 2.0.0
 
 npm never received 1.0.x (only `0.0.6` is published), so npm consumers go
