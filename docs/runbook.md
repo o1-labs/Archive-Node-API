@@ -104,7 +104,7 @@ Recovery semantics to expect:
 - Rolling update; `terminationGracePeriodSeconds: 30` lets in-flight requests
   drain (the app shuts down gracefully on SIGTERM and flushes traces).
 - Readiness gates traffic to new pods until they can reach the DB.
-- Roll back within the 1.0.x line — the service is stateless and carries no
+- Roll back to any 1.0.0 or later image — the service is stateless and carries no
   migrations. Do **not** roll back to a 0.0.x image while readiness targets
   `/readiness`: that path 404s, no pod goes Ready, and the Service loses all
   endpoints.

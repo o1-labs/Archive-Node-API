@@ -18,6 +18,7 @@
  *   same major keeps working.
  * - **MAJOR** for a change that can break a client: a removed or renamed field,
  *   a narrowed type, an argument that becomes required, or a field that becomes
- *   nullable when clients were entitled to assume it was not.
+ *   nullable when clients were entitled to assume it was not. Also when the
+ *   package or the SDKs take a major: they all share one (docs/versioning.md).
  */
-export const SCHEMA_VERSION = '1.1';
+export const SCHEMA_VERSION = '2.0';
