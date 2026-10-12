@@ -160,6 +160,24 @@ export type ZkappCommand = {
 
 export type ZkappCommands = ZkappCommand[];
 
+export type AccountUserCommand = {
+  blockInfo: BlockInfo;
+  sequenceNumber: number;
+  hash: string;
+  kind: string;
+  feePayer: string;
+  from: string;
+  to: string;
+  amount: string;
+  fee: string;
+  memo: string;
+  nonce: number;
+  status: string;
+  failureReason: string | null;
+};
+
+export type AccountUserCommands = AccountUserCommand[];
+
 export type FeeTransfer = {
   recipient: string;
   fee: string;
