@@ -31,6 +31,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
 
       # Trusted publishing needs npm 11.5.1 or later. Pin the major rather than
       # tracking `latest` so a future npm major cannot change publish semantics
@@ -48,4 +49,5 @@ jobs:
           polling-interval-ms: 10000
 
       - run: npm test
-      - run: npm publish --provenance --access public
+      # Verbose: npm hides why the OIDC token exchange failed behind ENEEDAUTH.
+      - run: npm publish --provenance --access public --loglevel verbose
