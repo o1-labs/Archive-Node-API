@@ -21,6 +21,7 @@ declare global {
       BLOCK_RANGE_SIZE?: string;
       ZKAPP_COMMAND_RANGE_SIZE?: string;
       ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT?: string;
+      USER_COMMAND_LIMIT?: string;
       ENABLE_LOGGING?: bool;
       ENABLE_METRICS?: bool;
       ENABLE_INTROSPECTION?: bool;
@@ -28,6 +29,7 @@ declare global {
       ENABLE_JAEGER?: bool;
       ENABLE_BLOCK_TRANSACTION_DETAILS?: bool;
       ENABLE_ZKAPP_COMMANDS_QUERY?: bool;
+      ENABLE_USER_COMMANDS_QUERY?: bool;
       ENABLED_QUERIES?: string;
       JAEGER_ENDPOINT?: string;
       JAEGER_SERVICE_NAME?: string;

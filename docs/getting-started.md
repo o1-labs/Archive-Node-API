@@ -200,8 +200,11 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `BLOCK_RANGE_SIZE` | `10000` | Max block range a single query may span |
 | `ZKAPP_COMMAND_RANGE_SIZE` | `1000` | Max block range for `zkappCommands` |
 | `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000` | Max expanded account updates for one `zkappCommands` query |
+| `ENABLE_ZKAPP_COMMANDS_QUERY` | `false` | Expose the `zkappCommands` range query |
+| `ENABLE_USER_COMMANDS_QUERY` | `false` | Expose the account-scoped `userCommands` query. Needs the archive's `user_commands` account indexes (see [versioning.md](./versioning.md#mina-compatibility)) |
+| `USER_COMMAND_LIMIT` | `5000` | Max user commands one `userCommands` query may return |
 | `ENABLE_BLOCK_TRANSACTION_DETAILS` | `false` | Include `userCommands` / `zkappCommands` / `feeTransfers` |
-| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,networkState,blocks` to expose; omitted fields are removed from the schema. `schemaVersion` is always served |
+| `ENABLED_QUERIES` | _(all)_ | Comma-separated subset of `events,actions,verificationKeyUpdates,zkappCommands,userCommands,networkState,blocks` to expose; omitted fields are removed from the schema. `schemaVersion` is always served |
 | `ENABLE_JAEGER` | `false` | Emit traces to a Jaeger collector |
 | `JAEGER_SERVICE_NAME` | `archive-api` | Service name reported to Jaeger |
 | `JAEGER_ENDPOINT` | — | e.g. `http://localhost:14268/api/traces` |

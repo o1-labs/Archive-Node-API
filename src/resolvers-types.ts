@@ -206,6 +206,7 @@ export type Query = {
    * is of no use to a client.
    */
   schemaVersion: Scalars['String']['output'];
+  userCommands: Array<UserCommandOutput>;
   verificationKeyUpdates: Array<VerificationKeyUpdate>;
   zkappCommands: Array<ZkappCommandOutput>;
 };
@@ -222,6 +223,10 @@ export type QueryBlocksArgs = {
 
 export type QueryEventsArgs = {
   input: EventFilterOptionsInput;
+};
+
+export type QueryUserCommandsArgs = {
+  input: UserCommandFilterInput;
 };
 
 export type QueryVerificationKeyUpdatesArgs = {
@@ -256,6 +261,51 @@ export type UserCommand = {
   to: Scalars['String']['output'];
 };
 
+/**
+ * Find applied account updates that set a specific verification key.
+ *
+ * The block range is required and limited by the server's configured maximum.
+ * `from` is inclusive and `to` is exclusive.
+ */
+export type UserCommandFilterInput = {
+  /**
+   * Public key of the account. A command is returned when the account is its fee
+   * payer, its source or its receiver.
+   */
+  address: Scalars['String']['input'];
+  /** Mina block height to search from, inclusive */
+  from: Scalars['Int']['input'];
+  status?: InputMaybe<BlockStatusFilter>;
+  /** Mina block height to search to, exclusive */
+  to: Scalars['Int']['input'];
+};
+
+/**
+ * A payment or a stake delegation that involves an account, with the block that
+ * carries it. A command that sits in several blocks of the result, such as two
+ * competing pending blocks, is returned once for each block.
+ */
+export type UserCommandOutput = {
+  __typename?: 'UserCommandOutput';
+  /** Amount in nanomina. `0` for a delegation. */
+  amount: Scalars['String']['output'];
+  blockInfo: BlockInfo;
+  failureReason?: Maybe<Scalars['String']['output']>;
+  fee: Scalars['String']['output'];
+  feePayer: Scalars['String']['output'];
+  from: Scalars['String']['output'];
+  hash: Scalars['String']['output'];
+  /** `payment` or `delegation` */
+  kind: Scalars['String']['output'];
+  memo: Scalars['String']['output'];
+  nonce: Scalars['Int']['output'];
+  /** Position of the command in its block */
+  sequenceNumber: Scalars['Int']['output'];
+  /** `applied` or `failed` */
+  status: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
 export type VerificationKeyUpdate = {
   __typename?: 'VerificationKeyUpdate';
   accountUpdateId: Scalars['String']['output'];
@@ -266,12 +316,6 @@ export type VerificationKeyUpdate = {
   verificationKeyHash: Scalars['String']['output'];
 };
 
-/**
- * Find applied account updates that set a specific verification key.
- *
- * The block range is required and limited by the server's configured maximum.
- * `from` is inclusive and `to` is exclusive.
- */
 export type VerificationKeyUpdateFilterInput = {
   from: Scalars['Int']['input'];
   status?: InputMaybe<BlockStatusFilter>;
@@ -505,6 +549,8 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   TransactionInfo: ResolverTypeWrapper<TransactionInfo>;
   UserCommand: ResolverTypeWrapper<UserCommand>;
+  UserCommandFilterInput: UserCommandFilterInput;
+  UserCommandOutput: ResolverTypeWrapper<UserCommandOutput>;
   VerificationKeyUpdate: ResolverTypeWrapper<VerificationKeyUpdate>;
   VerificationKeyUpdateFilterInput: VerificationKeyUpdateFilterInput;
   ZkAppCommand: ResolverTypeWrapper<ZkAppCommand>;
@@ -540,6 +586,8 @@ export type ResolversParentTypes = {
   String: Scalars['String']['output'];
   TransactionInfo: TransactionInfo;
   UserCommand: UserCommand;
+  UserCommandFilterInput: UserCommandFilterInput;
+  UserCommandOutput: UserCommandOutput;
   VerificationKeyUpdate: VerificationKeyUpdate;
   VerificationKeyUpdateFilterInput: VerificationKeyUpdateFilterInput;
   ZkAppCommand: ZkAppCommand;
@@ -802,6 +850,12 @@ export type QueryResolvers<
     ContextType
   >;
   schemaVersion?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userCommands?: Resolver<
+    Array<ResolversTypes['UserCommandOutput']>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryUserCommandsArgs, 'input'>
+  >;
   verificationKeyUpdates?: Resolver<
     Array<ResolversTypes['VerificationKeyUpdate']>,
     ParentType,
@@ -854,6 +908,30 @@ export type UserCommandResolvers<
   kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   nonce?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  to?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type UserCommandOutputResolvers<
+  ContextType = GraphQLContext,
+  ParentType extends
+    ResolversParentTypes['UserCommandOutput'] = ResolversParentTypes['UserCommandOutput'],
+> = {
+  amount?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  blockInfo?: Resolver<ResolversTypes['BlockInfo'], ParentType, ContextType>;
+  failureReason?: Resolver<
+    Maybe<ResolversTypes['String']>,
+    ParentType,
+    ContextType
+  >;
+  fee?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  feePayer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  from?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hash?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  memo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  nonce?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  sequenceNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   to?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
@@ -1030,6 +1108,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Query?: QueryResolvers<ContextType>;
   TransactionInfo?: TransactionInfoResolvers<ContextType>;
   UserCommand?: UserCommandResolvers<ContextType>;
+  UserCommandOutput?: UserCommandOutputResolvers<ContextType>;
   VerificationKeyUpdate?: VerificationKeyUpdateResolvers<ContextType>;
   ZkAppCommand?: ZkAppCommandResolvers<ContextType>;
   ZkappAccountPrecondition?: ZkappAccountPreconditionResolvers<ContextType>;

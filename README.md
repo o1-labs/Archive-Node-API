@@ -71,6 +71,8 @@ PG_CONN='postgres://postgres:postgres@localhost:5432/archive' \
 | `ENABLE_ZKAPP_COMMANDS_QUERY` | `false` | Expose the `zkappCommands` range query             |
 | `ZKAPP_COMMAND_RANGE_SIZE` | `1000`       | Max block range for `zkappCommands`                |
 | `ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT` | `5000`       | Max expanded account updates for one `zkappCommands` query |
+| `ENABLE_USER_COMMANDS_QUERY` | `false` | Expose the account-scoped `userCommands` query. Needs the archive's `user_commands` account indexes ([docs/versioning.md](./docs/versioning.md#mina-compatibility)) |
+| `USER_COMMAND_LIMIT` | `5000` | Max user commands one `userCommands` query may return |
 | `ENABLE_JAEGER`        | `false`      | Emit traces to a Jaeger collector                  |
 | `JAEGER_ENDPOINT`      | —            | e.g. `http://localhost:14268/api/traces`           |
 
