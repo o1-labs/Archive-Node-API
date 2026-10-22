@@ -18,7 +18,11 @@ const BOOLEAN_VARS = [
 ] as const;
 
 /** Env vars that, when set, must be positive integers. */
-const POSITIVE_INT_VARS = ['PORT', 'BLOCK_RANGE_SIZE'] as const;
+const POSITIVE_INT_VARS = [
+  'PORT',
+  'BLOCK_RANGE_SIZE',
+  'MAX_REQUEST_BODY_BYTES',
+] as const;
 
 /** Root query fields in schema.graphql — keep in sync. */
 const KNOWN_QUERIES = [
