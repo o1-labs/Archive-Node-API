@@ -193,6 +193,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `GRAPHQL_MAX_ALIASES` | `15` | Max aliases allowed in a single operation |
 | `GRAPHQL_MAX_TOKENS` | `1000` | Max lexical tokens allowed in a query document |
 | `GRAPHQL_MAX_COST` | `5000` | Max estimated query cost (depth/field heuristic) |
+| `MAX_REQUEST_BODY_BYTES` | _(off)_ | Max request body in bytes; recommended `262144` (256 KiB) for public deployments. When set, a larger declared `Content-Length` gets `413` and a `POST`/`PUT`/`PATCH` without `Content-Length` (e.g. chunked) gets `411`. Unset = no cap |
 | `ENABLE_GRAPHIQL` | `false` | If `true`, serves the GraphiQL playground at `/` |
 | `ENABLE_INTROSPECTION` | `false` | If `true`, allows GraphQL schema introspection |
 | `ENABLE_LOGGING` | `false` | Emit OpenTelemetry traces (request access logs are always on — see below) |
@@ -218,6 +219,15 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 - Counting the hops: a GCP external Application Load Balancer appends two entries — the client IP, then the forwarding-rule IP — so a bare GCP LB is `TRUST_PROXY=2`, plus one for each additional in-cluster proxy. Getting this wrong fails silently in both directions: too high falls back to the socket address, too low keys on your own proxy's IP and collapses every client into one bucket. The `TRUST_PROXY=0` warning reports the observed chain length; use it to confirm.
 - The counter is in-memory and **per-instance**: with N replicas the effective limit is roughly N × `RATE_LIMIT_MAX`. A shared store (e.g. Redis) for exact cross-replica limits is tracked as deployment hardening.
 - Health checks (`/healthcheck`) are never rate-limited.
+
+### Notes on the request body limit
+
+- Off by default, so upgrading changes nothing until you opt in: enabling a request-size cap by default would be a breaking change under the [versioning policy](./versioning.md). Set `MAX_REQUEST_BODY_BYTES=262144` (256 KiB) on any public deployment; that is far above any query this API legitimately serves.
+- The query-cost limits bound a query's shape, not its size: a long string literal counts as one token and `variables` are not counted. `MAX_REQUEST_BODY_BYTES` bounds the bytes a single request can make the server parse.
+- The check reads only the `Content-Length` header, so an oversized body is refused before it is parsed or buffered. Any method declaring more than the cap gets `413`. CORS preflights and the probe endpoints are unaffected.
+- Refusals (`413`, `411`) keep the usual CORS headers, so a browser on an allowed origin can read the status rather than a bare CORS error. They do not close the connection: the server discards the rest of the body as it arrives, so a client or proxy that already sent the whole body reads the refusal instead of a connection reset. A body that never ends is cut off by Node's request timeout (about 300 s by default). A client that itself sends `Connection: close` still has its connection closed right after the refusal, and may see a reset if it is still sending.
+- With the cap set, a `POST`, `PUT` or `PATCH` must declare its length: a chunked body gets `411`. A JSON string body sent through `fetch` (browsers, Node, and the GraphQL clients built on it) always carries `Content-Length`. A proxy that streams request bodies (cloudflared by default, nginx with `proxy-request-buffering` off) passes chunked clients through as chunked, and they get `411` when the cap is set.
+- A client that sends `Expect: 100-continue` gets `100 Continue` before the `413`: Node answers the expectation before the request reaches the check.
 
 ### Notes on `CORS_ORIGIN`
 

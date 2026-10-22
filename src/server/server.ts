@@ -1,11 +1,11 @@
 import { inspect } from 'node:util';
-import { createYoga } from 'graphql-yoga';
+import { createYoga, type Plugin } from 'graphql-yoga';
 import { createServer } from 'http';
-import { Plugin } from '@envelop/core';
 import { schema } from '../resolvers.js';
 import type { GraphQLContext } from '../context.js';
 import { parseBoolean } from '../config.js';
 import { useReadiness } from './readiness.js';
+import { useBodyLimit } from './body-limit.js';
 import { resolveCorsOptions, warnIfCorsDisabled } from './cors.js';
 import { logger, resolveYogaLogLevel } from './logger.js';
 
@@ -81,5 +81,9 @@ function buildYoga(context: GraphQLContext, plugins: Plugin[]) {
 
 function buildServer(context: GraphQLContext, plugins: Plugin[]) {
   warnIfCorsDisabled(resolveCorsOptions());
-  return createServer(buildYoga(context, plugins));
+  // Ahead of the caller's plugins, so a body is refused before their hooks work
+  // on the request. Yoga's built-in health-check, CORS and GraphiQL plugins and
+  // useReadiness (any method on /readiness) still answer first. Inside Yoga, so
+  // the refusal carries the CORS headers.
+  return createServer(buildYoga(context, [useBodyLimit(), ...plugins]));
 }

@@ -71,6 +71,7 @@ the [configuration](./getting-started.md#configuration):
 | --------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Per-IP **rate limiting**                                        | on once `TRUST_PROXY` is set    | Bounds request volume per client; disabled with a startup warning while `TRUST_PROXY` is unset               |
 | GraphQL **query-cost limits** (depth / aliases / tokens / cost) | on                              | Rejects expensive/abusive query shapes before execution                                                      |
+| Request **body size** cap                                       | off (`MAX_REQUEST_BODY_BYTES`)  | Refuses bodies over the cap (`413`) or without a length (`411`); set `262144` on public deployments          |
 | Postgres **statement timeout** & pool limits                    | on                              | Caps how long/much a single query can consume                                                                |
 | **CORS**                                                        | same-origin only                | Cross-origin browser access is opt-in — see the caveat below before locking it down                          |
 | **Introspection**                                               | off                             | Schema introspection disabled unless explicitly enabled                                                      |
@@ -81,7 +82,8 @@ the [configuration](./getting-started.md#configuration):
 > `*` there, so cross-origin access is wide open rather than opt-in.
 > Introspection disabling already exists on `0.0.x`, but any non-empty
 > `ENABLE_INTROSPECTION` value, including `false`, enables it. Check your
-> running version before relying on any row above.
+> running version before relying on any row above. The request body cap is
+> newer still: 2.0.0 and earlier have none.
 
 Tune these to your traffic; see the configuration table for the exact
 environment variables and defaults.
@@ -139,6 +141,8 @@ the credentials cannot modify or delete data.
 - [ ] Postgres reachable only from the API, not the public internet
 - [ ] API uses a **read-only** Postgres role
 - [ ] Rate-limit and query-cost limits reviewed for your expected traffic
+- [ ] `MAX_REQUEST_BODY_BYTES` set on a public deployment (recommended
+      `262144`); the body cap is off while it is unset
 - [ ] `CORS_ORIGIN` matches your clients: `*` for a public API any browser may
       call, or an explicit allowlist if your front-ends are known and fixed —
       leaving it unset blocks all cross-origin browser clients
