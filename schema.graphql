@@ -67,10 +67,11 @@ input ActionFilterOptionsInput {
 }
 
 """
-Find applied account updates that set a specific verification key.
+Find the user commands (payments and delegations) of one account.
 
 The block range is required and limited by the server's configured maximum.
-`from` is inclusive and `to` is exclusive.
+`from` is inclusive and `to` is exclusive. A range that holds more than the
+server's user command limit for the account is rejected.
 """
 input UserCommandFilterInput {
   """
@@ -89,6 +90,12 @@ input UserCommandFilterInput {
   status: BlockStatusFilter
 }
 
+"""
+Find applied account updates that set a specific verification key.
+
+The block range is required and limited by the server's configured maximum.
+`from` is inclusive and `to` is exclusive.
+"""
 input VerificationKeyUpdateFilterInput {
   verificationKeyHash: String!
   from: Int!

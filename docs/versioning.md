@@ -266,9 +266,10 @@ queries. A compatibility check a deployment can switch off would leave clients
 guessing, which is the situation the field exists to end.
 
 `schemaVersion` describes the contract, not which queries a deployment exposes.
-`ENABLED_QUERIES` and `ENABLE_ZKAPP_COMMANDS_QUERY` can still remove data
-queries from a given server, so a client must continue to detect features from
-the `Cannot query field` error, as mina-explorer already does.
+`ENABLED_QUERIES`, `ENABLE_ZKAPP_COMMANDS_QUERY` and
+`ENABLE_USER_COMMANDS_QUERY` can still remove data queries from a given server,
+so a client must continue to detect features from the `Cannot query field`
+error, as mina-explorer already does.
 
 ## Mina compatibility
 

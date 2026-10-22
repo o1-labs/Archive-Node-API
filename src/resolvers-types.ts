@@ -262,10 +262,11 @@ export type UserCommand = {
 };
 
 /**
- * Find applied account updates that set a specific verification key.
+ * Find the user commands (payments and delegations) of one account.
  *
  * The block range is required and limited by the server's configured maximum.
- * `from` is inclusive and `to` is exclusive.
+ * `from` is inclusive and `to` is exclusive. A range that holds more than the
+ * server's user command limit for the account is rejected.
  */
 export type UserCommandFilterInput = {
   /**
@@ -316,6 +317,12 @@ export type VerificationKeyUpdate = {
   verificationKeyHash: Scalars['String']['output'];
 };
 
+/**
+ * Find applied account updates that set a specific verification key.
+ *
+ * The block range is required and limited by the server's configured maximum.
+ * `from` is inclusive and `to` is exclusive.
+ */
 export type VerificationKeyUpdateFilterInput = {
   from: Scalars['Int']['input'];
   status?: InputMaybe<BlockStatusFilter>;
