@@ -21,6 +21,27 @@ env:
     NPM_REGISTRY: euro-npm
 
 jobs:
+  # A stable vX.Y.Z tag is deployed through gitops-infrastructure by
+  # deploy-gitops.yaml (see docs/versioning.md "Deploying a release"). This
+  # call only proves its credentials work, BEFORE build-and-deploy publishes
+  # npm and the images, so a broken deploy credential stops the release while
+  # nothing is out yet. Pre-release tags (anything with a `-`) and every other
+  # event skip it. The callee is taken from main, whose copy is the only one
+  # Google's STS lets authenticate; `@main` is resolved when the run is created,
+  # even for runs that skip the job.
+  gitops-preflight:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    # A called workflow gets at most what its caller job grants; these are the
+    # deploy job's own permissions.
+    permissions:
+      contents: read
+      id-token: write # deploy-gitops.yaml authenticates through Workload Identity Federation
+      attestations: read # and verifies the image's build provenance
+    uses: o1-labs/Archive-Node-API/.github/workflows/deploy-gitops.yaml@main
+    with:
+      tag: ${{ github.ref_name }}
+      preflight: true
+
   build-and-deploy:
     # This job authenticates to Google Cloud, publishes a dev npm package and
     # pushes a Docker image, so it only works where repository secrets are
@@ -28,14 +49,30 @@ jobs:
     # Dependabot, so the job is skipped there instead of failing at the auth
     # step. Fork and Dependabot pull requests are still covered by Run-Tests,
     # Linting, unit-tests, smoke-load, npm audit and Check Schema.
+    # gitops-preflight is skipped on everything but a stable tag; !cancelled()
+    # keeps that skip from skipping this job too, and a failed preflight stops it.
+    needs: gitops-preflight
     if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.event.pull_request.user.login != 'dependabot[bot]')
+      ${{ !cancelled() &&
+      contains(fromJSON('["success","skipped"]'), needs.gitops-preflight.result) &&
+      (github.event_name != 'pull_request' ||
+       (github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event.pull_request.user.login != 'dependabot[bot]')) }}
     runs-on: ubuntu-latest
+    # The workflow-level permissions plus attestations: write. A job-level block
+    # replaces the workflow-level one, so all of them are listed again here.
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation, and the attestation's signing certificate
+      packages: write # ghcr.io push on tag builds, and the attestation pushed beside the image
+      attestations: write # build provenance of the image on tag builds
+    outputs:
+      # The multi-arch index digest both registries hold; deploy-gitops pins it.
+      digest: ${{ steps.build.outputs.digest }}
     # ORDERING RULE: every step that runs dependency code (npm ci, npm run build)
     # comes BEFORE "Authenticate to Google Cloud". After that step only the
-    # registry logins, npm publish and the docker build may run. See issue 03.
+    # registry logins, npm publish, the docker build and its provenance
+    # attestation may run. See issue 03.
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -259,6 +296,7 @@ jobs:
           fi
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -271,6 +309,21 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
+      # Signs, with this run's identity, that the pushed index digest was built
+      # by build.yaml from this tag. deploy-gitops.yaml refuses a digest without
+      # it (`gh attestation verify`), so a registry tag moved later cannot be
+      # deployed. The attestation is stored with GitHub and pushed next to the
+      # image in GHCR. No storage record: that needs artifact-metadata: write
+      # and nothing here reads it.
+      - name: Attest build provenance
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/o1-labs/archive-node-api
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+
       # No always(): the "Cache Docker layers" post step only saves on success
       # (actions/cache declares post-if: success()), so after a failed build
       # there is nothing to rotate. The `if` guards a build that wrote no new
@@ -279,3 +332,20 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           if [ -d /tmp/.buildx-cache-new ]; then mv /tmp/.buildx-cache-new /tmp/.buildx-cache; fi
+
+  # Merges the devnet deploy and opens the mainnet one in gitops-infrastructure,
+  # pinned to the digest just pushed. A separate job, so its credentials never
+  # meet build-and-deploy's steps (ORDERING RULE) and a failure here can be
+  # re-run alone (`gh run rerun <id> --job <this job>`) without republishing.
+  # No `secrets: inherit`: the callee needs none.
+  deploy-gitops:
+    needs: build-and-deploy
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    permissions:
+      contents: read
+      id-token: write # deploy-gitops.yaml authenticates through Workload Identity Federation
+      attestations: read # and verifies the image's build provenance
+    uses: o1-labs/Archive-Node-API/.github/workflows/deploy-gitops.yaml@main
+    with:
+      tag: ${{ github.ref_name }}
+      digest: ${{ needs.build-and-deploy.outputs.digest }}
