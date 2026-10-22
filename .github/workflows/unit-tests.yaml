@@ -45,6 +45,23 @@ jobs:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
 
+  # The release's gitops deploy script is shell, not Node, so it runs once rather
+  # than per Node version. Offline: the tests stub gh and push to a local repo.
+  # yq, shellcheck and jq come with the runner image.
+  gitops-bump-script:
+    name: gitops-bump-script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Lint and test scripts/gitops-bump.sh
+        run: |
+          yq --version
+          shellcheck scripts/gitops-bump*.sh
+          bash scripts/gitops-bump.test.sh
+
   # Aggregate: reports under the name the branch ruleset requires.
   unit-tests:
     name: unit-tests

@@ -1,0 +1,328 @@
+name: Deploy to gitops-infrastructure
+
+# Deploys a release to archive-node-api on hetzner-rivendell-1 through
+# o1-labs/gitops-infrastructure (GI): merges a one-file devnet pull request and
+# opens a one-file mainnet pull request, which waits for a platform-engineering
+# approval. See docs/versioning.md "Releasing".
+#
+# Callers:
+# - build.yaml on a vX.Y.Z tag push, as `uses: …/deploy-gitops.yaml@main`:
+#   once with `preflight: true` before anything is published (credentials only),
+#   once with the image digest after the image is pushed.
+# - workflow_dispatch on main, to recover or re-deploy an existing release.
+#
+# Only those runs can obtain the merge token. The guard step runs first and
+# fails any other caller loudly. Google's STS then enforces the same rule at
+# auth, whatever this file says: the service account below is bound to a WIF
+# attribute that holds only for this file on main, called from build.yaml on a
+# v* tag or dispatched on main (see gitops-infrastructure
+# platform/gcloud/service-accounts/workload-identity.tf).
+# This file, build.yaml and scripts/gitops-bump*.sh are owned by
+# @o1-labs/platform-engineering-reviewers (.github/CODEOWNERS).
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, vX.Y.Z
+        required: true
+        type: string
+      digest:
+        description: Index digest of the pushed image (sha256:…); not needed for a preflight
+        required: false
+        type: string
+        default: ''
+      preflight:
+        description: Stop after proving the credentials work (before build.yaml publishes)
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to deploy, vX.Y.Z (the digest is read from GHCR)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  # The GitHub App archive-node-api-deploy, installed on gitops-infrastructure
+  # only, in the bypass list of its main branch. Hardcoded rather than a
+  # repository variable so that only a reviewed change to this file can point
+  # the deploy at another App. Set after Phase 0.1 creates the App; until then
+  # the guard step fails every run.
+  GITOPS_DEPLOY_APP_ID: ''
+  GITOPS_REPO: o1-labs/gitops-infrastructure
+  GHCR_IMAGE: ghcr.io/o1-labs/archive-node-api
+  GAR_IMAGE: europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api
+
+jobs:
+  # No job-level `if:`: a skipped job reports success to its caller, so the
+  # guard below is a step that fails instead.
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # mint the GitHub OIDC token for Workload Identity Federation
+      attestations: read # gh attestation verify on the image's build provenance
+    # Real deploys run one at a time and never cancel each other. The group is
+    # taken before the guard runs, so only an authorised context may join
+    # `gitops-deploy`; any other caller (a branch, a pull request, a preflight)
+    # gets a group of its own and can never cancel a pending deploy.
+    concurrency:
+      group: ${{ (github.repository == 'o1-labs/Archive-Node-API' && !inputs.preflight && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) && 'gitops-deploy' || format('gitops-other-{0}', github.run_id) }}
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Before any credential: inputs reach the shell only through env:. In a
+      # called workflow github.* is the caller's, so this checks the caller.
+      - name: Guard
+        id: guard
+        env:
+          APP_ID: ${{ env.GITOPS_DEPLOY_APP_ID }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          TAG: ${{ inputs.tag }}
+          DIGEST: ${{ inputs.digest }}
+          PREFLIGHT: ${{ inputs.preflight }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          [[ $APP_ID =~ ^[0-9]+$ ]] ||
+            fail "GITOPS_DEPLOY_APP_ID is not set in deploy-gitops.yaml; it is filled in once the archive-node-api-deploy App exists"
+          [[ $REPOSITORY == o1-labs/Archive-Node-API ]] || fail "deploys run only in o1-labs/Archive-Node-API, not $REPOSITORY"
+          case $EVENT in
+            workflow_dispatch)
+              [[ $REF == refs/heads/main ]] || fail "dispatch this workflow from main, not $REF"
+              # The same rule as the WIF attribute: this file itself, on main.
+              [[ $WORKFLOW_REF == "o1-labs/Archive-Node-API/.github/workflows/deploy-gitops.yaml@refs/heads/main" ]] ||
+                fail "only deploy-gitops.yaml on main may be dispatched to deploy, not $WORKFLOW_REF"
+              ;;
+            push)
+              [[ $REF == "refs/tags/$TAG" ]] || fail "tag input $TAG is not the ref being built ($REF)"
+              [[ $WORKFLOW_REF == "o1-labs/Archive-Node-API/.github/workflows/build.yaml@$REF"* ]] ||
+                fail "only build.yaml on a tag may call this workflow, not $WORKFLOW_REF"
+              ;;
+            *) fail "event $EVENT may not deploy" ;;
+          esac
+          [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "only a vX.Y.Z tag deploys, not '$TAG'"
+          if [[ $EVENT != workflow_dispatch && $PREFLIGHT != true && ! $DIGEST =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            fail "not an image digest: '$DIGEST'"
+          fi
+          echo "version=${TAG#v}" >>"$GITHUB_OUTPUT"
+          echo "deploying $TAG ($EVENT on $REF)"
+
+      # From main, explicitly: in a called workflow the default repository and
+      # ref are the caller's. main can be newer than the copy of this file the
+      # run started with; both are reviewed main.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: o1-labs/Archive-Node-API
+          # Fully qualified: a tag named `main` must not be checked out instead.
+          ref: refs/heads/main
+          persist-credentials: false
+
+      # Keyless, as in build.yaml, but a different service account: it may
+      # read only the App key and the image registry. `create_credentials_file:
+      # false` keeps the credential out of the workspace.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/1020762690228/locations/global/workloadIdentityPools/github-actions/providers/github
+          service_account: archive-node-api-gitops-deploy@o1labs-192920.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          access_token_lifetime: 900s
+
+      # gcloud is not logged in (no credentials file) and takes the token from
+      # the environment. Every line of the key is masked before it reaches an
+      # output; the output is a runner file, never a workflow output.
+      - name: Read the App key from Secret Manager
+        id: key
+        env:
+          CLOUDSDK_AUTH_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          pem=$(gcloud secrets versions access latest --secret archiveNodeApiGitopsDeployAppKey --project o1labs-192920)
+          while IFS= read -r line; do
+            if [[ -n $line ]]; then echo "::add-mask::$line"; fi
+          done <<<"$pem"
+          eof=$(openssl rand -hex 16)
+          { echo "pem<<$eof"; echo "$pem"; echo "$eof"; } >>"$GITHUB_OUTPUT"
+
+      # A one-hour token for gitops-infrastructure only.
+      - name: Mint the gitops-infrastructure token
+        id: token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ env.GITOPS_DEPLOY_APP_ID }}
+          private-key: ${{ steps.key.outputs.pem }}
+          owner: o1-labs
+          repositories: gitops-infrastructure
+          permission-contents: write
+          permission-pull-requests: write
+
+      # A real API call: the only way to tell a revoked App or a lost
+      # installation from a working one before build.yaml publishes anything.
+      - name: Probe gitops-infrastructure
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          set -euo pipefail
+          if ! probe=$(gh api "repos/$GITOPS_REPO" --jq '.full_name + " push=" + (.permissions.push | tostring)' 2>&1); then
+            echo "::error::the archive-node-api-deploy token cannot read $GITOPS_REPO; is the App still installed there? GitHub said: $probe"
+            exit 1
+          fi
+          case $probe in
+            *" push=true") echo "token reaches $probe" ;;
+            *" push=false")
+              echo "::error::the archive-node-api-deploy token can read $GITOPS_REPO but not write it: $probe"
+              exit 1
+              ;;
+            # Installation tokens may omit .permissions; the push is the real test.
+            *) echo "::notice::token reaches $probe; GitHub did not report write permission" ;;
+          esac
+
+      # Preflight stops here: every step below has `if: !inputs.preflight`.
+
+      # Registry tags can be moved by anyone who can push to them, so a digest
+      # read from a tag proves nothing on its own. The build provenance that
+      # build.yaml attests on tag runs ties the digest to that tag's build: a
+      # release built before attestations existed (v2.0.0 and earlier) fails
+      # here and is deployed by hand.
+      - name: Verify the release
+        id: release
+        if: ${{ !inputs.preflight }}
+        env:
+          TAG: ${{ inputs.tag }}
+          VERSION: ${{ steps.guard.outputs.version }}
+          EVENT: ${{ github.event_name }}
+          INPUT_DIGEST: ${{ inputs.digest }}
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git ls-remote --exit-code --tags https://github.com/o1-labs/Archive-Node-API "refs/tags/$TAG" >/dev/null ||
+            { echo "::error::tag $TAG does not exist in o1-labs/Archive-Node-API"; exit 1; }
+          index_digest() { docker buildx imagetools inspect "$1" --format '{{json .Manifest}}' | jq -r .digest; }
+          ghcr=$(index_digest "$GHCR_IMAGE:$VERSION") ||
+            { echo "::error::cannot read $GHCR_IMAGE:$VERSION"; exit 1; }
+          trap 'docker logout europe-west3-docker.pkg.dev >/dev/null 2>&1 || true' EXIT
+          echo "$ACCESS_TOKEN" | docker login europe-west3-docker.pkg.dev -u oauth2accesstoken --password-stdin >/dev/null
+          gar=$(index_digest "$GAR_IMAGE:$VERSION") ||
+            { echo "::error::cannot read $GAR_IMAGE:$VERSION"; exit 1; }
+          if [[ $EVENT == workflow_dispatch ]]; then
+            # A dispatch names only the tag: GHCR supplies the digest, and the
+            # bump refuses to go below what GI runs.
+            digest=$ghcr
+            echo "strict=true" >>"$GITHUB_OUTPUT"
+          else
+            digest=$INPUT_DIGEST
+          fi
+          echo "GHCR $ghcr, GAR $gar, expected $digest"
+          if [[ ! $digest =~ ^sha256:[0-9a-f]{64}$ || $ghcr != "$digest" || $gar != "$digest" ]]; then
+            echo "::error::$VERSION is not one image: GHCR $ghcr, GAR $gar, expected $digest"
+            exit 1
+          fi
+          if ! gh attestation verify "oci://$GHCR_IMAGE@$digest" --repo o1-labs/Archive-Node-API \
+            --signer-workflow o1-labs/Archive-Node-API/.github/workflows/build.yaml \
+            --source-ref "refs/tags/$TAG"; then
+            echo "::error::$digest has no build provenance from build.yaml on $TAG; deploy it by hand if it is genuine"
+            exit 1
+          fi
+          echo "digest=$digest" >>"$GITHUB_OUTPUT"
+
+      # The token stays in this checkout's git config, so the bump can push.
+      - name: Checkout gitops-infrastructure
+        if: ${{ !inputs.preflight }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: o1-labs/gitops-infrastructure
+          ref: main
+          token: ${{ steps.token.outputs.token }}
+          path: gitops-infrastructure
+          fetch-depth: 1
+
+      # Merged by the App through its bypass of GI main's review.
+      - name: Deploy to devnet
+        id: devnet
+        if: ${{ !inputs.preflight }}
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          VERSION: ${{ steps.guard.outputs.version }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+          STRICT: ${{ steps.release.outputs.strict }}
+        run: |
+          set -euo pipefail
+          args=(--version "$VERSION" --digest "$DIGEST" --gi-dir gitops-infrastructure)
+          if [[ $STRICT == true ]]; then args+=(--strict); fi
+          scripts/gitops-bump.sh --network devnet --merge "${args[@]}"
+
+      # Opened only, never merged here. Skipped when devnet did not move to
+      # this release: skipped-ahead (an older line's hotfix) or rejected (a
+      # person closed devnet's pull request) are deployed by hand. `reused`
+      # cannot come from devnet: with --merge an open pull request is merged.
+      - name: Open the mainnet pull request
+        id: mainnet
+        if: contains(fromJSON('["merged","noop"]'), steps.devnet.outputs.result)
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          VERSION: ${{ steps.guard.outputs.version }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+          STRICT: ${{ steps.release.outputs.strict }}
+        run: |
+          set -euo pipefail
+          args=(--version "$VERSION" --digest "$DIGEST" --gi-dir gitops-infrastructure)
+          if [[ $STRICT == true ]]; then args+=(--strict); fi
+          scripts/gitops-bump.sh --network mainnet "${args[@]}"
+
+      - name: Summary
+        if: always()
+        env:
+          TAG: ${{ inputs.tag }}
+          PREFLIGHT: ${{ inputs.preflight }}
+          JOB_STATUS: ${{ job.status }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+          DEVNET: ${{ steps.devnet.outputs.result }}
+          DEVNET_OUTCOME: ${{ steps.devnet.outcome }}
+          DEVNET_PR: ${{ steps.devnet.outputs.pr_url }}
+          MAINNET: ${{ steps.mainnet.outputs.result }}
+          MAINNET_OUTCOME: ${{ steps.mainnet.outcome }}
+          MAINNET_PR: ${{ steps.mainnet.outputs.pr_url }}
+        run: |
+          if [[ $PREFLIGHT == true ]]; then
+            echo "### gitops preflight for $TAG: $JOB_STATUS" >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # outcome: success, failure, skipped, or empty when an earlier step
+          # failed before the step was reached
+          state() {
+            case $2 in
+              failure) echo "failed; see the step log" ;;
+              *) echo "${1:-not reached}" ;;
+            esac
+          }
+          devnet=$(state "$DEVNET" "$DEVNET_OUTCOME")
+          mainnet=$(state "$MAINNET" "$MAINNET_OUTCOME")
+          # The mainnet step's condition skipped it: devnet did not move to this release.
+          if [[ $MAINNET_OUTCOME == skipped && -n $DEVNET ]]; then
+            mainnet="not run: devnet is $DEVNET; deploy mainnet by hand if it should move"
+            echo "::notice::mainnet pull request not opened: devnet result is $DEVNET"
+          fi
+          {
+            echo "### gitops deploy of $TAG: $JOB_STATUS"
+            echo "| | result | pull request |"
+            echo "|---|---|---|"
+            echo "| image | \`${DIGEST:-not verified}\` | |"
+            echo "| devnet | $devnet | ${DEVNET_PR:-none} |"
+            echo "| mainnet | $mainnet | ${MAINNET_PR:-none} |"
+          } >>"$GITHUB_STEP_SUMMARY"

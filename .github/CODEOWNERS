@@ -1,0 +1,8 @@
+# These files can change o1-labs/gitops-infrastructure: deploy-gitops.yaml and
+# the bump scripts merge to its main through a bypass App, and build.yaml calls
+# them. A change needs a review from platform engineering ("Require review from
+# Code Owners" on main). See docs/versioning.md "Releasing".
+/.github/workflows/deploy-gitops.yaml @o1-labs/platform-engineering-reviewers
+/.github/workflows/build.yaml         @o1-labs/platform-engineering-reviewers
+/scripts/gitops-bump*.sh              @o1-labs/platform-engineering-reviewers
+/.github/CODEOWNERS                   @o1-labs/platform-engineering-reviewers
