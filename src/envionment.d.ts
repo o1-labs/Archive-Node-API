@@ -18,6 +18,7 @@ declare global {
       GRAPHQL_MAX_ALIASES?: string;
       GRAPHQL_MAX_TOKENS?: string;
       GRAPHQL_MAX_COST?: string;
+      MAX_REQUEST_BODY_BYTES?: string;
       BLOCK_RANGE_SIZE?: string;
       ZKAPP_COMMAND_RANGE_SIZE?: string;
       ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT?: string;

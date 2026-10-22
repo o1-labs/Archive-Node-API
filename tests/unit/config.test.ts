@@ -149,6 +149,29 @@ describe('validateConfig', () => {
     );
   });
 
+  test('flags a non-positive-integer MAX_REQUEST_BODY_BYTES', () => {
+    for (const value of ['256k', '1.5', '0', '-1']) {
+      assert.ok(
+        validateConfig({ ...valid, MAX_REQUEST_BODY_BYTES: value }).some((e) =>
+          /MAX_REQUEST_BODY_BYTES must be a positive integer/.test(e)
+        ),
+        `MAX_REQUEST_BODY_BYTES=${value} should be rejected`
+      );
+    }
+    assert.deepStrictEqual(
+      validateConfig({ ...valid, MAX_REQUEST_BODY_BYTES: '262144' }),
+      []
+    );
+  });
+
+  test('accepts MAX_REQUEST_BODY_BYTES unset or empty (no cap)', () => {
+    assert.deepStrictEqual(validateConfig(valid), []);
+    assert.deepStrictEqual(
+      validateConfig({ ...valid, MAX_REQUEST_BODY_BYTES: '' }),
+      []
+    );
+  });
+
   test('aggregates multiple problems', () => {
     const errors = validateConfig({ PORT: '-1', ENABLE_LOGGING: 'huh' });
     assert.strictEqual(errors.length, 3); // PG_CONN, PORT, ENABLE_LOGGING
