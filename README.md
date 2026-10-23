@@ -102,6 +102,7 @@ Tagged commits trigger CI to publish:
 
 - npm (public): [`@o1-labs/mina-archive-node-graphql`](https://www.npmjs.com/package/@o1-labs/mina-archive-node-graphql)
 - Docker (GHCR): `ghcr.io/o1-labs/archive-node-api`
+- Docker Hub: `docker.io/minaprotocol/archive-node-api` (a copy of the GHCR image)
 
 A release PR bumps `package.json`, then a maintainer tags its merge commit. Do
 not run `npm version` on `main`: `package.json` already carries the version
