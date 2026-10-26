@@ -21,4 +21,4 @@
  *   nullable when clients were entitled to assume it was not. Also when the
  *   package or the SDKs take a major: they all share one (docs/versioning.md).
  */
-export const SCHEMA_VERSION = '2.0';
+export const SCHEMA_VERSION = '2.1';

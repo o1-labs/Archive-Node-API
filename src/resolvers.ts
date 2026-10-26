@@ -24,6 +24,11 @@ const schemaPath = path.resolve(__dirname, '../../schema.graphql');
 const ENABLE_ZKAPP_COMMANDS_QUERY = parseBoolean(
   process.env.ENABLE_ZKAPP_COMMANDS_QUERY
 );
+// Off by default: the query needs the user_commands account indexes of archive
+// schema 5.0.0 to be fast.
+const ENABLE_USER_COMMANDS_QUERY = parseBoolean(
+  process.env.ENABLE_USER_COMMANDS_QUERY
+);
 
 const fullResolvers: Resolvers = {
   Query: {
@@ -61,6 +66,15 @@ const fullResolvers: Resolvers = {
         'zkappCommands.graphql'
       );
       return context.db_client.getZkappCommands(input, {
+        tracingState: new TracingState(graphQLSpan),
+      });
+    },
+    userCommands: async (_, { input }, context) => {
+      const graphQLSpan = setSpanNameFromGraphQLContext(
+        context,
+        'userCommands.graphql'
+      );
+      return context.db_client.getUserCommands(input, {
         tracingState: new TracingState(graphQLSpan),
       });
     },
@@ -102,6 +116,12 @@ if (process.env.ENABLED_QUERIES !== undefined) {
 if (!ENABLE_ZKAPP_COMMANDS_QUERY) {
   enabledQueries = enabledQueries.filter(
     (queryName) => queryName !== 'zkappCommands'
+  );
+}
+
+if (!ENABLE_USER_COMMANDS_QUERY) {
+  enabledQueries = enabledQueries.filter(
+    (queryName) => queryName !== 'userCommands'
   );
 }
 
