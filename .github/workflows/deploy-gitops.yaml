@@ -51,9 +51,8 @@ env:
   # The GitHub App archive-node-api-deploy, installed on gitops-infrastructure
   # only, in the bypass list of its main branch. Hardcoded rather than a
   # repository variable so that only a reviewed change to this file can point
-  # the deploy at another App. Set after Phase 0.1 creates the App; until then
-  # the guard step fails every run.
-  GITOPS_DEPLOY_APP_ID: ''
+  # the deploy at another App.
+  GITOPS_DEPLOY_APP_ID: '5481801'
   GITOPS_REPO: o1-labs/gitops-infrastructure
   GHCR_IMAGE: ghcr.io/o1-labs/archive-node-api
   GAR_IMAGE: europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api
@@ -96,7 +95,7 @@ jobs:
           set -euo pipefail
           fail() { echo "::error::$1"; exit 1; }
           [[ $APP_ID =~ ^[0-9]+$ ]] ||
-            fail "GITOPS_DEPLOY_APP_ID is not set in deploy-gitops.yaml; it is filled in once the archive-node-api-deploy App exists"
+            fail "GITOPS_DEPLOY_APP_ID in deploy-gitops.yaml must be the numeric ID of the archive-node-api-deploy App"
           [[ $REPOSITORY == o1-labs/Archive-Node-API ]] || fail "deploys run only in o1-labs/Archive-Node-API, not $REPOSITORY"
           case $EVENT in
             workflow_dispatch)
