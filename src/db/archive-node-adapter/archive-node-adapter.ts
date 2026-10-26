@@ -6,6 +6,7 @@ import type {
   Blocks,
   VerificationKeyUpdates,
   ZkappCommands,
+  AccountUserCommands,
 } from '../../blockchain/types.js';
 import type { DatabaseAdapter } from './archive-node-adapter.interface.js';
 import type {
@@ -15,6 +16,7 @@ import type {
   BlockSortByInput,
   VerificationKeyUpdateFilterInput,
   ZkappCommandFilterOptionsInput,
+  UserCommandFilterInput,
 } from '../../resolvers-types.js';
 import { getTables, USED_TABLES } from '../../db/sql/events-actions/queries.js';
 import { buildPostgresOptions } from './postgres-options.js';
@@ -24,6 +26,10 @@ import { ActionsService } from '../../services/actions-service/actions-service.j
 import { IActionsService } from '../../services/actions-service/actions-service.interface.js';
 import { ZkappCommandsService } from '../../services/zkapp-commands-service/zkapp-commands-service.js';
 import { IZkappCommandsService } from '../../services/zkapp-commands-service/zkapp-commands-service.interface.js';
+import { UserCommandsService } from '../../services/user-commands-service/user-commands-service.js';
+import { IUserCommandsService } from '../../services/user-commands-service/user-commands-service.interface.js';
+import { getMissingUserCommandIndexesQuery } from '../../db/sql/user-commands/queries.js';
+import { ENABLE_USER_COMMANDS_QUERY } from '../../server/server.js';
 import { NetworkService } from '../../services/network-service/network-service.js';
 import { INetworkService } from '../../services/network-service/network-service.interface.js';
 import { BlocksService } from '../../services/blocks-service/blocks-service.js';
@@ -54,6 +60,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
   private eventsService: IEventsService;
   private actionsService: IActionsService;
   private zkappCommandsService: IZkappCommandsService;
+  private userCommandsService: IUserCommandsService;
   private networkService: INetworkService;
   private blocksService: IBlocksService;
   private verificationKeyUpdatesService: IVerificationKeyUpdatesService;
@@ -72,6 +79,7 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     this.eventsService = new EventsService(this.client);
     this.actionsService = new ActionsService(this.client);
     this.zkappCommandsService = new ZkappCommandsService(this.client);
+    this.userCommandsService = new UserCommandsService(this.client);
     this.networkService = new NetworkService(this.client);
     this.blocksService = new BlocksService(this.client);
     this.verificationKeyUpdatesService = new VerificationKeyUpdatesService(
@@ -98,6 +106,13 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
     options: unknown
   ): Promise<ZkappCommands> {
     return this.zkappCommandsService.getZkappCommands(input, options);
+  }
+
+  async getUserCommands(
+    input: UserCommandFilterInput,
+    options: unknown
+  ): Promise<AccountUserCommands> {
+    return this.userCommandsService.getUserCommands(input, options);
   }
 
   async getNetworkState(options: unknown): Promise<NetworkState> {
@@ -141,6 +156,27 @@ export class ArchiveNodeAdapter implements DatabaseAdapter {
           `Missing table ${table}. Please make sure the table exists in the database.`
         );
       }
+    }
+    if (ENABLE_USER_COMMANDS_QUERY) {
+      await this.warnIfUserCommandIndexesMissing();
+    }
+  }
+
+  // userCommands still answers correctly without these indexes, but each
+  // request then reads all of user_commands. Say so at startup instead of
+  // letting it surface as timeouts.
+  private async warnIfUserCommandIndexesMissing() {
+    const missing = (await getMissingUserCommandIndexesQuery(this.client)).map(
+      (row) => row.name
+    );
+    if (missing.length > 0) {
+      console.warn(
+        `[userCommands] missing indexes on user_commands: ${missing.join(
+          ', '
+        )}. ` +
+          'Every userCommands request will scan the whole table. Apply the ' +
+          "archive's 5.0.0 upgrade.sql, or create them with CREATE INDEX CONCURRENTLY."
+      );
     }
   }
 

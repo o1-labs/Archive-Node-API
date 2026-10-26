@@ -3,6 +3,7 @@ import type {
   EventFilterOptionsInput,
   VerificationKeyUpdateFilterInput,
   ZkappCommandFilterOptionsInput,
+  UserCommandFilterInput,
 } from '../../resolvers-types.js';
 import type {
   Actions,
@@ -11,6 +12,7 @@ import type {
   Blocks,
   VerificationKeyUpdates,
   ZkappCommands,
+  AccountUserCommands,
 } from '../../blockchain/types.js';
 import type {
   BlockQueryInput,
@@ -27,6 +29,10 @@ export interface DatabaseAdapter {
     input: ZkappCommandFilterOptionsInput,
     options?: unknown
   ): Promise<ZkappCommands>;
+  getUserCommands(
+    input: UserCommandFilterInput,
+    options?: unknown
+  ): Promise<AccountUserCommands>;
   getNetworkState(options?: unknown): Promise<NetworkState>;
   getVerificationKeyUpdates(
     input: VerificationKeyUpdateFilterInput,

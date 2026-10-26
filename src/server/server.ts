@@ -15,6 +15,8 @@ export {
   ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT,
   ENABLE_BLOCK_TRANSACTION_DETAILS,
   ENABLE_ZKAPP_COMMANDS_QUERY,
+  ENABLE_USER_COMMANDS_QUERY,
+  USER_COMMAND_LIMIT,
   buildYoga,
   buildServer,
 };
@@ -33,6 +35,12 @@ const ZKAPP_COMMAND_RANGE_SIZE =
   Number(process.env.ZKAPP_COMMAND_RANGE_SIZE) || 1000;
 const ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT =
   Number(process.env.ZKAPP_COMMAND_ACCOUNT_UPDATE_LIMIT) || 5000;
+// The account-scoped userCommands query is fast only on an archive with the
+// user_commands account indexes (archive schema 5.0.0), so an operator opts in.
+const ENABLE_USER_COMMANDS_QUERY = parseBoolean(
+  process.env.ENABLE_USER_COMMANDS_QUERY
+);
+const USER_COMMAND_LIMIT = Number(process.env.USER_COMMAND_LIMIT) || 5000;
 const YOGA_LOG_LEVEL = resolveYogaLogLevel();
 
 const yogaLog =

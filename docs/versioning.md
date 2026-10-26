@@ -308,7 +308,11 @@ package version.
 }
 ```
 
-The server answers `"2.0"` today. Schema 2.0 has no breaking change against
+The server answers `"2.1"` today. Schema 2.1 adds the `userCommands` query and
+its types to 2.0, off by default (`ENABLE_USER_COMMANDS_QUERY`) but part of the
+contract.
+
+Schema 2.0 has no breaking change against
 schema 1.0, which the 1.0.x releases shipped; see "One major across the server
 and the SDKs" below for why it is a major. Its changes against 1.0:
 
@@ -357,9 +361,10 @@ queries. A compatibility check a deployment can switch off would leave clients
 guessing, which is the situation the field exists to end.
 
 `schemaVersion` describes the contract, not which queries a deployment exposes.
-`ENABLED_QUERIES` and `ENABLE_ZKAPP_COMMANDS_QUERY` can still remove data
-queries from a given server, so a client must continue to detect features from
-the `Cannot query field` error, as mina-explorer already does.
+`ENABLED_QUERIES`, `ENABLE_ZKAPP_COMMANDS_QUERY` and
+`ENABLE_USER_COMMANDS_QUERY` can still remove data queries from a given server,
+so a client must continue to detect features from the `Cannot query field`
+error, as mina-explorer already does.
 
 ## Mina compatibility
 
@@ -391,6 +396,21 @@ queries you need against it.
 
 A hardfork that changes the archive database schema is the case to watch: it can
 break the SQL in `src/db/sql/` without changing one line of this repository.
+
+**Indexes that `userCommands` needs.** The query looks up user commands by
+account through three indexes that Mina's archive schema creates from 5.0.0
+(`upgrade.sql`, MinaProtocol/mina#19477): `idx_user_commands_fee_payer_id`,
+`idx_user_commands_source_id` and `idx_user_commands_receiver_id`. Without them
+the query still returns the correct result, but each request reads all of
+`user_commands`. When `ENABLE_USER_COMMANDS_QUERY=true`, the server logs a
+warning at startup for each missing index. To add them to a live archive without
+blocking inserts:
+
+```sql
+CREATE INDEX CONCURRENTLY idx_user_commands_fee_payer_id ON user_commands(fee_payer_id);
+CREATE INDEX CONCURRENTLY idx_user_commands_source_id    ON user_commands(source_id);
+CREATE INDEX CONCURRENTLY idx_user_commands_receiver_id  ON user_commands(receiver_id);
+```
 
 ## Supported versions
 

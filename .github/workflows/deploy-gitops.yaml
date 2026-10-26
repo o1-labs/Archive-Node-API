@@ -51,9 +51,8 @@ env:
   # The GitHub App archive-node-api-deploy, installed on gitops-infrastructure
   # only, in the bypass list of its main branch. Hardcoded rather than a
   # repository variable so that only a reviewed change to this file can point
-  # the deploy at another App. Set after Phase 0.1 creates the App; until then
-  # the guard step fails every run.
-  GITOPS_DEPLOY_APP_ID: ''
+  # the deploy at another App.
+  GITOPS_DEPLOY_APP_ID: '5481801'
   GITOPS_REPO: o1-labs/gitops-infrastructure
   GHCR_IMAGE: ghcr.io/o1-labs/archive-node-api
   GAR_IMAGE: europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api
@@ -96,7 +95,7 @@ jobs:
           set -euo pipefail
           fail() { echo "::error::$1"; exit 1; }
           [[ $APP_ID =~ ^[0-9]+$ ]] ||
-            fail "GITOPS_DEPLOY_APP_ID is not set in deploy-gitops.yaml; it is filled in once the archive-node-api-deploy App exists"
+            fail "GITOPS_DEPLOY_APP_ID in deploy-gitops.yaml must be the numeric ID of the archive-node-api-deploy App"
           [[ $REPOSITORY == o1-labs/Archive-Node-API ]] || fail "deploys run only in o1-labs/Archive-Node-API, not $REPOSITORY"
           case $EVENT in
             workflow_dispatch)
@@ -173,24 +172,20 @@ jobs:
 
       # A real API call: the only way to tell a revoked App or a lost
       # installation from a working one before build.yaml publishes anything.
+      # Write access is not checked here: the mint above already asked for
+      # contents and pull-requests write on this repository, and GitHub refuses
+      # a token with permissions the App lacks. `.permissions.push` on this
+      # response reports false for an installation token even when it can write.
       - name: Probe gitops-infrastructure
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
         run: |
           set -euo pipefail
-          if ! probe=$(gh api "repos/$GITOPS_REPO" --jq '.full_name + " push=" + (.permissions.push | tostring)' 2>&1); then
+          if ! probe=$(gh api "repos/$GITOPS_REPO" --jq .full_name 2>&1); then
             echo "::error::the archive-node-api-deploy token cannot read $GITOPS_REPO; is the App still installed there? GitHub said: $probe"
             exit 1
           fi
-          case $probe in
-            *" push=true") echo "token reaches $probe" ;;
-            *" push=false")
-              echo "::error::the archive-node-api-deploy token can read $GITOPS_REPO but not write it: $probe"
-              exit 1
-              ;;
-            # Installation tokens may omit .permissions; the push is the real test.
-            *) echo "::notice::token reaches $probe; GitHub did not report write permission" ;;
-          esac
+          echo "token reaches $probe"
 
       # Preflight stops here: every step below has `if: !inputs.preflight`.
 
