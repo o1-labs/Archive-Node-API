@@ -65,6 +65,7 @@ Distributed as:
 - The bin entry has a shebang in `build/src/index.js`; do not strip it. (See commit `8052799` — broken bin in the past.)
 - The npm package ships only what is in `package.json#files`: `build`, `src`, `schema.graphql`, `README.md`, `tsconfig.json`. New runtime assets must be added there or they won't reach published consumers.
 - The package is scoped (`@o1-labs/...`) and published from CI on tag push with `--provenance`. Workflow lives at `.github/workflows/publish-npm.yml` — changes there affect the supply chain.
+- `.github/workflows/deploy-gitops.yaml`, `.github/workflows/build.yaml` and `scripts/gitops-bump*.sh` change `o1-labs/gitops-infrastructure`: a stable tag merges a devnet deploy there and opens a mainnet one. `@o1-labs/platform-engineering-reviewers` owns them through `.github/CODEOWNERS`. Test the script with `bash scripts/gitops-bump.test.sh` (offline, `gh` stubbed); see [`docs/versioning.md#deploying-a-release`](./docs/versioning.md#deploying-a-release).
 - CI has no stored cloud credential; do not add one. `build.yaml` authenticates to Google Cloud through Workload Identity Federation — see [`docs/versioning.md#ci-credentials`](./docs/versioning.md#ci-credentials).
 - Tests under `tests/live-network/` and `tests/devnet-dump/` hit external resources and are intentionally outside `npm run test:unit`. Don't fold them into routine CI.
 - The default port is **`8080`**, not `3000`. Old docs sometimes say otherwise.

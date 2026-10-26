@@ -147,6 +147,73 @@ CI then builds and publishes the npm package (with provenance, once npm trusted
 publishing is configured for this repository) and the Docker images. Choose the
 bump level according to the rules above.
 
+### Deploying a release
+
+On a stable `vX.Y.Z` tag (no `-` in it), `build.yaml` also deploys to
+archive-node-api on hetzner-rivendell-1 through
+[`gitops-infrastructure`](https://github.com/o1-labs/gitops-infrastructure)
+(GI), by calling `.github/workflows/deploy-gitops.yaml` from `main`:
+
+1. **Preflight**, before anything is published: the deploy credentials must
+   work, or the release stops there. A malformed stable-looking tag (such as
+   `v2`, with no `-`) fails the preflight's guard, so nothing is published:
+   fail-closed by design. Delete the tag and push a correct one.
+2. After the image is pushed, the run checks that the tag exists, that GHCR
+   and Artifact Registry serve `X.Y.Z` under the digest this build produced,
+   and that the digest carries the build provenance `build.yaml` attests on
+   tag runs (`gh attestation verify`), so a moved registry tag cannot be
+   deployed. Releases built before attestations existed (2.0.0 and earlier)
+   fail this check and are deployed by hand.
+3. **Devnet**: a pull request that changes the two lines `tag` and `digest` of
+   `platform/hetzner-rivendell-1/applications/archive-node-api/image-devnet.yaml`,
+   merged by the run. Argo CD rolls it out.
+4. **Mainnet**: the same change to `image-mainnet.yaml`, **opened but not
+   merged**. It waits for an approval from `@o1-labs/platform-engineering-reviewers`.
+   An older open mainnet pull request is closed as superseded.
+
+`scripts/gitops-bump.sh` makes each pull request; its header lists every
+outcome, and the job summary shows both pull requests.
+
+**Approving mainnet.** Approve only when devnet has run the same digest,
+Synced and Healthy, for at least 24 hours, and both registries serve the
+version under the digest in the pull request. The pull request lists the
+commands, including:
+
+```sh
+docker buildx imagetools inspect ghcr.io/o1-labs/archive-node-api:X.Y.Z
+docker buildx imagetools inspect europe-west3-docker.pkg.dev/o1labs-192920/euro-docker-repo/archive-node-api:X.Y.Z
+gh attestation verify oci://ghcr.io/o1-labs/archive-node-api@<digest> --repo o1-labs/Archive-Node-API \
+  --signer-workflow o1-labs/Archive-Node-API/.github/workflows/build.yaml --source-ref refs/tags/vX.Y.Z
+```
+
+**Rolling back** is a hand-written one-file pull request on `image-<net>.yaml`
+in GI, setting `tag` and `digest` to the earlier release.
+
+**Recovering a failed deploy.** Either re-run only the deploy job,
+`gh run rerun <run-id> --job <deploy-gitops job id>`, or dispatch the workflow
+from `main`:
+
+```sh
+gh workflow run deploy-gitops.yaml --ref main -f tag=vX.Y.Z
+```
+
+A dispatch reads the digest from GHCR, deploys it only with the tag's build
+provenance, and refuses to move a network to a version lower than it runs. Never re-run the whole release run: the npm
+publish fails on an existing version, and a rebuild produces a different
+digest, which the deploy refuses. Deploys run one at a time; when a newer one
+queues behind a pending one, GitHub cancels the pending one. Recover it by
+dispatch. If the run fails with "image-<net>.yaml has no digest", that file
+was seeded before its release existed: set its `digest` by hand in GI, from
+`imagetools inspect` of the tag it names, then recover as above. The run never
+fills an empty digest itself.
+
+**What the run leaves to a person**, with a notice in the job summary:
+
+- a hotfix on an older line, when devnet already runs a newer version;
+- a pull request a person closed without merging: the run does not reopen it.
+  To deploy that version anyway, edit `image-<net>.yaml` by hand;
+- mainnet, when devnet did not move to the release.
+
 ### CI credentials
 
 `.github/workflows/build.yaml` authenticates to Google Cloud **keylessly**, via
@@ -166,6 +233,34 @@ to the workspace (`create_credentials_file: false`), and reaches only the two
 registry logins and `npm publish`. Changing the step order, or reintroducing a
 stored credential, undoes both properties — see the ordering comment at the top
 of the job.
+
+`.github/workflows/deploy-gitops.yaml` uses a second service account,
+`archive-node-api-gitops-deploy@o1labs-192920.iam.gserviceaccount.com`, through
+the same provider. Its binding is a derived attribute,
+`attribute.ana_gitops_deploy`, that holds only for `deploy-gitops.yaml` on
+`main` in this repository, called by `build.yaml` on a `v*` tag or dispatched
+on `main`. The workflow's guard step runs first and refuses any other branch,
+caller or event (a dispatch must be `deploy-gitops.yaml` itself on
+`refs/heads/main`, a call must come from `build.yaml` on the tag being
+built). Google's STS refuses them again at authentication, so a copy of the
+workflow with the guard removed still gets no token.
+
+That account reads one secret, the private key of the GitHub App
+`archive-node-api-deploy`, from Secret Manager in `o1labs-192920`, and turns it
+into a one-hour token for `gitops-infrastructure` only. The App can merge to
+GI `main` without review (it is on that branch's bypass list), which is how
+devnet deploys unattended. GitHub never stores the key. It is readable by the
+deploy service account and by the project's existing secret readers and
+admins; that list lives in `gitops-infrastructure`
+`platform/hetzner-rivendell-1/applications/archive-node-api/README.md`, under
+"Deploy credential".
+
+**Rotating the App key** (owner: platform engineering): create a new private
+key in the App's settings, add it with
+`gcloud secrets versions add archiveNodeApiGitopsDeployAppKey --project o1labs-192920 --data-file=<pem>`,
+delete the old key in the App's settings (from then on it mints nothing), then
+disable the previous secret version. This is the order in the GI README.
+Rotate on any suspected leak, and when anyone who can read the secret leaves.
 
 ## Upgrading to 2.0.0
 
