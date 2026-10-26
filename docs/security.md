@@ -83,7 +83,7 @@ the [configuration](./getting-started.md#configuration):
 > Introspection disabling already exists on `0.0.x`, but any non-empty
 > `ENABLE_INTROSPECTION` value, including `false`, enables it. Check your
 > running version before relying on any row above. The request body cap is
-> newer still: 2.0.0 and earlier have none.
+> newer still: it arrives in 2.1.0.
 
 Tune these to your traffic; see the configuration table for the exact
 environment variables and defaults.
