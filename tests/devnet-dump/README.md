@@ -21,8 +21,9 @@ also be started by hand from the Actions tab.
 | `ACTION_STATE_SAMPLE_ACCOUNTS` | `25` | Accounts checked by the action-state invariant suite |
 | `ACTION_STATE_MAX_CHECKPOINTS_PER_ACCOUNT` | `12` | Checkpoints checked per account |
 
-A dump loaded at `DEVNET_DUMP_PATH` does not have to be devnet. Point it at a
-mesa or mainnet dump and the same invariants apply.
+A dump loaded at `DEVNET_DUMP_PATH` does not have to be devnet. Set
+`DUMP_NETWORK=mainnet`, or point `DEVNET_DUMP_PATH` at a mainnet dump, and the
+same invariants apply.
 
 ## The action-state invariant suite
 

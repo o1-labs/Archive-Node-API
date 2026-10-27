@@ -33,8 +33,8 @@
  *    address, the expected and actual block heights, and a GraphQL query that
  *    can be pasted into any endpoint.
  *
- * It works against any archive dump, not only devnet. Point `DEVNET_DUMP_PATH`
- * at another dump — a mesa or mainnet one, say — and the same invariants apply.
+ * It works against any archive dump, not only devnet. Set DUMP_NETWORK=mainnet,
+ * or point `DEVNET_DUMP_PATH` at a mainnet dump, and the same invariants apply.
  *
  * Tuning, for a slower or faster run:
  *   ACTION_STATE_SAMPLE_ACCOUNTS            accounts to check (default 25)
