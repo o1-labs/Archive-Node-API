@@ -29,7 +29,7 @@ Distributed as:
 | `schema.graphql` | Source of truth for the GraphQL schema. |
 | `tests/unit/` | Unit tests, no DB. |
 | `tests/integration/` | Static-dump integration tests. |
-| `tests/devnet-dump/` | Tests against a real devnet archive dump (long-running). |
+| `tests/archive-dump/` | Tests against a real devnet or mainnet archive dump (long-running). |
 | `tests/live-network/` | Hits external networks — not part of routine CI. |
 | `benchmark/` | Lightnet setup script + Artillery config. |
 | `scripts/` | DB snapshot download, libp2p keygen, Jaeger init, Compose helper. |
@@ -67,7 +67,7 @@ Distributed as:
 - The package is scoped (`@o1-labs/...`) and published from CI on tag push with `--provenance`. Workflow lives at `.github/workflows/publish-npm.yml` — changes there affect the supply chain.
 - `.github/workflows/deploy-gitops.yaml`, `.github/workflows/build.yaml` and `scripts/gitops-bump*.sh` change `o1-labs/gitops-infrastructure`: a stable tag merges a devnet deploy there and opens a mainnet one. `@o1-labs/platform-engineering-reviewers` owns them through `.github/CODEOWNERS`. Test the script with `bash scripts/gitops-bump.test.sh` (offline, `gh` stubbed); see [`docs/versioning.md#deploying-a-release`](./docs/versioning.md#deploying-a-release).
 - CI has no stored cloud credential; do not add one. `build.yaml` authenticates to Google Cloud through Workload Identity Federation — see [`docs/versioning.md#ci-credentials`](./docs/versioning.md#ci-credentials).
-- Tests under `tests/live-network/` and `tests/devnet-dump/` hit external resources and are intentionally outside `npm run test:unit`. Don't fold them into routine CI.
+- Tests under `tests/live-network/` and `tests/archive-dump/` hit external resources and are intentionally outside `npm run test:unit`. Don't fold them into routine CI.
 - The default port is **`8080`**, not `3000`. Old docs sometimes say otherwise.
 
 ## Where to look first

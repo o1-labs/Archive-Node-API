@@ -4,7 +4,7 @@ set -eo pipefail
 # Downloads the second-newest hourly archive dump of a network from GCS.
 # We skip the newest dump to avoid fetching one that may still be uploading.
 #
-# Usage: DUMP_NETWORK=mainnet ./scripts/download_devnet_dump.sh [output_dir]
+# Usage: DUMP_NETWORK=mainnet ./scripts/download_archive_dump.sh [output_dir]
 #   output_dir defaults to ./data
 #   DUMP_NETWORK defaults to devnet; the bucket also holds mainnet dumps
 
@@ -61,7 +61,7 @@ URL="${BASE_URL}/${TARGET}"
 echo "Downloading and extracting: $URL"
 curl -f -# "$URL" | tar -xzf - -C "$OUTPUT_DIR"
 
-# The extracted file is named like devnet-archive-dump-YYYY-MM-DD_HHMM.sql
+# The extracted file is named like <network>-archive-dump-YYYY-MM-DD_HHMM.sql
 EXTRACTED=$(basename "${TARGET%.tar.gz}")
 mv "$OUTPUT_DIR/$EXTRACTED" "$OUTPUT_DIR/$PG_DUMP"
 

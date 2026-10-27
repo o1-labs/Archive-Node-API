@@ -29,7 +29,7 @@
     "test:integration": "npm run build && (ec=0; for f in ./build/tests/integration/*.test.js; do node --enable-source-maps --test \"$f\" || ec=$?; done; exit $ec)",
     "test:live-api": "npm run build && node --enable-source-maps --test ./build/tests/live-api/*.test.js",
     "test:live-network": "npm run build && node --enable-source-maps --test-timeout 600000 --test ./build/tests/live-network/live-network.test.js",
-    "test:devnet-dump": "npm run build && node --enable-source-maps --test-timeout 900000 --test ./build/tests/devnet-dump/devnet-dump.test.js",
+    "test:archive-dump": "npm run build && node --enable-source-maps --test-timeout 900000 --test ./build/tests/archive-dump/archive-dump.test.js",
     "clean": "rimraf ./build",
     "gen-test-mocks": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm tests/mocked_sql/generate_mock_data.ts",
     "benchmark": "cross-env NODE_NO_WARNINGS=1 node --loader ts-node/esm benchmark/setup.ts && npx artillery run benchmark/graphql.yaml --output benchmark/report.json",

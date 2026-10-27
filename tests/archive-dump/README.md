@@ -1,11 +1,12 @@
-# Devnet dump tests
+# Archive dump tests
 
 Tests that run against a real archive dump, downloaded from the public
 `mina-archive-dumps` GCS bucket. They are not part of the pull-request gate:
 the download and load take minutes, and the data changes every hour.
 
 ```bash
-npm run test:devnet-dump
+npm run test:archive-dump                       # devnet
+DUMP_NETWORK=mainnet npm run test:archive-dump  # mainnet
 ```
 
 Scheduled nightly by `.github/workflows/nightly-archive-dump.yaml`, which can
@@ -16,20 +17,20 @@ also be started by hand from the Actions tab.
 | Variable | Default | Meaning |
 |---|---|---|
 | `DUMP_NETWORK` | `devnet` | Network whose dump to download (`devnet` or `mainnet`); the nightly job runs both |
-| `DEVNET_DUMP_PATH` | `./data/<DUMP_NETWORK>-archive.sql` | Use a dump you already have instead of downloading one |
+| `ARCHIVE_DUMP_PATH` | `./data/<DUMP_NETWORK>-archive.sql` | Use a dump you already have instead of downloading one. The old name, `DEVNET_DUMP_PATH`, still works |
 | `PG_TEST_HOST` / `PG_TEST_PORT` / `PG_TEST_USER` / `PG_TEST_PASSWORD` | `localhost` / `5432` / `postgres` / `postgres` | PostgreSQL connection |
 | `ACTION_STATE_SAMPLE_ACCOUNTS` | `25` | Accounts checked by the action-state invariant suite |
 | `ACTION_STATE_MAX_CHECKPOINTS_PER_ACCOUNT` | `12` | Checkpoints checked per account |
 
-A dump loaded at `DEVNET_DUMP_PATH` does not have to be devnet. Set
-`DUMP_NETWORK=mainnet`, or point `DEVNET_DUMP_PATH` at a mainnet dump, and the
+A dump loaded at `ARCHIVE_DUMP_PATH` does not have to be devnet. Set
+`DUMP_NETWORK=mainnet`, or point `ARCHIVE_DUMP_PATH` at a mainnet dump, and the
 same invariants apply.
 
 ## The action-state invariant suite
 
 `action-state-invariants.ts` checks that `fromActionState` and `endActionState`
 return the right actions on real data. It is registered from
-`devnet-dump.test.ts` rather than living in a test file of its own, because
+`archive-dump.test.ts` rather than living in a test file of its own, because
 node:test gives each file its own process, and therefore its own multi-minute
 dump load.
 

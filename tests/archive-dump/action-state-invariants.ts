@@ -34,7 +34,7 @@
  *    can be pasted into any endpoint.
  *
  * It works against any archive dump, not only devnet. Set DUMP_NETWORK=mainnet,
- * or point `DEVNET_DUMP_PATH` at a mainnet dump, and the same invariants apply.
+ * or point `ARCHIVE_DUMP_PATH` at a mainnet dump, and the same invariants apply.
  *
  * Tuning, for a slower or faster run:
  *   ACTION_STATE_SAMPLE_ACCOUNTS            accounts to check (default 25)
@@ -378,8 +378,8 @@ export function describeActionStateInvariants(getContext: () => Context) {
         `this suite proved nothing: ${coverage.accounts} account(s) and ` +
           `${coverage.checkpoints} checkpoint(s) were checked. Either the dump has no zkApp ` +
           `accounts with at least two action-state changes, or the discovery query in ` +
-          `tests/devnet-dump/action-state-invariants.ts no longer matches the archive schema. ` +
-          `Point DEVNET_DUMP_PATH at a dump with zkApp activity, or fix the query.`
+          `tests/archive-dump/action-state-invariants.ts no longer matches the archive schema. ` +
+          `Point ARCHIVE_DUMP_PATH at a dump with zkApp activity, or fix the query.`
       );
       // Report against what was discovered, so that a drift between discovery
       // and the service shows here long before coverage reaches zero.
