@@ -3,11 +3,10 @@ import { GraphQLClient } from 'graphql-request';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { NetworkState } from 'src/blockchain/types.js';
+import { endpoint } from './endpoint.js';
 
 const K = 290; // Consensus parameter meaning length of chain required for a block to become canonical
-const endpoint =
-  process.env.STAGING_GRAPHQL_ENDPOINT ||
-  'http://archive-node-api.gcp.o1test.net/';
+
 const client = new GraphQLClient(endpoint);
 
 const networkStateQuery = gql`
