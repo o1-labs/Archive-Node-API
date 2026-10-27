@@ -1,4 +1,4 @@
-name: Nightly Devnet Dump Tests
+name: Nightly Archive Dump Tests
 
 # Runs the suites that need a real archive dump. They are deliberately kept off
 # pull requests: the dump is downloaded from GCS and loaded into PostgreSQL,
@@ -28,7 +28,7 @@ permissions:
   contents: read
 
 jobs:
-  devnet-dump:
+  archive-dump:
     # The suite is network-agnostic. Mainnet is the network users depend on,
     # and its dump is about four times the size of devnet's.
     name: dump-tests (${{ matrix.network }})

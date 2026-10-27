@@ -8,7 +8,7 @@ the download and load take minutes, and the data changes every hour.
 npm run test:devnet-dump
 ```
 
-Scheduled nightly by `.github/workflows/nightly-devnet-dump.yaml`, which can
+Scheduled nightly by `.github/workflows/nightly-archive-dump.yaml`, which can
 also be started by hand from the Actions tab.
 
 ## Configuration
