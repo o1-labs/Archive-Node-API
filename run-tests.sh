@@ -12,7 +12,7 @@ for f in ./build/**/*test.js; do
     continue
   fi
   # Skip tests that require dedicated setup (use their own npm scripts)
-  if [[ "$f" == *"/devnet-dump/"* ]] || [[ "$f" == *"/live-network/"* ]]; then
+  if [[ "$f" == *"/archive-dump/"* ]] || [[ "$f" == *"/live-network/"* ]]; then
     echo "Skipping $f (run via dedicated npm script)"
     continue
   fi

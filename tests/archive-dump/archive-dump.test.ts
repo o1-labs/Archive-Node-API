@@ -1,12 +1,12 @@
 /**
- * Integration tests against a real devnet archive database dump.
+ * Integration tests against a real archive database dump.
  *
- * These tests download the second-newest hourly devnet dump from GCS,
- * load it into a local PostgreSQL instance, and exercise the API services
- * against real production data — including very old blocks that have
- * historically caused issues when querying details.
+ * These tests download the second-newest hourly dump of DUMP_NETWORK (devnet
+ * by default, or mainnet) from GCS, load it into a local PostgreSQL instance,
+ * and exercise the API services against real production data — including very
+ * old blocks that have historically caused issues when querying details.
  *
- * Run with: npm run test:devnet-dump
+ * Run with: npm run test:archive-dump
  */
 import { describe, test, before, after } from 'node:test';
 import assert from 'node:assert';
@@ -46,11 +46,11 @@ before(async () => {
 
   // Discover chain boundaries
   const state = await networkService.getNetworkState(nullOptions);
-  assert.ok(state.maxBlockHeight, 'devnet dump must have at least one indexed block');
+  assert.ok(state.maxBlockHeight, `${DUMP_NETWORK} dump must have at least one indexed block`);
   maxCanonicalHeight = state.maxBlockHeight.canonicalMaxBlockHeight;
   const minRow = await client`SELECT MIN(height) as min_height FROM blocks WHERE chain_status = 'canonical'`;
   minHeight = Number(minRow[0].min_height);
-  console.log(`Devnet chain: canonical heights ${minHeight} to ${maxCanonicalHeight}`);
+  console.log(`${DUMP_NETWORK} chain: canonical heights ${minHeight} to ${maxCanonicalHeight}`);
 }, { timeout: 900000 }); // 15 min for download + import
 
 after(async () => {
@@ -65,8 +65,8 @@ after(async () => {
  *
  * The suite asserts invariants rather than values, because the dump rotates
  * hourly. An earlier version pinned the year at >= 2023, which no dump can
- * satisfy: devnet's genesis block is dated 2021-09-24, so the oldest blocks in
- * every dump fail it.
+ * satisfy: both chains date from 2021 (devnet's genesis block is dated
+ * 2021-09-24), so the oldest blocks in every dump fail it.
  */
 const MINA_EPOCH_START = Date.UTC(2020, 0, 1);
 
@@ -93,10 +93,10 @@ describe(`NetworkState (${DUMP_NETWORK} dump)`, () => {
       state.maxBlockHeight.canonicalMaxBlockHeight > 0,
       `canonical max height should be positive, got ${state.maxBlockHeight.canonicalMaxBlockHeight}`
     );
-    // Devnet should have many thousands of blocks
+    // Either network has many thousands of blocks
     assert.ok(
       state.maxBlockHeight.canonicalMaxBlockHeight > 1000,
-      `devnet should have >1000 blocks, got ${state.maxBlockHeight.canonicalMaxBlockHeight}`
+      `${DUMP_NETWORK} should have >1000 blocks, got ${state.maxBlockHeight.canonicalMaxBlockHeight}`
     );
   });
 });
@@ -510,7 +510,7 @@ describe(`Events and Actions (${DUMP_NETWORK} dump)`, () => {
 // ─── Schema Validation ─────────────────────────────────────────────
 
 describe(`Schema validation (${DUMP_NETWORK} dump)`, () => {
-  test('all required tables exist in devnet dump', async () => {
+  test('all required tables exist in the dump', async () => {
     const tables = await client`
       SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'
     `;
@@ -538,7 +538,7 @@ describe(`Schema validation (${DUMP_NETWORK} dump)`, () => {
   test('blocks table has substantial data', async () => {
     const countResult = await client`SELECT COUNT(*) as cnt FROM blocks`;
     const count = Number(countResult[0].cnt);
-    assert.ok(count > 1000, `devnet should have >1000 blocks, got ${count}`);
+    assert.ok(count > 1000, `${DUMP_NETWORK} should have >1000 blocks, got ${count}`);
     console.log(`  Total blocks in dump: ${count}`);
   });
 });

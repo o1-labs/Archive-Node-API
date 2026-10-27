@@ -11,7 +11,7 @@ name: Nightly Archive Dump Tests
 # data, whose shapes a fixture does not model?
 #
 # It asserts invariants only — no expected values are written down — so it needs
-# no upkeep as the dump rotates. See tests/devnet-dump/README.md.
+# no upkeep as the dump rotates. See tests/archive-dump/README.md.
 
 on:
   schedule:
@@ -80,4 +80,4 @@ jobs:
           PG_TEST_USER: postgres
           PG_TEST_PASSWORD: postgres
           ACTION_STATE_SAMPLE_ACCOUNTS: ${{ github.event.inputs.sample_accounts || '25' }}
-        run: npm run test:devnet-dump
+        run: npm run test:archive-dump
