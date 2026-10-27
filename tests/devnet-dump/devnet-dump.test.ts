@@ -17,6 +17,7 @@ import { EventsService } from '../../src/services/events-service/events-service.
 import { ActionsService } from '../../src/services/actions-service/actions-service.js';
 import { TracingState } from '../../src/tracing/tracer.js';
 import {
+  DUMP_NETWORK,
   setupTestDatabase,
   teardownTestDatabase,
   createTestClient,
@@ -84,7 +85,7 @@ function assertPlausibleBlockTime(date: Date, context: string): void {
   );
 }
 
-describe('NetworkState (devnet dump)', () => {
+describe(`NetworkState (${DUMP_NETWORK} dump)`, () => {
   test('returns valid max block heights', async () => {
     const state = await networkService.getNetworkState(nullOptions);
     assert.ok(state.maxBlockHeight, 'should have maxBlockHeight');
@@ -102,7 +103,7 @@ describe('NetworkState (devnet dump)', () => {
 
 // ─── Oldest Blocks ─────────────────────────────────────────────────
 
-describe('Oldest blocks (devnet dump)', () => {
+describe(`Oldest blocks (${DUMP_NETWORK} dump)`, () => {
   test('can query the very first blocks', async () => {
     const blocks = await blocksService.getBlocks(
       { blockHeight_gte: minHeight, blockHeight_lt: minHeight + 5, canonical: true },
@@ -153,7 +154,7 @@ describe('Oldest blocks (devnet dump)', () => {
 
 // ─── Newest Blocks ─────────────────────────────────────────────────
 
-describe('Newest blocks (devnet dump)', () => {
+describe(`Newest blocks (${DUMP_NETWORK} dump)`, () => {
   test('can query the most recent canonical blocks', async () => {
     const blocks = await blocksService.getBlocks(
       { blockHeight_gte: maxCanonicalHeight - 5, canonical: true },
@@ -202,7 +203,7 @@ describe('Newest blocks (devnet dump)', () => {
 
 // ─── Block Details & Edge Cases ────────────────────────────────────
 
-describe('Block details across height ranges (devnet dump)', () => {
+describe(`Block details across height ranges (${DUMP_NETWORK} dump)`, () => {
   test('query blocks at 10% height mark', async () => {
     const targetHeight = Math.floor(maxCanonicalHeight * 0.1);
     const blocks = await blocksService.getBlocks(
@@ -327,7 +328,7 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-describe(`Quickcheck: ${RANDOM_BLOCK_COUNT} random individual blocks (devnet dump)`, () => {
+describe(`Quickcheck: ${RANDOM_BLOCK_COUNT} random individual blocks (${DUMP_NETWORK} dump)`, () => {
   let randomHeights: number[];
 
   before(() => {
@@ -366,7 +367,7 @@ describe(`Quickcheck: ${RANDOM_BLOCK_COUNT} random individual blocks (devnet dum
   });
 });
 
-describe(`Quickcheck: ${RANDOM_RANGE_COUNT} random block ranges (devnet dump)`, () => {
+describe(`Quickcheck: ${RANDOM_RANGE_COUNT} random block ranges (${DUMP_NETWORK} dump)`, () => {
   let ranges: { from: number; to: number }[];
 
   before(() => {
@@ -427,7 +428,7 @@ describe(`Quickcheck: ${RANDOM_RANGE_COUNT} random block ranges (devnet dump)`, 
   });
 });
 
-describe('Quickcheck: random zkApp addresses (devnet dump)', () => {
+describe(`Quickcheck: random zkApp addresses (${DUMP_NETWORK} dump)`, () => {
   test('events and actions queries succeed for random zkApp addresses', async () => {
     const rows = await client`
       SELECT address FROM (
@@ -460,7 +461,7 @@ describe('Quickcheck: random zkApp addresses (devnet dump)', () => {
 
 // ─── Events & Actions on Real Data ──────────────────────────────────
 
-describe('Events and Actions (devnet dump)', () => {
+describe(`Events and Actions (${DUMP_NETWORK} dump)`, () => {
   test('events query works with real addresses from the chain', async () => {
     // Find an address that exists in the chain
     const rows = await client`
@@ -508,7 +509,7 @@ describe('Events and Actions (devnet dump)', () => {
 
 // ─── Schema Validation ─────────────────────────────────────────────
 
-describe('Schema validation (devnet dump)', () => {
+describe(`Schema validation (${DUMP_NETWORK} dump)`, () => {
   test('all required tables exist in devnet dump', async () => {
     const tables = await client`
       SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'
