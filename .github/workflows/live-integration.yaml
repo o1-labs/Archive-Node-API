@@ -2,8 +2,12 @@ name: Live Integration
 
 # Read-only integration tests against deployed Archive Node API endpoints on each
 # network. Scheduled (not on PRs) so schema/query drift against real data is
-# caught without slowing the PR loop. Endpoints come from repo variables; a
-# network with no configured URL is skipped, so this stays green until they're set.
+# caught without slowing the PR loop. Endpoints come from repository secrets.
+#
+# A network with no configured URL fails the job. It used to be skipped, and
+# every network was, so this workflow reported green every night while testing
+# nothing. The matrix holds the two live networks; mesa, the hard-fork
+# rehearsal network, no longer exists.
 
 on:
   schedule:
@@ -20,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        network: [devnet, mainnet, mesa]
+        network: [devnet, mainnet]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -28,30 +32,23 @@ jobs:
           node-version: '24'
       - run: npm ci
 
-      - name: Resolve endpoint for ${{ matrix.network }}
-        id: endpoint
-        env:
-          DEVNET_URL: ${{ vars.DEVNET_ARCHIVE_API_URL }}
-          MAINNET_URL: ${{ vars.MAINNET_ARCHIVE_API_URL }}
-          MESA_URL: ${{ vars.MESA_ARCHIVE_API_URL }}
-        run: |
-          case "${{ matrix.network }}" in
-            devnet)  URL="$DEVNET_URL" ;;
-            mainnet) URL="$MAINNET_URL" ;;
-            mesa)    URL="$MESA_URL" ;;
-          esac
-          if [ -z "$URL" ]; then
-            echo "No endpoint configured for ${{ matrix.network }} (set the *_ARCHIVE_API_URL repo variable); skipping."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "url=$URL" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Run live-api tests against ${{ matrix.network }}
-        if: steps.endpoint.outputs.skip != 'true'
         env:
-          STAGING_GRAPHQL_ENDPOINT: ${{ steps.endpoint.outputs.url }}
+          # Secrets, not variables: the repository is public and Actions masks
+          # secrets in logs. Both are read in this one step so the endpoint is
+          # never handed to another step.
+          DEVNET_URL: ${{ secrets.DEVNET_ARCHIVE_API_URL }}
+          MAINNET_URL: ${{ secrets.MAINNET_ARCHIVE_API_URL }}
           # Lets the suite skip cases pinned to another network's fixtures while
           # still running every network-agnostic check here.
           LIVE_API_NETWORK: ${{ matrix.network }}
-        run: npm run test:live-api
+        run: |
+          case "$LIVE_API_NETWORK" in
+            devnet)  URL="$DEVNET_URL" ;;
+            mainnet) URL="$MAINNET_URL" ;;
+          esac
+          if [ -z "$URL" ]; then
+            echo "::error::No endpoint configured for $LIVE_API_NETWORK. Set the ${LIVE_API_NETWORK^^}_ARCHIVE_API_URL repository secret."
+            exit 1
+          fi
+          STAGING_GRAPHQL_ENDPOINT="$URL" npm run test:live-api

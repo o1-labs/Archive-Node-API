@@ -20,7 +20,7 @@ These tests give us confidence that the API behaves correctly against production
 
 | Variable                     | Required | Description |
 |------------------------------|----------|-------------|
-| `STAGING_GRAPHQL_ENDPOINT`   | No       | URL of the API to test. Defaults to `http://archive-node-api.gcp.o1test.net/`. |
+| `STAGING_GRAPHQL_ENDPOINT`   | Yes      | URL of the API to test. There is no default; the suite fails at load without it. |
 | `PG_CONN`                    | No       | Postgres connection string. Only needed for pending-chain event tests that discover ZkApp addresses with pending data. Tests still work without it (pending suite is skipped). |
 
 ## Running
@@ -28,14 +28,11 @@ These tests give us confidence that the API behaves correctly against production
 Live API tests are **skipped by default** in the normal test suite. To run them:
 
 ```bash
-# Run only live-api tests
-LIVE_API_TESTS=true npm test
-
-# Run against a specific endpoint
-STAGING_GRAPHQL_ENDPOINT=http://localhost:4000 LIVE_API_TESTS=true npm test
+# Run the full suite, live-api tests included
+STAGING_GRAPHQL_ENDPOINT=http://localhost:8080 LIVE_API_TESTS=true npm test
 
 # Include pending-chain tests (requires DB access)
-PG_CONN=postgresql://user:pass@host:5432/archive LIVE_API_TESTS=true npm test
+STAGING_GRAPHQL_ENDPOINT=http://localhost:8080 PG_CONN=postgresql://user:pass@host:5432/archive LIVE_API_TESTS=true npm test
 
 # Run just the live-api suite directly against an endpoint
 STAGING_GRAPHQL_ENDPOINT=https://my-archive-api npm run test:live-api
@@ -44,22 +41,25 @@ STAGING_GRAPHQL_ENDPOINT=https://my-archive-api npm run test:live-api
 ## Nightly multi-network runs (CI)
 
 The [`Live Integration`](../../.github/workflows/live-integration.yaml) workflow
-runs this suite nightly against **devnet, mainnet, and mesa** to catch schema or
-query drift against each network's real data without slowing the PR loop.
+runs this suite nightly against **devnet and mainnet** to catch schema or
+query drift against each network's real data without slowing the PR loop. These
+are the only two live networks; mesa, used to prepare the hard fork, no longer
+exists.
 
-Each network's endpoint is read from a repository variable; a network with no
-configured URL is skipped (so the job stays green until it's set):
+Each network's endpoint is read from a repository secret, so Actions masks it
+in the (public) run logs. A network with no configured URL fails its job rather
+than being skipped, so a green run always means the suite ran:
 
-| Repo variable | Network |
-|---------------|---------|
+| Repo secret | Network |
+|-------------|---------|
 | `DEVNET_ARCHIVE_API_URL`  | devnet |
 | `MAINNET_ARCHIVE_API_URL` | mainnet |
-| `MESA_ARCHIVE_API_URL`    | mesa |
 
-Set them under **Settings → Secrets and variables → Actions → Variables**, or
-trigger the workflow manually from the Actions tab.
+The values are the archive-node-api hosts deployed by `gitops-infrastructure`.
+Set them under **Settings → Secrets and variables → Actions → Secrets**, then
+trigger the workflow manually from the Actions tab to check them.
 
-> Note: `actions.test.ts` is still a placeholder — it needs a known mainnet/mesa
+> Note: `actions.test.ts` is still a placeholder — it needs a known mainnet
 > zkApp with actions to snapshot fixtures against. Filling that in (and adding a
 > successful-`zkappCommands` fixture) is the remaining piece of test coverage.
 

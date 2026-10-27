@@ -375,10 +375,12 @@ GraphQL contract sits on top of that and moves separately.
 **Nightly check of the deployed endpoints.** The `Live Integration` workflow
 (`.github/workflows/live-integration.yaml`, 05:00 UTC) runs the live-api suite
 against the archive endpoint set in each `*_ARCHIVE_API_URL` repository
-variable. It tests the build that runs at that endpoint, not the commit that
-triggers the workflow. A network with no variable is skipped. As of 2026-10-02
-no `*_ARCHIVE_API_URL` variable is set, so every leg skips and the nightly run
-gives no compatibility evidence until the variables are configured.
+secret (a secret, so the endpoint is masked in the public run logs). It tests
+the build that runs at that endpoint, not the commit that triggers the
+workflow. A network with no secret fails its leg. Until 2026-10-27 a missing
+endpoint was skipped instead, and none was set, so every leg skipped
+and the nightly run reported green while giving no compatibility evidence. The
+matrix covers devnet and mainnet, the two live networks.
 
 **Known-good as of 2026-09-22**, read from the live daemons rather than assumed:
 
