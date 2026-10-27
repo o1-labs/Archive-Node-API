@@ -7,6 +7,7 @@ import { EventOutput } from 'src/resolvers-types.js';
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { endpoint } from './endpoint.js';
 
 /**
  * Fixtures resolve against the source tree, not `__dirname`. These tests run
@@ -67,9 +68,6 @@ const J1fu_84_83 = JSON.parse(
 let db_client: ReturnType<typeof postgres>;
 let zkappsWithPendingEvents: string[];
 
-const endpoint =
-  process.env.STAGING_GRAPHQL_ENDPOINT ||
-  'http://archive-node-api.gcp.o1test.net/';
 const client = new GraphQLClient(endpoint);
 
 const getEventsQuery = gql`
