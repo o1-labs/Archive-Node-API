@@ -239,9 +239,14 @@ export function describeActionStateInvariants(getContext: () => Context) {
 
       for (const subject of subjects) {
         const { address } = subject;
+        const started = Date.now();
         // The unfiltered list is the reference. It never sets fromActionState,
         // so it is not subject to the defect being guarded against.
         const unfiltered: Actions = await actionsService.getActions(subject, nullOptions);
+        // One line per account, so that a slow or stuck run shows where it is.
+        console.log(
+          `    ${address}: ${unfiltered.length} action block(s) in ${Date.now() - started} ms`
+        );
         if (unfiltered.length < 2) continue;
         coverage.accounts++;
 
@@ -278,6 +283,7 @@ export function describeActionStateInvariants(getContext: () => Context) {
           );
           assertActionChainIsLinked(filtered, `${address} fromActionState=${checkpoint}`);
         }
+        console.log(`      ${limit} checkpoint(s) checked in ${Date.now() - started} ms`);
       }
 
       if (coverage.skippedCheckpoints > 0) {

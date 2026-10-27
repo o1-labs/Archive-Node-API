@@ -148,6 +148,15 @@ export async function setupTestDatabase(): Promise<void> {
       );
     }
     console.log(`Dump loaded: ${row.blocks} blocks in ${targetDb}.`);
+
+    // A freshly loaded database has no planner statistics until autovacuum
+    // gets to it, which can take minutes on a dump this size. A query planned
+    // before then assumes every join yields a row or two: one unbounded
+    // actions query over blocks and accounts_accessed took 98 s instead of
+    // under 1 s, and on a CI runner long enough to hit the test timeout.
+    const analyzeStart = Date.now();
+    await check`ANALYZE`;
+    console.log(`Analyzed ${targetDb} in ${Date.now() - analyzeStart} ms.`);
   } finally {
     await check.end();
   }
