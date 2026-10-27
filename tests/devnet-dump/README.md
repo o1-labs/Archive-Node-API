@@ -57,9 +57,18 @@ day. Four rules keep this suite from needing upkeep. Keep them if you extend it.
    There is no block height, address or count to update when the data changes.
 
 2. **Subjects are discovered, never named.** The suite asks the database which
-   accounts have at least two action states, and checks the most active ones
-   first. Accounts whose action states carry an interning-order inversion come
-   first, because those are the ones the old code answered incorrectly.
+   accounts changed their action state at least twice within their window (see
+   below), and checks the most active ones first. Accounts whose action states carry an interning-order
+   inversion come first, because those are the ones the old code answered
+   incorrectly.
+
+   Each account is checked in its own block window: `from` is one of its
+   action-state changes (for an inverted account, the change just before the
+   first inversion that fits in one window with it) and `to` is
+   `from + BLOCK_RANGE_SIZE`. A query with no
+   range covers only the last `BLOCK_RANGE_SIZE` blocks of the chain, and devnet
+   can go longer than that without a single action. The suite used to query
+   without a range, and from 2026-09-21 it checked nothing.
 
    Discovery is ordered deterministically. Do not use `ORDER BY random()` — a
    nightly failure that cannot be reproduced on the same dump is a failure
@@ -69,7 +78,9 @@ day. Four rules keep this suite from needing upkeep. Keep them if you extend it.
    actually covered some accounts and checkpoints. A suite that silently tests
    nothing is worse than no suite, because it reports success. If it fires,
    either the dump holds no zkApp action history or the discovery query no
-   longer matches the archive schema; both need a person.
+   longer matches what the service answers; both need a person. The run also
+   logs `covered X of Y discovered`, so a gap between the two shows before
+   coverage reaches zero.
 
 4. **A failure must be reproducible without the dump.** Messages carry the
    account, a compact difference, and a GraphQL query to paste into any
@@ -83,7 +94,7 @@ day. Four rules keep this suite from needing upkeep. Keep them if you extend it.
      diverges at: index 1 (expected block 303203, got 303207)
      missing    : [303203]
      unexpected : none
-     reproduce  : { actions(input: { address: "B62q…", fromActionState: "27078…" }) { … } }
+     reproduce  : { actions(input: { address: "B62q…", tokenId: "wSHV…", from: 303199, to: 313199, fromActionState: "27078…" }) { … } }
    ```
 
    Accounts on a real chain can have hundreds of action states, so the message
