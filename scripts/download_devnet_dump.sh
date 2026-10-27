@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# Downloads the second-newest hourly devnet archive dump from GCS.
+# Downloads the second-newest hourly archive dump of a network from GCS.
 # We skip the newest dump to avoid fetching one that may still be uploading.
 #
-# Usage: ./scripts/download_devnet_dump.sh [output_dir]
+# Usage: DUMP_NETWORK=mainnet ./scripts/download_devnet_dump.sh [output_dir]
 #   output_dir defaults to ./data
+#   DUMP_NETWORK defaults to devnet; the bucket also holds mainnet dumps
 
 OUTPUT_DIR="${1:-.}"
 BASE_URL="https://storage.googleapis.com/mina-archive-dumps"
 GCS_API="https://storage.googleapis.com/storage/v1/b/mina-archive-dumps/o"
-NETWORK="devnet"
-PG_DUMP="devnet-archive.sql"
+NETWORK="${DUMP_NETWORK:-devnet}"
+PG_DUMP="${NETWORK}-archive.sql"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "Querying GCS for available devnet dumps..."
+echo "Querying GCS for available $NETWORK dumps..."
 
 # List dumps from today and yesterday, sorted by time (GCS returns chronologically)
 TODAY=$(date -u '+%Y-%m-%d')
@@ -34,7 +35,7 @@ for DATE in "$TODAY" "$YESTERDAY"; do
 done
 
 if [ -z "$DUMPS" ]; then
-  echo "ERROR: No devnet dumps found for $TODAY or $YESTERDAY"
+  echo "ERROR: No $NETWORK dumps found for $TODAY or $YESTERDAY"
   exit 1
 fi
 
@@ -52,24 +53,16 @@ TARGET=$(echo "$SORTED" | tail -n 2 | head -n 1)
 echo "Selected dump (second-newest): $TARGET"
 
 URL="${BASE_URL}/${TARGET}"
-ARCHIVE_FILE="${OUTPUT_DIR}/$(basename "$TARGET")"
 
-echo "Downloading: $URL"
-curl -# -o "$ARCHIVE_FILE" "$URL"
-
-# Verify it's not an XML error page
-if grep -q "<Error>" "$ARCHIVE_FILE" 2>/dev/null; then
-  echo "ERROR: Downloaded file is an error page, not a valid dump"
-  rm -f "$ARCHIVE_FILE"
-  exit 1
-fi
-
-echo "Extracting..."
-tar -xf "$ARCHIVE_FILE" -C "$OUTPUT_DIR"
+# Stream the archive into tar rather than saving it first: a mainnet dump is
+# 1.6 GB compressed and several times that extracted, and a runner has little
+# disk to spare. -f turns an HTTP error page into a failure, and pipefail
+# carries it through the pipe.
+echo "Downloading and extracting: $URL"
+curl -f -# "$URL" | tar -xzf - -C "$OUTPUT_DIR"
 
 # The extracted file is named like devnet-archive-dump-YYYY-MM-DD_HHMM.sql
 EXTRACTED=$(basename "${TARGET%.tar.gz}")
 mv "$OUTPUT_DIR/$EXTRACTED" "$OUTPUT_DIR/$PG_DUMP"
-rm -f "$ARCHIVE_FILE"
 
-echo "Devnet dump ready at: $OUTPUT_DIR/$PG_DUMP"
+echo "$NETWORK dump ready at: $OUTPUT_DIR/$PG_DUMP"

@@ -15,7 +15,8 @@ also be started by hand from the Actions tab.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `DEVNET_DUMP_PATH` | `./data/devnet-archive.sql` | Use a dump you already have instead of downloading one |
+| `DUMP_NETWORK` | `devnet` | Network whose dump to download (`devnet` or `mainnet`); the nightly job runs both |
+| `DEVNET_DUMP_PATH` | `./data/<DUMP_NETWORK>-archive.sql` | Use a dump you already have instead of downloading one |
 | `PG_TEST_HOST` / `PG_TEST_PORT` / `PG_TEST_USER` / `PG_TEST_PASSWORD` | `localhost` / `5432` / `postgres` / `postgres` | PostgreSQL connection |
 | `ACTION_STATE_SAMPLE_ACCOUNTS` | `25` | Accounts checked by the action-state invariant suite |
 | `ACTION_STATE_MAX_CHECKPOINTS_PER_ACCOUNT` | `12` | Checkpoints checked per account |
