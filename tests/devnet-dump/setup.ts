@@ -19,8 +19,12 @@ const PG_TEST_USER = process.env.PG_TEST_USER ?? 'postgres';
 const PG_TEST_PASSWORD = process.env.PG_TEST_PASSWORD ?? 'postgres';
 const PG_TEST_DB = process.env.PG_TEST_DB ?? 'devnet_dump_test';
 
+// Which network's dump to download; scripts/download_devnet_dump.sh reads the
+// same variable from the environment.
+export const DUMP_NETWORK = process.env.DUMP_NETWORK ?? 'devnet';
+
 const DATA_DIR = path.resolve(process.cwd(), 'data');
-const DEFAULT_DUMP_PATH = path.join(DATA_DIR, 'devnet-archive.sql');
+const DEFAULT_DUMP_PATH = path.join(DATA_DIR, `${DUMP_NETWORK}-archive.sql`);
 const DEVNET_DUMP_PATH = process.env.DEVNET_DUMP_PATH ?? DEFAULT_DUMP_PATH;
 
 /**
@@ -90,7 +94,9 @@ export async function downloadDump(): Promise<string> {
     return DEVNET_DUMP_PATH;
   }
 
-  console.log('Downloading devnet archive dump (second-newest to avoid incomplete)...');
+  console.log(
+    `Downloading ${DUMP_NETWORK} archive dump (second-newest to avoid incomplete)...`
+  );
   const script = path.resolve(process.cwd(), 'scripts/download_devnet_dump.sh');
   execSync(`bash ${script} ${DATA_DIR}`, { stdio: 'inherit' });
 
