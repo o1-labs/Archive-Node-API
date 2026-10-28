@@ -185,6 +185,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 | `SHUTDOWN_TIMEOUT_MS` | `20000` | Max ms to drain in-flight requests on SIGTERM before forcing exit. Keep Kubernetes `terminationGracePeriodSeconds` above this value |
 | `LOG_LEVEL` | `info` | Log verbosity: `trace` \| `debug` \| `info` \| `warn` \| `error` \| `fatal` \| `silent` |
 | `CORS_ORIGIN` | *(disabled)* | Cross-origin access. Unset = same-origin only; `*` = any origin; or a comma-separated allowlist |
+| `CORS_MAX_AGE` | _(off)_ | Seconds browsers may cache a CORS preflight (`Access-Control-Max-Age`); recommended `7200`. Ignored when CORS is disabled. Unset = no header |
 | `READINESS_PING_TIMEOUT_MS` | `2000` | Upper bound on the `/readiness` database ping. Exceeding it returns 503 rather than leaving the probe to hang. Keep it below the orchestrator's probe `timeoutSeconds` |
 | `RATE_LIMIT_MAX` | `600` | Max requests per client IP per window; `0` disables rate limiting |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window length in milliseconds |
@@ -238,6 +239,7 @@ Boolean variables (`ENABLE_*`) accept `true`/`false`, `1`/`0`, `yes`/`no`, or `o
 - To allow browser apps on other origins, set an explicit allowlist: `CORS_ORIGIN=https://app.example.com,https://www.example.com`.
 - Allowlist entries must be exact `scheme://host[:port]` origins: no trailing slash, no wildcard subdomains, and no path.
 - `CORS_ORIGIN=*` opens the API to any origin — convenient for a fully public read API, but make it a deliberate choice rather than a default.
+- A browser sends a preflight (`OPTIONS`) before every cross-origin `POST` with a JSON body. Without `Access-Control-Max-Age` it caches that preflight for only about 5 s, so almost every request costs two, and both count against any per-IP rate limit in front of the API. Set `CORS_MAX_AGE=7200` to cache preflights for 2 h. Browsers cap the value (Chrome at 7200 s, Firefox at 86400 s), so a larger number buys nothing in Chrome. Off by default, so upgrading changes nothing until you opt in. A proxy in front of the API may already add the header; check before relying on either.
 
 ### Notes on logging
 

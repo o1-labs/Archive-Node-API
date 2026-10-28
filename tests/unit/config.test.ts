@@ -172,6 +172,21 @@ describe('validateConfig', () => {
     );
   });
 
+  test('flags a non-positive-integer CORS_MAX_AGE', () => {
+    for (const value of ['abc', '0', '-1', '1.5']) {
+      assert.ok(
+        validateConfig({ ...valid, CORS_MAX_AGE: value }).some((e) =>
+          /CORS_MAX_AGE must be a positive integer/.test(e)
+        ),
+        `CORS_MAX_AGE=${value} should be rejected`
+      );
+    }
+    assert.deepStrictEqual(
+      validateConfig({ ...valid, CORS_MAX_AGE: '7200' }),
+      []
+    );
+  });
+
   test('aggregates multiple problems', () => {
     const errors = validateConfig({ PORT: '-1', ENABLE_LOGGING: 'huh' });
     assert.strictEqual(errors.length, 3); // PG_CONN, PORT, ENABLE_LOGGING

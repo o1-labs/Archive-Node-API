@@ -1,7 +1,10 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { createSchema, createYoga } from 'graphql-yoga';
-import { resolveCorsOptions, warnIfCorsDisabled } from '../../src/server/cors.js';
+import {
+  resolveCorsOptions,
+  warnIfCorsDisabled,
+} from '../../src/server/cors.js';
 
 const corsBase = {
   methods: ['GET', 'POST'],
@@ -73,7 +76,85 @@ describe('CORS configuration', () => {
       res.headers.get('access-control-allow-headers') ?? '',
       /content-type/
     );
-    assert.strictEqual(res.headers.get('access-control-allow-credentials'), null);
+    assert.strictEqual(
+      res.headers.get('access-control-allow-credentials'),
+      null
+    );
+  });
+
+  test('adds maxAge only when CORS_MAX_AGE is set', () => {
+    assert.deepStrictEqual(
+      resolveCorsOptions({ CORS_ORIGIN: '*', CORS_MAX_AGE: '7200' }),
+      { origin: '*', ...corsBase, maxAge: 7200 }
+    );
+    assert.deepStrictEqual(
+      resolveCorsOptions({
+        CORS_ORIGIN: 'https://app.example.com',
+        CORS_MAX_AGE: ' 7200 ',
+      }),
+      { origin: ['https://app.example.com'], ...corsBase, maxAge: 7200 }
+    );
+    for (const CORS_MAX_AGE of [undefined, '', '  ']) {
+      assert.ok(
+        !(
+          'maxAge' in
+          (resolveCorsOptions({ CORS_ORIGIN: '*', CORS_MAX_AGE }) as object)
+        ),
+        `CORS_MAX_AGE=${JSON.stringify(CORS_MAX_AGE)} should add no maxAge`
+      );
+    }
+  });
+
+  test('CORS_MAX_AGE does nothing when CORS is disabled', () => {
+    assert.strictEqual(resolveCorsOptions({ CORS_MAX_AGE: '7200' }), false);
+  });
+
+  describe('preflight Access-Control-Max-Age', () => {
+    const preflight = async (env: Record<string, string>) => {
+      const yoga = createYoga({
+        schema: createSchema({ typeDefs: 'type Query { hello: String }' }),
+        logging: false,
+        cors: resolveCorsOptions(env),
+      });
+      return yoga.fetch('http://localhost/', {
+        method: 'OPTIONS',
+        headers: {
+          origin: 'https://a.example.com',
+          'access-control-request-method': 'POST',
+          'access-control-request-headers': 'content-type',
+        },
+      });
+    };
+
+    test('is sent when CORS_MAX_AGE is set, keeping Vary and no credentials', async () => {
+      // `*` as on the public deployments: the origin is reflected, so the
+      // response must vary by it. (A one-entry allowlist sends a fixed origin
+      // and no Vary, which is correct for it.)
+      const res = await preflight({ CORS_ORIGIN: '*', CORS_MAX_AGE: '7200' });
+
+      assert.strictEqual(res.status, 204);
+      assert.strictEqual(res.headers.get('access-control-max-age'), '7200');
+      assert.strictEqual(
+        res.headers.get('access-control-allow-origin'),
+        'https://a.example.com'
+      );
+      assert.match(res.headers.get('vary') ?? '', /Origin/);
+      assert.strictEqual(
+        res.headers.get('access-control-allow-credentials'),
+        null
+      );
+    });
+
+    test('is absent when CORS_MAX_AGE is unset (unchanged default)', async () => {
+      const res = await preflight({ CORS_ORIGIN: '*' });
+
+      assert.strictEqual(res.status, 204);
+      assert.strictEqual(res.headers.get('access-control-max-age'), null);
+      assert.strictEqual(
+        res.headers.get('access-control-allow-origin'),
+        'https://a.example.com'
+      );
+    });
   });
 
   test('warns for allowlist entries that are unlikely to match', () => {
@@ -82,7 +163,8 @@ describe('CORS configuration', () => {
     console.warn = (message: string) => warnings.push(message);
     try {
       resolveCorsOptions({
-        CORS_ORIGIN: 'HTTPS://App.Example.com,https://app.example.com/,*.example.com',
+        CORS_ORIGIN:
+          'HTTPS://App.Example.com,https://app.example.com/,*.example.com',
       });
     } finally {
       console.warn = originalWarn;

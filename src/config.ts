@@ -22,6 +22,7 @@ const POSITIVE_INT_VARS = [
   'PORT',
   'BLOCK_RANGE_SIZE',
   'MAX_REQUEST_BODY_BYTES',
+  'CORS_MAX_AGE',
 ] as const;
 
 /** Root query fields in schema.graphql — keep in sync. */

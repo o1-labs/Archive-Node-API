@@ -10,6 +10,7 @@ declare global {
       PG_CONNECT_TIMEOUT?: string;
       PG_STATEMENT_TIMEOUT?: string;
       CORS_ORIGIN?: string;
+      CORS_MAX_AGE?: string;
       READINESS_PING_TIMEOUT_MS?: string;
       RATE_LIMIT_MAX?: string;
       RATE_LIMIT_WINDOW_MS?: string;
