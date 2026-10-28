@@ -25,6 +25,14 @@ const POSITIVE_INT_VARS = [
   'CORS_MAX_AGE',
 ] as const;
 
+/**
+ * Positive-integer vars sent verbatim as an HTTP header value, which takes
+ * decimal digits only. `Number()` also accepts `1e21` (sent as `1e+21`, which
+ * browsers ignore), `0x10` and the like. The other vars keep the looser check,
+ * so tightening it cannot fail an existing deployment at boot.
+ */
+const DECIMAL_DIGITS_VARS: ReadonlySet<string> = new Set(['CORS_MAX_AGE']);
+
 /** Root query fields in schema.graphql — keep in sync. */
 const KNOWN_QUERIES = [
   'events',
@@ -86,7 +94,13 @@ function validateConfig(env: EnvSource = process.env): string[] {
     const value = env[name];
     if (value !== undefined && value.trim() !== '') {
       const parsed = Number(value);
-      if (!Number.isInteger(parsed) || parsed <= 0) {
+      const decimalOnly = DECIMAL_DIGITS_VARS.has(name);
+      if (
+        !Number.isInteger(parsed) ||
+        parsed <= 0 ||
+        (decimalOnly &&
+          (!/^\d+$/.test(value.trim()) || !Number.isSafeInteger(parsed)))
+      ) {
         errors.push(`${name} must be a positive integer, got "${value}".`);
       }
     }

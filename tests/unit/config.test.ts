@@ -173,7 +173,9 @@ describe('validateConfig', () => {
   });
 
   test('flags a non-positive-integer CORS_MAX_AGE', () => {
-    for (const value of ['abc', '0', '-1', '1.5']) {
+    // 1e21 would be sent as "1e+21", which browsers ignore; hex and exponent
+    // forms are rejected too, since the value goes verbatim into a header.
+    for (const value of ['abc', '0', '-1', '1.5', '1e21', '1e3', '0x10']) {
       assert.ok(
         validateConfig({ ...valid, CORS_MAX_AGE: value }).some((e) =>
           /CORS_MAX_AGE must be a positive integer/.test(e)
@@ -183,6 +185,10 @@ describe('validateConfig', () => {
     }
     assert.deepStrictEqual(
       validateConfig({ ...valid, CORS_MAX_AGE: '7200' }),
+      []
+    );
+    assert.deepStrictEqual(
+      validateConfig({ ...valid, CORS_MAX_AGE: ' 7200 ' }),
       []
     );
   });
