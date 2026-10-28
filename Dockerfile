@@ -16,7 +16,7 @@
 # --ignore-scripts is safe here: no production dependency has an install
 # script. The node-gyp build that used to run belongs to unix-dgram, an
 # optional transitive dependency of artillery, which --omit=dev removes.
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS deps
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS deps
 WORKDIR /app
 COPY package*.json ./
 # --no-audit only suppresses npm's inline post-install summary; the audit gate is
@@ -25,7 +25,7 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 # Stage 2: compile. tsc output is architecture-independent, so this stage is
 # pinned to the BUILD platform: it runs natively once and serves every target.
-FROM --platform=$BUILDPLATFORM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS build
+FROM --platform=$BUILDPLATFORM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
@@ -34,7 +34,7 @@ COPY tsconfig.json ./
 RUN npm run build
 
 # Stage 3: Runtime
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
 WORKDIR /app
 
 # tini as PID 1: forwards SIGTERM to node (so graceful shutdown runs) and reaps zombies.
