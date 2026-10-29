@@ -20,6 +20,9 @@ type CorsResult =
       // undefined makes the adapter send Access-Control-Allow-Credentials: true
       // alongside an echoed origin.
       credentials: false;
+      // Seconds a browser may cache a preflight (Access-Control-Max-Age).
+      // Present only when CORS_MAX_AGE is set; see corsMaxAge.
+      maxAge?: number;
     };
 
 const corsBase = {
@@ -29,24 +32,43 @@ const corsBase = {
 } as const;
 
 /**
- * Resolve the Yoga `cors` option from `CORS_ORIGIN`.
+ * The `maxAge` option from `CORS_MAX_AGE`, or nothing when it is unset.
+ *
+ * Without Access-Control-Max-Age, browsers cache a preflight for only about
+ * 5 s, so almost every cross-origin POST costs an extra OPTIONS request; behind
+ * a per-IP rate limit that halves what a browser can do. Browsers cap the value
+ * (Chrome at 7200 s, Firefox at 86400 s). Unset keeps the header off, as before.
+ * `assertValidConfig` has already rejected anything but a positive integer.
+ */
+function corsMaxAge(env: Record<string, string | undefined>): {
+  maxAge?: number;
+} {
+  const raw = env.CORS_MAX_AGE?.trim();
+  return raw ? { maxAge: Number(raw) } : {};
+}
+
+/**
+ * Resolve the Yoga `cors` option from `CORS_ORIGIN` and `CORS_MAX_AGE`.
  *
  * Secure by default: when `CORS_ORIGIN` is unset, cross-origin browser access is
  * disabled rather than allowed from anywhere. Wide-open access (`*`) is still
  * available, but only as a deliberate opt-in. Server-to-server clients and curl
  * are unaffected by CORS; this only governs browsers calling from another origin.
  *
- * Accepted values:
+ * Accepted `CORS_ORIGIN` values:
  *   - unset / empty  → `false` (same-origin only)
  *   - `*`            → allow any origin (explicit opt-in)
  *   - one or more comma-separated origins → allowlist
+ *
+ * `CORS_MAX_AGE` adds `maxAge` when CORS is enabled and does nothing when it
+ * is disabled.
  */
 function resolveCorsOptions(
   env: Record<string, string | undefined> = process.env
 ): CorsResult {
   const raw = env.CORS_ORIGIN?.trim();
   if (!raw) return false;
-  if (raw === '*') return { origin: '*', ...corsBase };
+  if (raw === '*') return { origin: '*', ...corsBase, ...corsMaxAge(env) };
 
   const origins = raw
     .split(',')
@@ -72,7 +94,7 @@ function resolveCorsOptions(
     }
   }
 
-  return { origin: origins, ...corsBase };
+  return { origin: origins, ...corsBase, ...corsMaxAge(env) };
 }
 
 /**
@@ -90,7 +112,7 @@ function warnIfCorsDisabled(
   if (cors !== false) return;
   warn(
     '[cors] CORS_ORIGIN is unset — cross-origin browser requests are blocked ' +
-      '(same-origin only), and they will fail silently from this server\'s side. ' +
+      "(same-origin only), and they will fail silently from this server's side. " +
       'Set CORS_ORIGIN to your frontend origin(s), or to "*" for a public API ' +
       'any browser may call.'
   );

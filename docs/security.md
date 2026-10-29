@@ -104,6 +104,18 @@ clean. This catches people out, so decide deliberately:
   listed explicitly. This only limits which _browser pages_ may read responses;
   it does not restrict anyone else.
 
+Behind a per-IP rate limit, also set `CORS_MAX_AGE=7200`. Without
+`Access-Control-Max-Age`, browsers repeat the preflight about every 5 s, so
+almost every cross-origin request costs two against the limit. `7200` is the
+useful value: browsers cap it (Chrome at 7200 s, Firefox at 86400 s, Safari at
+600 s). It grants no additional access, because the browser still checks
+`Access-Control-Allow-Origin` on every actual response. The trade-off is that
+for up to that long, browsers on an origin you remove from `CORS_ORIGIN` keep
+sending requests without a preflight: the server still answers them, but the
+browser blocks the page from reading the response. If a proxy in front of the
+API already sets `Access-Control-Max-Age`, leave `CORS_MAX_AGE` unset: two
+headers make browsers ignore both.
+
 ## Least-privilege database access
 
 The API only ever issues `SELECT`s. Give it a **read-only** Postgres role rather
